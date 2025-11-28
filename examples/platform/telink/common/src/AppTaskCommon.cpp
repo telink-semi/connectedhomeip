@@ -88,6 +88,60 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
+#include <ext_driver/ext_pm.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+
+#define OPCODE_FACTORY_RESET 0
+#define OPCODE_SWITCH_ZIGBEE 1 // include init state and matter paired state.
+#define OPCODE_MATTER_PAIRED 2
+
+#define DUAL_MODE_PARTITION dual_mode_partition
+#define DUAL_MODE_PARTITION_DEVICE FIXED_PARTITION_DEVICE(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_OFFSET FIXED_PARTITION_OFFSET(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_SIZE FIXED_PARTITION_SIZE(DUAL_MODE_PARTITION)
+// init mode will jump to matter
+#define MODE_VAL_INIT 0xff
+
+// after matter paired , it will go to matter, only if trigger action.
+#define MODE_VAL_MATTER_PAIR 0x55
+#define ACTION_SWITCH_ZIGBEE 0xaa
+
+// after zb paired , it will go to zb, only if trigger action.
+#define MODE_VAL_ZB_PAIR 0xaa
+#define ACTION_SWITCH_MATTER 0x55
+void dual_mode_switch(int32_t op)
+{
+    uint8_t boot_flag[2]                 = { 0xff, 0xff };
+    const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, boot_flag, 2);
+
+    if (op == OPCODE_FACTORY_RESET)
+    {
+        boot_flag[0] = MODE_VAL_INIT;
+        boot_flag[1] = MODE_VAL_INIT;
+    }
+    else if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        boot_flag[1] = ACTION_SWITCH_ZIGBEE;
+    }
+    else if (op == OPCODE_MATTER_PAIRED)
+    {
+        boot_flag[0] = MODE_VAL_MATTER_PAIR;
+        boot_flag[1] = MODE_VAL_INIT;
+    }
+    flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
+    flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, boot_flag, sizeof(boot_flag));
+
+    // need to reboot ,switch to bootloader
+    if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        sys_reboot(SYS_REBOOT_WARM);
+    }
+}
+
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
 #endif
@@ -166,6 +220,12 @@ class AppFabricTableDelegate : public FabricTable::Delegate
             {
                 ChipLogProgress(DeviceLayer, "Rebooting board");
                 sys_reboot(SYS_REBOOT_WARM);
+            }
+            else
+            {
+                ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
+                chip::Server::GetInstance().ScheduleFactoryReset();
+                dual_mode_switch(OPCODE_FACTORY_RESET);
             }
         }
     }
@@ -566,7 +626,7 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
     LOG_INF("StartBleAdvHandler");
-
+    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
     {
@@ -612,6 +672,7 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         sFactoryResetCntr = 0;
 
         chip::Server::GetInstance().ScheduleFactoryReset();
+        dual_mode_switch(OPCODE_FACTORY_RESET);
     }
 }
 
@@ -791,6 +852,9 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
             Internal::BLEMgrImpl().ClearResetFailSafeTimerFlag();
             Server::GetInstance().GetFailSafeContext().ForceFailSafeTimerExpiry();
         }
+        break;
+    case DeviceEventType::kCommissioningComplete:
+        dual_mode_switch(OPCODE_MATTER_PAIRED);
         break;
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
