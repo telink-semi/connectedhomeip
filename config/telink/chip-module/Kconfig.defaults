@@ -336,7 +336,7 @@ config OPENTHREAD_MANUAL_START
 
 # 6 is the max rf level by Vant
 config OPENTHREAD_DEFAULT_TX_POWER
-    default 6 if PM
+    default 3 if PM
     default 11
 
 config OPENTHREAD_IP6_MAX_EXT_MCAST_ADDRS
