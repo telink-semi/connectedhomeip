@@ -22,7 +22,7 @@
 // add information , increase part for matter & zigbee
 // suppose the matter application layer is 30k, zigbee is 60k
 // currently , basic matter fw is 813k, zigbee is 140k , so just suppose matter is 916k, and zigbee is 216, reserve 20k for matter ota trailor
-		slot0_matter_partition: partition@16000 {
+		slot0_matter_partition: partition@15000_1 {
 			label = "image-0-matter";
 			reg = <0x15000 0xe5000>; // suppose matter is 916k (0xe5000)
 		};
