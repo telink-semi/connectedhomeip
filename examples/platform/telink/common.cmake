@@ -126,9 +126,14 @@ else()
   unset(USB_CONF_OVERLAY_FILE)
 endif()
 
+set(FIRMWARE_COMPRESS_LZMA "")
 if(${CONFIG_COMPRESS_LZMA} MATCHES y)
   set(BOOT_CONF_OVERLAY_FILE "${CHIP_ROOT}/config/telink/app/bootloader_compress_lzma.conf")
+<<<<<<< HEAD
   set(FLASH_LAYOUT_SUFFIX "_lzma")
+=======
+  set(FIRMWARE_COMPRESS_LZMA "lzma_")
+>>>>>>> 23558b6eea (telink: tl3238x: add the flash partition table .)
 else()
   set(BOOT_CONF_OVERLAY_FILE "${CHIP_ROOT}/config/telink/app/bootloader.conf")
   set(FLASH_LAYOUT_SUFFIX "")
@@ -166,7 +171,15 @@ if(NOT EXISTS "${GLOBAL_DTC_OVERLAY_FILE}")
   unset(GLOBAL_DTC_OVERLAY_FILE)
 endif()
 
+<<<<<<< HEAD
 set(FLASH_DTC_OVERLAY_FILE "${CHIP_ROOT}/src/platform/telink/${BASE_BOARD}_${FLASH_SIZE}_flash${FLASH_LAYOUT_SUFFIX}.overlay")
+=======
+if(${BASE_BOARD} MATCHES "tl3238x")
+  set(FLASH_DTC_OVERLAY_FILE "${CHIP_ROOT}/src/platform/telink/${BASE_BOARD}_${FLASH_SIZE}_${FIRMWARE_COMPRESS_LZMA}flash.overlay")
+else()
+  set(FLASH_DTC_OVERLAY_FILE "${CHIP_ROOT}/src/platform/telink/${BASE_BOARD}_${FLASH_SIZE}_flash.overlay")
+endif()
+>>>>>>> 23558b6eea (telink: tl3238x: add the flash partition table .)
 if(NOT EXISTS "${FLASH_DTC_OVERLAY_FILE}")
   message(STATUS "${FLASH_DTC_OVERLAY_FILE} doesn't exist")
   unset(FLASH_DTC_OVERLAY_FILE)
