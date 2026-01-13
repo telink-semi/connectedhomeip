@@ -88,6 +88,7 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
 #include <ext_driver/ext_pm.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
@@ -141,6 +142,7 @@ void dual_mode_switch(int32_t op)
         sys_reboot(SYS_REBOOT_WARM);
     }
 }
+#endif
 
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
@@ -225,7 +227,9 @@ class AppFabricTableDelegate : public FabricTable::Delegate
             {
                 ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
                 chip::Server::GetInstance().ScheduleFactoryReset();
+                #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
                 dual_mode_switch(OPCODE_FACTORY_RESET);
+                #endif
             }
         }
     }
@@ -626,7 +630,9 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
     LOG_INF("StartBleAdvHandler");
+    #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
     dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
+    #endif
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
     {
@@ -672,7 +678,9 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         sFactoryResetCntr = 0;
 
         chip::Server::GetInstance().ScheduleFactoryReset();
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_FACTORY_RESET);
+        #endif
     }
 }
 
@@ -854,7 +862,9 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         }
         break;
     case DeviceEventType::kCommissioningComplete:
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_MATTER_PAIRED);
+        #endif
         break;
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
