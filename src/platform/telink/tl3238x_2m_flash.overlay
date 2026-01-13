@@ -9,15 +9,15 @@
 // reserve 20k for software bootloader , 64k for mcuboot,need to disable log for mcuboot；		
 		boot_partition: partition@0 {
 			label = "mcuboot";
-			reg = <0x00000000 0x16000>; 
+			reg = <0x00000000 0x15000>; 
 		};
-		slot0_partition: partition@16000 {
+		slot0_partition: partition@15000 {
 			label = "image-0";
-			reg = <0x16000 0xe5000>; // total slot0 is 916k
+			reg = <0x15000 0xe5000>; // total slot0 is 916k
 		};
-		slot1_partition: partition@fb000 {
+		slot1_partition: partition@fa000 {
 			label = "image-1";
-			reg = <0xfb000 0xe5000>; // total slot1 is 916k
+			reg = <0xfa000 0xe6000>; // total slot1 is 916k
 		};
 		user_rfu_partition: partition@1e0000 {
  			label = "user_rfu";
