@@ -355,6 +355,7 @@ config OPENTHREAD_CSMABACKOFF_OPTIMIZATION
 
 config IEEE802154_TLX_OPTIMIZATION
     bool "Optimize 802.15.4 RF performance for TLX SoCs"
+    default y if PM && SOC_RISCV_TELINK_TL323X
     default n
     help
       Improve RF performance in IEEE 802.15.4 communication on TLX SoCs.
