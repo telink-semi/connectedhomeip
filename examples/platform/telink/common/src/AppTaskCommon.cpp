@@ -220,15 +220,17 @@ void dual_mode_auto_switch(int32_t op)
     }
     else if (op == OPCODE_SWITCH_ZIGBEE)
     {
+        /*if commission fail should keep the state of others , directly write from 0xAA to 0xA0*/
         boot_flag = USER_MATTER_BACK_ZB;
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
     }
     else if (op == OPCODE_MATTER_PAIRED)
     {
         boot_flag = MODE_VAL_MATTER_PAIR;
+        flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
     }
-    flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
-    flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
-
+    
     // need to reboot ,switch to bootloader
     if (op == OPCODE_SWITCH_ZIGBEE)
     {
