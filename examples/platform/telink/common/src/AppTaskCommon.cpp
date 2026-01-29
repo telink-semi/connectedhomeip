@@ -739,9 +739,6 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
     LOG_INF("StartBleAdvHandler");
-    #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
-    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
-    #endif
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
     {
@@ -979,8 +976,8 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         printk("Commissioning complete; Matter commissioned flag set.\n");
         break;
 
-#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
     case DeviceEventType::kFailSafeTimerExpired:
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
         /* Reset to Zigbee mode if commissioning fails */
         if (sBoot_zb)
         {
@@ -988,11 +985,12 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
             printk("FailSafeTimer expired; Matter commissioning failed. Rebooting to Zigbee mode...\n");
         }
         else
+#endif
         {
             printk("FailSafeTimer expired; Matter commissioning failed.\n");
         }
         break;
-#endif
+
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
