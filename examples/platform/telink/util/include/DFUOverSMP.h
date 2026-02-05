@@ -27,6 +27,14 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern struct k_timer sDnssTimer;
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
 enum VerificationFailReason : unsigned char
 {
     NO_FAIL          = 0,

@@ -116,9 +116,12 @@ bool sHaveBLEConnections   = false;
 
 const struct device * flash_para_dev = USER_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
-k_timer sDnssTimer;
 uint8_t sBoot_zb           = 0;
 constexpr int kDnssTimeout = 60000; // for init will cost for about 5s
+#if !CONFIG_MCUMGR_TRANSPORT_BT
+/* Create sDnssTimer when dfu disable */
+static k_timer sDnssTimer;
+#endif /* !CONFIG_MCUMGR_TRANSPORT_BT */
 
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
