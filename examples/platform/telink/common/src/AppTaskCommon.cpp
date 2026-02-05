@@ -173,7 +173,9 @@ user_para_t user_para;
 const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
 constexpr int kDnssTimeout           = 60000;
-static k_timer sDnssTimer;
+#if !CONFIG_MCUMGR_TRANSPORT_BT
+static k_timer sDnssTimer; // create when dfu disable
+#endif /* !CONFIG_MCUMGR_TRANSPORT_BT */
 
 void FactoryResetExtHandler(void)
 {
