@@ -185,9 +185,16 @@ user_para_t user_para;
 #define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
 #define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
 
+/*MATTER NVS*/
+#define MATTER_NVS_PARTITION storage_partition
+#define MATTER_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_SIZE FIXED_PARTITION_SIZE(MATTER_NVS_PARTITION)
 
 const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
+const struct device * matter_nvs_dev    = MATTER_NVS_PARTITION_DEVICE;
+
 constexpr int kDnssTimeout           = 60000;
 #if !CONFIG_MCUMGR_TRANSPORT_BT
 static k_timer sDnssTimer; // create when dfu disable
@@ -206,6 +213,8 @@ uint8_t dual_mode_switch_from_zb()
     flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &user_para, sizeof(user_para));
     if (user_para.val == USER_ZB_SW_VAL){
         return 1;
+    }else{
+        return 0;
     }
 }
 
@@ -236,6 +245,8 @@ void dual_mode_auto_switch(int32_t op)
     // need to reboot ,switch to bootloader
     if (op == OPCODE_SWITCH_ZIGBEE)
     {
+        // clear matter nvs for unclean info in matter nvs 
+        flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
         sys_reboot(SYS_REBOOT_WARM);
     }
 }
