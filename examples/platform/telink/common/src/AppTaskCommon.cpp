@@ -984,6 +984,8 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_MATTER_PAIRED);
         #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        /* clear boot from zigbee after commission*/
+        sBoot_zb = 0;
         dual_mode_auto_switch(OPCODE_MATTER_PAIRED);
         #endif
         printk("Commissioning complete; Matter commissioned flag set.\n");
