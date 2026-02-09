@@ -134,7 +134,9 @@ protected:
     virtual void LinkPwms(PwmManager & pwmManager);
     void InitButtons(void);
     virtual void LinkButtons(ButtonManager & buttonManager);
-
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+    static void DnssTimerTimeoutCallback(k_timer * timer);
+#endif
     static void FactoryResetTimerTimeoutCallback(k_timer * timer);
     static void FactoryResetTimerEventHandler(AppEvent * aEvent);
     static void FactoryResetButtonEventHandler(void);

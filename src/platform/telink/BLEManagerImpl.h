@@ -172,6 +172,11 @@ public:
     bool NeedToResetFailSafeTimer(void);
     void ClearResetFailSafeTimerFlag(void);
 
+#if CHIP_DEVICE_EXPOSE_CHIP_ID_VIA_BLE
+    static ssize_t HandleChipIDRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len,
+                                    uint16_t offset);
+#endif
+
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Switch context from BLE to Thread
     void SwitchToIeee802154(void);

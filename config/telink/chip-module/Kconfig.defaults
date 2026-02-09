@@ -337,6 +337,7 @@ config OPENTHREAD_CSMABACKOFF_OPTIMIZATION
 
 config IEEE802154_TLX_OPTIMIZATION
     bool "Optimize 802.15.4 RF performance for TLX SoCs"
+    default y if PM && SOC_RISCV_TELINK_TL323X
     default n
     help
       Improve RF performance in IEEE 802.15.4 communication on TLX SoCs.
@@ -350,6 +351,8 @@ config OPENTHREAD_THREAD_STACK_SIZE
 
 config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
     default 496 if PM && ZEPHYR_VERSION_3_3
+    default 608 if PM && SOC_RISCV_TELINK_TL323X
+    default 608 if SOC_RISCV_TELINK_TL323X
     default 640
 
 config OPENTHREAD_SLAAC
@@ -360,7 +363,8 @@ config OPENTHREAD_MANUAL_START
 
 # 6 is the max rf level by Vant
 config OPENTHREAD_DEFAULT_TX_POWER
-    default 6 if PM
+    default 6 if PM && (SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL721X)
+    default 3 if PM && SOC_RISCV_TELINK_TL323X
     default 11
 
 config OPENTHREAD_IP6_MAX_EXT_MCAST_ADDRS
