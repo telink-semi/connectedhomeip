@@ -188,6 +188,7 @@ class TelinkBuilder(Builder):
                  tflm_config: bool = False,
                  chip_enable_nfc_onboarding_payload: bool = False,
                  log_level: TelinkLogLevel = TelinkLogLevel.DEFAULT,
+                 dual_mode_config: int = 0,
                  ):
         super(TelinkBuilder, self).__init__(root, runner)
         self.app = app
@@ -206,6 +207,7 @@ class TelinkBuilder(Builder):
         self.tflm_config = tflm_config
         self.chip_enable_nfc_onboarding_payload = chip_enable_nfc_onboarding_payload
         self.log_level = log_level
+        self.dual_mode_config = dual_mode_config
 
     def get_cmd_prefixes(self):
         if not self._runner.dry_run:
@@ -263,6 +265,9 @@ class TelinkBuilder(Builder):
 
         if self.tflm_config:
             flags.append("-DCONFIG_TFLM_FEATURE=y")
+
+        if self.dual_mode_config:
+            flags.append("-DCONFIG_DUAL_MODE=0")
 
         if self.options.pregen_dir:
             flags.append(f"-DCHIP_CODEGEN_PREGEN_DIR={shlex.quote(self.options.pregen_dir)}")
