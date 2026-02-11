@@ -378,45 +378,7 @@ class AppFabricTableDelegate : public FabricTable::Delegate
     {
         if (chip::Server::GetInstance().GetFabricTable().FabricCount() == 0)
         {
-            ChipLogProgress(DeviceLayer, "Erasing settings partition");
-
-            // TC-OPCREDS-3.6 (device doesn't need to reboot automatically after the last fabric is removed) can't use FactoryReset
-            void * storage = nullptr;
-            int status     = settings_storage_get(&storage);
-
-            if (!status)
-            {
-                status = nvs_clear(static_cast<nvs_fs *>(storage));
-            }
-
-            if (!status)
-            {
-                status = nvs_mount(static_cast<nvs_fs *>(storage));
-            }
-
-            if (status)
-            {
-                ChipLogError(DeviceLayer, "Storage clear failed: %d", status);
-            }
-#ifdef CONFIG_TFLM_FEATURE
-            AppTask::MicroSpeechProcessStop();
-#endif
-            // Reboot in case of failed commissioning to allow new pairing via BLE
-            if (sIsCommissioningFailed)
-            {
-                ChipLogProgress(DeviceLayer, "Rebooting board");
-                sys_reboot(SYS_REBOOT_WARM);
-            }
-            else
-            {
-#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
-                dual_mode_switch(OPCODE_FACTORY_RESET);
-#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
-                dual_mode_auto_switch(OPCODE_FACTORY_RESET);
-#endif
-                ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
-                chip::Server::GetInstance().ScheduleFactoryReset();
-            }
+            k_work_schedule(&sDelayedFactoryResetWork, K_SECONDS(2));
         }
     }
 };
