@@ -238,6 +238,10 @@ config CHIP_PERSISTENT_SUBSCRIPTIONS
 	# selecting experimental for this feature since there is an issue with multiple controllers.
 	select EXPERIMENTAL
 
+config EXPOSE_CHIP_ID_VIA_BLE
+	bool "Enable CHIP-ID via ble"
+	default n
+
 config CHIP_MAX_FABRICS
 	int "Maximum number of Matter fabrics"
 	default 3 if BOARD_TL3218X_RETENTION
