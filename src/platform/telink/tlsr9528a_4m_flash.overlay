@@ -1,47 +1,76 @@
 &flash {
 	reg = <0x20000000 0x400000>;
 
-	/delete-node/ partitions;
 	partitions {
-		compatible = "fixed-partitions";
-		#address-cells = <1>;
-		#size-cells = <1>;
-
+		/delete-node/ partition@0;
+		/delete-node/ partition@20000;
+		/delete-node/ partition@88000;
+		/delete-node/ partition@f0000;
+		/delete-node/ partition@f4000;
+		/delete-node/ partition@fe000;
 		boot_partition: partition@0 {
 			label = "mcuboot";
-			reg = <0x00000000 0x13000>;
+			reg = <0x00000000 0x14000>;
 		};
-		slot0_partition: partition@13000 {
+		slot0_partition: partition@14000 {
 			label = "image-0";
-			reg = <0x13000 0x1ea000>;
+			reg = <0x14000 0x1a5000>;// 0x14000 is matter , 0x154000 is zigbee , 0x1b4000~0x1b9000 reserved for trailor and move sector, should be 20k
 		};
-		slot1_partition: partition@1fd000 {
+		slot1_partition: partition@1b9000 {
 			label = "image-1";
-			reg = <0x1fd000 0x1ea000>;
+			reg = <0x1b9000 0x1a5000>;
 		};
-		storage_partition: partition@3e7000 {
+		rfu_partition: partition@35e000 {
+ 			label = "rfu";
+			reg = <0x35e000 0x22000>; //reserved for next step flash protect to keep 3.5k,now use all protect 
+ 		};
+		storage_partition: partition@380000 {
 			label = "storage";
-			reg = <0x3e7000 0xf000>; // matter nvs part 
+			reg = <0x380000 0xb000>; // matter nvs part 
 		};
+		zigbee_partition: partition@38b000 {
+			label = "zigbee";
+			reg = <0x38b000 0x1a000>; // zigbee nvs part , total is 104k.
+		};
+		user_token_partition: partition@3a5000 {
+ 			label = "user-token";
+			reg = <0x3a5000 0x1000>; //user:store token info, for customer to config.
+ 		};
+		user_para_partition: partition@3a6000 {
+ 			label = "user-para";
+			reg = <0x3a6000 0x1000>; //user:store the mode info and the key info part.
+ 		};
+		user_rfu_partition: partition@3a7000 {
+ 			label = "user_rfu";
+			reg = <0x3a7000 0x19000>; //user_rfu: reserve 100k for user extend.
+ 		};
+		user_cluster_partition: partition@3c0000 {
+ 			label = "user-cluster";
+			reg = <0x3c0000 0x1000>; //user_cluster: reserve 4k for user storage cluster para.
+ 		};
+		stack_extend_partition: partition@3c1000 {
+ 			label = "stack_extend";
+			reg = <0x3c1000 0x35000>; //reserved for matter stack extend proc，about 212k.
+ 		};
 		dac_keypair_partition: partition@3f6000 {
 			label = "dac-keypair";
-			reg = <0x3f6000 0x1000>; // store dac and key pair.
+			reg = <0x3f6000 0x1000>; //store dac and key pair.
 		};
 		factory_partition: partition@3f7000 {
 			label = "factory-data";
-			reg = <0x3f7000 0x1000>; // factory data info.
+			reg = <0x3f7000 0x1000>; // factory data info 
 		};
 		secure_partition: partition@3f8000 {
  			label = "secure";
-			reg = <0x3f8000 0x4000>; // secure info, reserved for secure boot. if not use, can be used by other way.
+			reg = <0x3f8000 0x4000>; //secure info ,reserved for secure boot .if not use , can beused by other way .
  		};
 		vendor_rfu_partition: partition@3fc000 {
 			label = "vendor-rfu";
-			reg = <0x3fc000 0x2000>; // reserved for chip extend.
+			reg = <0x3fc000 0x2000>;// reserved for chip extend.
 		};
 		vendor_partition: partition@3fe000 {
 			label = "vendor-data";
-			reg = <0x3fe000 0x2000>; // mac and adc info.
+			reg = <0x3fe000 0x2000>;// mac and adc info.
 		};
 	};
 };
