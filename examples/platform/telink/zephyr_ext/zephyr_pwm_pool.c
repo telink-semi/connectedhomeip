@@ -181,7 +181,8 @@ bool pwm_pool_init(struct pwm_pool_data * pwm_pool)
         /* init all PWMs are ready */
         for (size_t i = 0; i < pwm_pool->out_len; i++)
         {
-            if (pwm_set_dt(&pwm_pool->out[i], pwm_pool->out[i].period, 0))
+            extern unsigned char para_lightness ;
+            if (pwm_set_dt(&pwm_pool->out[i], pwm_pool->out[i].period, para_lightness*pwm_pool->out[i].period/255))
             {
                 result = false;
                 break;
