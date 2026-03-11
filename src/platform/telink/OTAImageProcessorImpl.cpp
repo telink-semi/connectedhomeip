@@ -215,7 +215,7 @@ CHIP_ERROR OTAImageProcessorImpl::RestoreBytes(ByteSpan & aBlock)
         // Align to the nearest lower multiple of sector size (4 KB) for Flash erase/write
         downloadedBytesRestored = ROUND_DOWN(downloadedBytesRestored, 0x1000);
         ChipLogDetail(SoftwareUpdate, "Restored %u/%u bytes", static_cast<unsigned>(downloadedBytesRestored),
-                      static_cast<unsigned>(mParams.totalFileBytes))
+                      static_cast<unsigned>(mParams.totalFileBytes));
 
             // Reinit Flash Stream with offset
             ReturnErrorOnFailure(System::MapErrorZephyr(stream_flash_buffered_write(&stream, NULL, 0, true)));
