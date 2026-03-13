@@ -22,3 +22,27 @@
 
 #define APP_SET_DEVICE_INFO_PROVIDER 1
 #define APP_SET_NETWORK_COMM_ENDPOINT_SEC 0
+
+// -----User setting part 
+#define APP_LIGHT_USER_MODE_EN         1
+
+#define APP_LIGHT_PWM       0
+#define APP_LIGHT_I2C       1
+#define APP_LIGHT_ADC       2
+
+#if CONFIG_I2C
+#define APP_LIGHT_MODE      APP_LIGHT_I2C
+#elif CONFIG_ADC
+#define APP_LIGHT_MODE      APP_LIGHT_ADC
+#else
+#define APP_LIGHT_MODE      APP_LIGHT_PWM
+#endif
+
+// Independent Factory Reset Button
+#define INDEPENDENT_FACTORY_RESET_BUTTON     0
+
+#define FW_TYPE_PRODUCT 0
+#define FW_TYPE_DEBUG 1
+#define FW_TYPE_DEVELOP 2
+
+#define MATTER_FW_TYPE FW_TYPE_PRODUCT

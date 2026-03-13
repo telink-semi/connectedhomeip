@@ -161,6 +161,94 @@ public:
 AppCallbacks sCallbacks;
 } // namespace
 
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+const struct device *cluster_para_dev = USER_CLUSTER_PARTITION_DEVICE;
+
+uint32_t cluster_para_addr = USER_CLUSTER_PARTITION_OFFSET;
+#define CLUSTER_PARA_LEN (sizeof(cluster_startup_para))
+#define USER_CLUSTER_PARTITION_END (    \
+    USER_CLUSTER_PARTITION_OFFSET + USER_CLUSTER_PARTITION_SIZE)
+
+void clear_cluster_para(void)
+{
+    flash_erase(cluster_para_dev, USER_CLUSTER_PARTITION_OFFSET, USER_CLUSTER_PARTITION_SIZE);
+    cluster_para_addr = USER_CLUSTER_PARTITION_OFFSET;
+}
+
+void init_cluster_partition(void)
+{
+    uint32_t i, cur_addr;
+    cluster_startup_para t_cmp;
+    cluster_startup_para t_cmp_back;
+    memset((void *)(&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
+
+    for (i = 0;; i++)
+    {
+        cur_addr = USER_CLUSTER_PARTITION_OFFSET + i * CLUSTER_PARA_LEN;
+        if (cur_addr >= USER_CLUSTER_PARTITION_END)
+        {
+            clear_cluster_para();
+            break;
+        }
+
+        flash_read(cluster_para_dev, cur_addr, &t_cmp, CLUSTER_PARA_LEN);
+        if (memcmp(&t_cmp, &t_cmp_back, CLUSTER_PARA_LEN) == 0) // read t_cmp is 0xff
+        {
+            cluster_para_addr = cur_addr;
+            return;
+        }
+    }
+}
+
+int store_cluster_para(cluster_startup_para *data)
+{
+    if (data == NULL)
+    {
+        return -1;
+    }
+    if (cluster_para_addr >= (USER_CLUSTER_PARTITION_END - CLUSTER_PARA_LEN))
+    {
+        clear_cluster_para();
+    }
+
+    flash_write(cluster_para_dev, cluster_para_addr, data, CLUSTER_PARA_LEN);
+    cluster_para_addr += CLUSTER_PARA_LEN;
+    return 0;
+}
+
+int read_cluster_para(cluster_startup_para *data)
+{
+    if (data == NULL)
+    {
+        return -1;
+    }
+    if (cluster_para_addr >= USER_CLUSTER_PARTITION_END)
+    {
+        clear_cluster_para();
+        return -1;
+    }
+    if ((cluster_para_addr - CLUSTER_PARA_LEN) < USER_CLUSTER_PARTITION_OFFSET)
+    {
+        return -1;
+    }
+
+    cluster_startup_para t_cmp;
+    cluster_startup_para t_cmp_back;
+    memset((void *)(&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
+
+    flash_read(cluster_para_dev, (cluster_para_addr - CLUSTER_PARA_LEN), &t_cmp, CLUSTER_PARA_LEN);
+    if (memcmp(&t_cmp, &t_cmp_back, CLUSTER_PARA_LEN) == 0) // read t_cmp is 0xff, error
+    {
+        clear_cluster_para();
+        return -1;
+    }
+    memcpy(data, &t_cmp, CLUSTER_PARA_LEN);
+    return 0;
+}
+#endif
+#endif
+
 /* Not modify reg addr by user */
 #define MATTER_ANALOG_REG_OTA_ADR   (unsigned char)(0x3b)
 #define MATTER_ANALOG_OTA_FLAG_VAL  0x55
@@ -309,6 +397,10 @@ void AppTaskCommon::PrintFirmwareInfo(void)
 CHIP_ERROR AppTaskCommon::InitCommonParts(void)
 {
     PrintFirmwareInfo();
+
+#if INDEPENDENT_FACTORY_RESET_BUTTON
+    IndependentFactoryReset();  // Open the factory_reset button separately.
+#endif
 
     InitLeds();
     UpdateStatusLED();
@@ -849,6 +941,30 @@ void AppTaskCommon::OtaEventsHandler(const ChipDeviceEvent * event)
     }
 }
 
+k_timer KOtaQueryImageTimer;
+constexpr int KOtaQueryImageTimeout = 120000; // for init will cost for about 120s
+void KOtaQueryImageTimerTimeoutCallback(k_timer * timer)
+{
+    LOG_INF("=======proc KOtaQueryImageTimerTimeoutCallback\n");
+    InitBasicOTARequestor();
+    chip::OTARequestorInterface * requestor = chip::GetRequestorInstance();
+    if (chip::Server::GetInstance().GetFabricTable().FabricCount() != 0)
+    {
+        // Schedule a query. At the end of this query/update process the Default Provider timer is started
+        chip::DeviceLayer::SystemLayer().ScheduleLambda([requestor] { requestor->TriggerImmediateQuery(); });
+        // GetRequestorInstance()->TriggerImmediateQuery();
+    }
+}
+
+int KOtaQueryImageTimer_proc(void)
+{
+    k_timer_init(&KOtaQueryImageTimer, &KOtaQueryImageTimerTimeoutCallback, nullptr);
+    k_timer_start(&KOtaQueryImageTimer, K_MSEC(KOtaQueryImageTimeout), K_NO_WAIT);
+    LOG_INF("=======KOtaQueryImageTimer start\n");
+
+    return 1;
+}
+
 void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* arg */)
 {
     switch (event->Type)
@@ -920,11 +1036,41 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
      case DeviceEventType::kCommissioningComplete:
      {
         unsigned char val = USER_MATTER_PAIR_VAL;
+
+        /* just a demo to show how to change the cluster after commission , only in the zb switch and touchlink is paired*/
+        #if 0
+        if(user_para.val == USER_ZB_SW_VAL && user_para.on_net ){
+            Protocols::InteractionModel::Status status;
+            /* Switch from the touch link, need to restore previous values */ 
+            status = Clusters::OnOff::Attributes::OnOff::Set(kExampleEndpointId, light_para.onoff);
+            if (status != Protocols::InteractionModel::Status::Success)
+            {
+                LOG_ERR("Update OnOff fail: %x", to_underlying(status));
+            }
+            status = Clusters::LevelControl::Attributes::CurrentLevel::Set(kExampleEndpointId, light_para.level);
+            {
+                LOG_ERR("Update brightness fail: %x", to_underlying(status));
+            }
+        }
+        #endif
+
         /*clear zigbee switch flag*/
         sBoot_zb = 0;
         /*write commission suc flag*/
         flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
         flash_write(flash_para_dev, USER_PARTITION_OFFSET, &val, 1);
+
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+        cluster_startup_para cluster_para;
+        cluster_para.onoff = light_para.onoff;
+        cluster_para.level = light_para.level;
+        if (store_cluster_para(&cluster_para) != 0) {
+            printk("[ChipEventHandler] Fail store startup cluster para\n");
+        }
+#endif
+#endif
+
         printk("Commissioning complete, set Matter commissionined flag");
         break;
     }
@@ -944,6 +1090,21 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
     case DeviceEventType::kDnssdInitialized:
 #if CONFIG_CHIP_OTA_REQUESTOR
         InitBasicOTARequestor();
+        {
+            // metadata is only 1(debug firmware) and 2(develop firmware) and null(product firmware).
+            // other values are illegal.
+            static uint8_t metadata                 = MATTER_FW_TYPE;
+            chip::OTARequestorInterface * requestor = chip::GetRequestorInstance();
+            if ((metadata == FW_TYPE_DEBUG) || (metadata == FW_TYPE_DEVELOP))
+            {
+                printk("set metadata start");
+                requestor->SetMetadataForProvider(chip::ByteSpan(&metadata, 1));
+                printk("set metadata end");
+            }else{
+                // metadata is is null(product firmare) as default.
+            }
+            KOtaQueryImageTimer_proc();
+        }
         if (GetRequestorInstance()->GetCurrentUpdateState() == Clusters::OtaSoftwareUpdateRequestor::OTAUpdateStateEnum::kIdle)
         {
 #endif
