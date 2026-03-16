@@ -35,6 +35,9 @@
 #include <DeviceInfoProviderImpl.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#include <app/persistence/AttributePersistenceProviderInstance.h>
+#include <app/persistence/DefaultAttributePersistenceProvider.h>
+#include <app/persistence/DeferredAttributePersistenceProvider.h>
 #include <app/server/Server.h>
 #include <app/util/endpoint-config-api.h>
 #include <setup_payload/OnboardingCodesUtil.h>
@@ -51,11 +54,11 @@
 
 #include "AppConfig.h"
 #include <analog.h>
+#include <app-common/zap-generated/attributes/Accessors.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/reboot.h>
-#include <app-common/zap-generated/attributes/Accessors.h>
 
 #ifdef CONFIG_MCUMGR_TRANSPORT_BT
 #include <DFUOverSMP.h>
@@ -112,9 +115,9 @@ bool sIsNetworkAttached    = false;
 bool sHaveBLEConnections   = false;
 
 const struct device * flash_para_dev = USER_PARTITION_DEVICE;
-const struct device * zb_para_dev = ZB_NVS_PARTITION_DEVICE;
+const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
 k_timer sDnssTimer;
-uint8_t sBoot_zb = 0;
+uint8_t sBoot_zb           = 0;
 constexpr int kDnssTimeout = 60000; // for init will cost for about 5s
 
 #if APP_SET_DEVICE_INFO_PROVIDER
@@ -135,6 +138,37 @@ Identify sIdentify = {
 };
 
 #endif
+
+/**
+ * @brief Set deferred attributes storage
+ *
+ * @see Define a custom attribute persister which makes actual write of the CurrentHue, CurrentSaturation, CurrentLevel attributes
+ * value to the non-volatile storage only when it has remained constant for 5 seconds. This is to reduce the flash wearout when the
+ * attribute changes frequently as a result of MoveToLevel command. DeferredAttribute object describes a deferred attribute, but
+ * also holds a buffer with a value to be written, so it must live so long as the DeferredAttributePersistenceProvider object.
+ *
+ * @param ATTRIBUTES_ARRAY_SIZE The lenght of the DeferredAttribute array
+ * @param DEFERRED_STORAGE_TIME The deferred time(ms) to store attributes
+ */
+#define ATTRIBUTES_ARRAY_SIZE (3U)
+#define DEFERRED_STORAGE_TIME (500U)
+
+DeferredAttribute gPersisters[] = {
+#if CONFIG_DEFERRED_ATTR_STORAGE
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id, Clusters::ColorControl::Attributes::CurrentHue::Id)),
+    DeferredAttribute(ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id,
+                                            Clusters::ColorControl::Attributes::CurrentSaturation::Id)),
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::LevelControl::Id, Clusters::LevelControl::Attributes::CurrentLevel::Id))
+#endif // CONFIG_DEFERRED_ATTR_STORAGE
+};
+
+// Deferred persistence will be auto-initialized as soon as the default persistence is initialized
+DefaultAttributePersistenceProvider gSimpleAttributePersistence;
+DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
+                                                                 Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
+                                                                 System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
 
 // NOTE! This key is for test/certification only and should not be available in production devices!
 uint8_t sTestEventTriggerEnableKey[TestEventTriggerDelegate::kEnableKeyLength] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
@@ -163,12 +197,10 @@ AppCallbacks sCallbacks;
 
 #if APP_LIGHT_USER_MODE_EN
 #if CONFIG_STARTUP_OPTIMIZATE
-const struct device *cluster_para_dev = USER_CLUSTER_PARTITION_DEVICE;
-
-uint32_t cluster_para_addr = USER_CLUSTER_PARTITION_OFFSET;
+const struct device * cluster_para_dev = USER_CLUSTER_PARTITION_DEVICE;
+uint32_t cluster_para_addr             = USER_CLUSTER_PARTITION_OFFSET;
 #define CLUSTER_PARA_LEN (sizeof(cluster_startup_para))
-#define USER_CLUSTER_PARTITION_END (    \
-    USER_CLUSTER_PARTITION_OFFSET + USER_CLUSTER_PARTITION_SIZE)
+#define USER_CLUSTER_PARTITION_END (USER_CLUSTER_PARTITION_OFFSET + USER_CLUSTER_PARTITION_SIZE)
 
 void clear_cluster_para(void)
 {
@@ -181,7 +213,7 @@ void init_cluster_partition(void)
     uint32_t i, cur_addr;
     cluster_startup_para t_cmp;
     cluster_startup_para t_cmp_back;
-    memset((void *)(&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
+    memset((void *) (&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
 
     for (i = 0;; i++)
     {
@@ -201,7 +233,7 @@ void init_cluster_partition(void)
     }
 }
 
-int store_cluster_para(cluster_startup_para *data)
+int store_cluster_para(cluster_startup_para * data)
 {
     if (data == NULL)
     {
@@ -217,7 +249,7 @@ int store_cluster_para(cluster_startup_para *data)
     return 0;
 }
 
-int read_cluster_para(cluster_startup_para *data)
+int read_cluster_para(cluster_startup_para * data)
 {
     if (data == NULL)
     {
@@ -235,7 +267,7 @@ int read_cluster_para(cluster_startup_para *data)
 
     cluster_startup_para t_cmp;
     cluster_startup_para t_cmp_back;
-    memset((void *)(&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
+    memset((void *) (&t_cmp_back), 0xff, CLUSTER_PARA_LEN);
 
     flash_read(cluster_para_dev, (cluster_para_addr - CLUSTER_PARA_LEN), &t_cmp, CLUSTER_PARA_LEN);
     if (memcmp(&t_cmp, &t_cmp_back, CLUSTER_PARA_LEN) == 0) // read t_cmp is 0xff, error
@@ -246,21 +278,21 @@ int read_cluster_para(cluster_startup_para *data)
     memcpy(data, &t_cmp, CLUSTER_PARA_LEN);
     return 0;
 }
-#endif
-#endif
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
 
 /* Not modify reg addr by user */
-#define MATTER_ANALOG_REG_OTA_ADR   (unsigned char)(0x3b)
-#define MATTER_ANALOG_OTA_FLAG_VAL  0x55
+#define MATTER_ANALOG_REG_OTA_ADR (0x3b)
+#define MATTER_ANALOG_OTA_FLAG_VAL 0x55
 
 void AppTaskCommon::OtaSetAnaFlag(void)
 {
-    analog_write(MATTER_ANALOG_REG_OTA_ADR, MATTER_ANALOG_OTA_FLAG_VAL);
+    analog_write((unsigned char) MATTER_ANALOG_REG_OTA_ADR, MATTER_ANALOG_OTA_FLAG_VAL);
 }
 
 bool AppTaskCommon::OtaGetAnaFlag(void)
 {
-    if (analog_read(MATTER_ANALOG_REG_OTA_ADR) == MATTER_ANALOG_OTA_FLAG_VAL)
+    if (analog_read((unsigned char) MATTER_ANALOG_REG_OTA_ADR) == MATTER_ANALOG_OTA_FLAG_VAL)
     {
         return true;
     }
@@ -317,17 +349,20 @@ CHIP_ERROR AppTaskCommon::StartApp(void)
     /* Proc ota boot flag , and erase flag */
     flash_read(flash_para_dev, USER_PARTITION_OFFSET, &user_para, sizeof(user_para));
     /* Boot from Zigbee , need to clean the user parameters sector first and set a flag */
-    if (user_para.val == USER_ZB_SW_VAL){
+    if (user_para.val == USER_ZB_SW_VAL)
+    {
         // if switch from zb , need to get all the cluster info from zb
-        flash_read(flash_para_dev, USER_PARTITION_OFFSET+sizeof(user_para), &light_para, sizeof(light_para));
-        //flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+        flash_read(flash_para_dev, USER_PARTITION_OFFSET + sizeof(user_para), &light_para, sizeof(light_para));
+        // flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
         sBoot_zb = 1;
         /* Ensure lightness is at least 2 to avoid display error on HomePod Mini */
-        if(light_para.level < 2){
+        if (light_para.level < 2)
+        {
             light_para.level = 2;
         }
         /* Pass the value to the init part to avoid gaps in pwm_pool init */
-        if(light_para.onoff){
+        if (light_para.onoff)
+        {
             para_lightness = light_para.level;
         }
         k_timer_init(&sDnssTimer, &AppTask::DnssTimerTimeoutCallback, nullptr);
@@ -399,7 +434,7 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     PrintFirmwareInfo();
 
 #if INDEPENDENT_FACTORY_RESET_BUTTON
-    IndependentFactoryReset();  // Open the factory_reset button separately.
+    IndependentFactoryReset(); // Open the factory_reset button separately.
 #endif
 
     InitLeds();
@@ -442,6 +477,7 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);
 #endif
     LogErrorOnFailure(initParams.InitializeStaticResourcesBeforeServerInit());
+    VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
 #if APP_SET_DEVICE_INFO_PROVIDER
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
@@ -457,6 +493,9 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     // ZAP/codegen applications use the generated data model.
     initParams.dataModelProvider = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
     ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
+
+    /* Add deferred storage attribute for provider */
+    app::SetAttributePersistenceProvider(&gDeferredAttributePersister);
 
     ConfigurationMgr().LogDeviceConfig();
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
@@ -748,9 +787,14 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
 
         // Erase user parameters partition and reset to Zigbee mode upon factory reset
         flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
-        // Need to erase zb nvs part 
+        // Need to erase zb nvs part
         flash_erase(zb_para_dev, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
-
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+        // Need to erase cluster para part
+        flash_erase(cluster_para_dev, USER_CLUSTER_PARTITION_OFFSET, USER_CLUSTER_PARTITION_SIZE);
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
         printk("Factory reset triggered by button, resetting to Zigbee mode");
 
         chip::Server::GetInstance().ScheduleFactoryReset();
@@ -772,8 +816,8 @@ void AppTaskCommon::FactoryResetTimerTimeoutCallback(k_timer * timer)
 
 void SwitchBackToZigbee()
 {
-    uint8_t switch_flag  = USER_MATTER_BACK_ZB;
-    flash_write(flash_para_dev,USER_PARTITION_OFFSET,&switch_flag,1);
+    uint8_t switch_flag = USER_MATTER_BACK_ZB;
+    flash_write(flash_para_dev, USER_PARTITION_OFFSET, &switch_flag, 1);
     sys_reboot(SYS_REBOOT_WARM);
 }
 
@@ -781,8 +825,9 @@ void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
 {
     printk("Matter: DnssTimer expired.\r\n");
     /*If initialization of Dnss takes longer than 90 seconds, the device will reboot and revert to Zigbee mode*/
-    if (sBoot_zb){
-         SwitchBackToZigbee();
+    if (sBoot_zb)
+    {
+        SwitchBackToZigbee();
     }
 }
 
@@ -1033,15 +1078,14 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         }
         break;
 
-     case DeviceEventType::kCommissioningComplete:
-     {
+    case DeviceEventType::kCommissioningComplete: {
         unsigned char val = USER_MATTER_PAIR_VAL;
 
-        /* just a demo to show how to change the cluster after commission , only in the zb switch and touchlink is paired*/
-        #if 0
+/* just a demo to show how to change the cluster after commission , only in the zb switch and touchlink is paired*/
+#if 0
         if(user_para.val == USER_ZB_SW_VAL && user_para.on_net ){
             Protocols::InteractionModel::Status status;
-            /* Switch from the touch link, need to restore previous values */ 
+            /* Switch from the touch link, need to restore previous values */
             status = Clusters::OnOff::Attributes::OnOff::Set(kExampleEndpointId, light_para.onoff);
             if (status != Protocols::InteractionModel::Status::Success)
             {
@@ -1052,39 +1096,40 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
                 LOG_ERR("Update brightness fail: %x", to_underlying(status));
             }
         }
-        #endif
+#endif
 
         /*clear zigbee switch flag*/
         sBoot_zb = 0;
         /*write commission suc flag*/
         flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
         flash_write(flash_para_dev, USER_PARTITION_OFFSET, &val, 1);
-
 #if APP_LIGHT_USER_MODE_EN
 #if CONFIG_STARTUP_OPTIMIZATE
         cluster_startup_para cluster_para;
         cluster_para.onoff = light_para.onoff;
         cluster_para.level = light_para.level;
-        if (store_cluster_para(&cluster_para) != 0) {
+        if (store_cluster_para(&cluster_para) != 0)
+        {
             printk("[ChipEventHandler] Fail store startup cluster para\n");
         }
-#endif
-#endif
-
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
         printk("Commissioning complete, set Matter commissionined flag");
         break;
     }
-    case DeviceEventType::kFailSafeTimerExpired:
-    {
+    case DeviceEventType::kFailSafeTimerExpired: {
         /* Erase and reset to Zigbee mode if commissioning fails */
-        if (sBoot_zb) {
+        if (sBoot_zb)
+        {
             printk("FailSafeTimer expired, Matter commissioning failed, rebooting to Zigbee mode.\r\n");
             SwitchBackToZigbee();
-        }else{
+        }
+        else
+        {
             printk("FailSafeTimer expired, Matter commissioning failed.\r\n");
-        } 
+        }
     }
-        break;
+    break;
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
@@ -1100,7 +1145,9 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
                 printk("set metadata start");
                 requestor->SetMetadataForProvider(chip::ByteSpan(&metadata, 1));
                 printk("set metadata end");
-            }else{
+            }
+            else
+            {
                 // metadata is is null(product firmare) as default.
             }
             KOtaQueryImageTimer_proc();
@@ -1114,7 +1161,8 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
 #if CONFIG_CHIP_OTA_REQUESTOR
         }
 #endif
-        if(sBoot_zb){
+        if (sBoot_zb)
+        {
             k_timer_stop(&sDnssTimer);
             printk("Dnss Timer stopped, Matter commissioning kDnssdInitialized.\r\n");
         }
