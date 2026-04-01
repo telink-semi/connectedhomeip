@@ -93,7 +93,7 @@ jobs:
                 gh-context: ${{ toJson(github) }}
 
             - name: Update Zephyr version 4.1.0 (develop) to specific revision (for developers purpose)
-              run: scripts/run_in_build_env.sh "python3 scripts/tools/telink/update_zephyr.py 28aad1b3c95c0174ddb5c684b3e61f31c776cdf2"
+              run: scripts/run_in_build_env.sh "python3 scripts/tools/telink/update_zephyr.py ab3f2eea24ef3e7c0b0d9796b347cd2f7dc92696"
 
             - name: Download Factory Data tools
               uses: actions/download-artifact@v8

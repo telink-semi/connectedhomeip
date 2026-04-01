@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <zephyr/logging/log.h>
 
+// LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
+
 namespace chip {
 namespace {
 
@@ -106,6 +108,27 @@ CHIP_ERROR FactoryDataProvider<FlashFactoryData>::Init()
         ChipLogError(DeviceLayer, "Failed to parse factory data");
         return CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND;
     }
+
+    // LOG_INF("[ParseFactoryData - ParseFactoryData] DAC priv key len=%u", mFactoryData.dac_priv_key.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_priv_key.data, mFactoryData.dac_priv_key.len, "DAC PRIV KEY");
+
+    // LOG_INF("[ParseFactoryData - ParseFactoryData] DAC cert len=%u", mFactoryData.dac_cert.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_cert.data, mFactoryData.dac_cert.len, "DAC CERT");
+
+#if CHIP_DEVICE_SECURE_PROGRAMMING
+    if (!LoadDACCertAndKey(mFactoryDataBuffer, &mFactoryData))
+    {
+        ChipLogError(DeviceLayer, "Failed to inject dac data");
+        free(ptr); // Only free on failure
+        return CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND;
+    }
+
+    // LOG_INF("[ParseFactoryData-LoadDACCertAndKey] DAC priv key len=%u", mFactoryData.dac_priv_key.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_priv_key.data, mFactoryData.dac_priv_key.len, "DAC PRIV KEY");
+
+    // LOG_INF("[ParseFactoryData-LoadDACCertAndKey] DAC cert len=%u", mFactoryData.dac_cert.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_cert.data, mFactoryData.dac_cert.len, "DAC CERT");
+#endif
 
     // Release the memory of mFactoryDataBuffer after complete parse
     free(ptr);
@@ -196,12 +219,20 @@ CHIP_ERROR FactoryDataProvider<FlashFactoryData>::SignWithDeviceAttestationKey(c
     }
 
     GetFactoryData(P_DACCert, mFactoryData.dac_cert.data, mFactoryData.dac_cert.len);
+#endif
+    // LOG_INF("[SignWithDeviceAttestationKey] DAC cert len=%u", mFactoryData.dac_cert.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_cert.data, mFactoryData.dac_cert.len, "mFactoryData.dac_cert.data");
+    // LOG_HEXDUMP_INF(P_DACCert, mFactoryData.dac_cert.len, "DAC CERT - P_DACCert");
 
     // Extract public key from DAC cert.
     ByteSpan dacCertSpan{ reinterpret_cast<uint8_t *>(P_DACCert), mFactoryData.dac_cert.len };
+    // LOG_INF("[SignWithDeviceAttestationKey] DAC cert len=%u", dacCertSpan.size());
+    // LOG_HEXDUMP_INF(dacCertSpan.data(), dacCertSpan.size(), "DAC CERT");
     chip::Crypto::P256PublicKey dacPublicKey;
 
     error = chip::Crypto::ExtractPubkeyFromX509Cert(dacCertSpan, dacPublicKey);
+    // LOG_INF("[SignWithDeviceAttestationKey] DAC pub key len=%u", dacPublicKey.Length());
+    // LOG_HEXDUMP_INF(dacPublicKey.Bytes(), dacPublicKey.Length(), "DAC PUB KEY");
     free(P_DACCert);
     if (error != CHIP_NO_ERROR)
     {
@@ -220,6 +251,10 @@ CHIP_ERROR FactoryDataProvider<FlashFactoryData>::SignWithDeviceAttestationKey(c
     }
 
     GetFactoryData(P_DACPrivKey, mFactoryData.dac_priv_key.data, mFactoryData.dac_priv_key.len);
+#endif
+    // LOG_INF("[SignWithDeviceAttestationKey] DAC priv key len=%u", mFactoryData.dac_priv_key.len);
+    // LOG_HEXDUMP_INF(mFactoryData.dac_priv_key.data, mFactoryData.dac_priv_key.len, "mFactoryData.dac_priv_key.data");
+    // LOG_HEXDUMP_INF(P_DACPrivKey, mFactoryData.dac_priv_key.len, "DAC CERT - P_DACPrivKey");
 
     // Load keypair from raw.
     error = LoadKeypairFromRaw(ByteSpan(reinterpret_cast<uint8_t *>(P_DACPrivKey), mFactoryData.dac_priv_key.len),

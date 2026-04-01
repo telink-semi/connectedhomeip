@@ -30,11 +30,11 @@
 #endif
 
 #include <app-common/zap-generated/attributes/Accessors.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/adc.h>
-#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/kernel.h>
 
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 using namespace chip::app::Clusters;
@@ -66,24 +66,25 @@ bool AppTask::IsTurnedOn() const
 #if (APP_LIGHT_MODE == APP_LIGHT_I2C)
 void i2c_demo_proc(void)
 {
-    const uint8_t tx_buf[23]= { 0xc0,0x63,0x3f,0x63,    0x63,0x63,0x22,0x22,
-                                0x00,0x00,0x00,0x00,    0x3f,0x3f,0x00,0x00,
-                                0x00,0x00,0xff,0xff,    0x2b,0x06,0xbe};
+    const uint8_t tx_buf[23] = { 0xc0, 0x63, 0x3f, 0x63, 0x63, 0x63, 0x22, 0x22, 0x00, 0x00, 0x00, 0x00,
+                                 0x3f, 0x3f, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x2b, 0x06, 0xbe };
     printk("i2c demo start \n.");
     uint32_t i2c_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_CONTROLLER;
     /* get i2c device */
     int rc;
-	const struct i2c_dt_spec i2c = I2C_DT_SPEC_GET(DT_COMPAT_GET_ANY_STATUS_OKAY(ledcontrol_i2c));
-    if (!device_is_ready(i2c.bus)) {
-		printf("Device %s is not ready\n", i2c.bus->name);
-		return ;
-	}
+    const struct i2c_dt_spec i2c = I2C_DT_SPEC_GET(DT_COMPAT_GET_ANY_STATUS_OKAY(ledcontrol_i2c));
+    if (!device_is_ready(i2c.bus))
+    {
+        printf("Device %s is not ready\n", i2c.bus->name);
+        return;
+    }
     rc = i2c_configure(i2c.bus, i2c_cfg);
-	if(rc != 0){
-		printf("Failed to configure i2c device\n");
-		return ;
-	}
-    i2c_write(i2c.bus, tx_buf+1, sizeof(tx_buf)-1,tx_buf[0]);
+    if (rc != 0)
+    {
+        printf("Failed to configure i2c device\n");
+        return;
+    }
+    i2c_write(i2c.bus, tx_buf + 1, sizeof(tx_buf) - 1, tx_buf[0]);
     printk("i2c demo stop ,finish transfer\n");
 }
 #endif
@@ -91,87 +92,90 @@ void i2c_demo_proc(void)
 #if (APP_LIGHT_MODE == APP_LIGHT_ADC)
 void adc_demo_proc(void)
 {
-	/* Data of ADC io-channels specified in devicetree. */
-	#define DT_SPEC_AND_COMMA(node_id, prop, idx) \
-		ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
+/* Data of ADC io-channels specified in devicetree. */
+#define DT_SPEC_AND_COMMA(node_id, prop, idx) ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
-	static const struct adc_dt_spec adc_channels[] = {
-		DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, 
-					DT_SPEC_AND_COMMA)
-	};
+    static const struct adc_dt_spec adc_channels[] = { DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels, DT_SPEC_AND_COMMA) };
 
-	/* Define ADC data structure. */
-	uint16_t buf;
-	struct adc_sequence sequence = {
-		.buffer = &buf,
-		/* buffer size in bytes, not number of samples */
-		.buffer_size = sizeof(buf),
-	};
+    /* Define ADC data structure. */
+    uint16_t buf;
+    struct adc_sequence sequence = {
+        .buffer = &buf,
+        /* buffer size in bytes, not number of samples */
+        .buffer_size = sizeof(buf),
+    };
 
-	int err = 0;
+    int err = 0;
 
-	/* Configure channels individually prior to sampling. */
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-		if (!device_is_ready(adc_channels[i].dev)) {
-			printf("ADC controller device %s not ready\n", adc_channels[i].dev->name);
-			return;
-		}
+    /* Configure channels individually prior to sampling. */
+    for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
+    {
+        if (!device_is_ready(adc_channels[i].dev))
+        {
+            printf("ADC controller device %s not ready\n", adc_channels[i].dev->name);
+            return;
+        }
 
-		err = adc_channel_setup_dt(&adc_channels[i]);
-		if (err < 0) {
-			printf("Could not setup channel #%d (%d)\n", i, err);
-			return;
-		}
-	}
+        err = adc_channel_setup_dt(&adc_channels[i]);
+        if (err < 0)
+        {
+            printf("Could not setup channel #%d (%d)\n", i, err);
+            return;
+        }
+    }
 
-	/* ADC sampling. */
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {  // channel default is 0.
-		printf("- %s, channel %d: ",
-				adc_channels[i].dev->name,
-				adc_channels[i].channel_id);
+    /* ADC sampling. */
+    for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
+    { // channel default is 0.
+        printf("- %s, channel %d: ", adc_channels[i].dev->name, adc_channels[i].channel_id);
 
-		(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
+        (void) adc_sequence_init_dt(&adc_channels[i], &sequence);
 
-		err = adc_read(adc_channels[i].dev, &sequence);
-		if (err < 0) {
-			printf("Could not read (%d)\n", err);
-			continue;
-		}
+        err = adc_read(adc_channels[i].dev, &sequence);
+        if (err < 0)
+        {
+            printf("Could not read (%d)\n", err);
+            continue;
+        }
 
-		int32_t val_mv = 0;
+        int32_t val_mv = 0;
 
-		/*
-		 * If using differential mode, the 16 bit value
-		 * in the ADC sample buffer should be a signed 2's
-		 * complement value.
-		 */
-		if (adc_channels[i].channel_cfg.differential) {  // differential default is 0.
-			val_mv = (int32_t)((int16_t)buf);
-		} else {
-			val_mv = (int32_t)buf;
-		}
-		printf("%" PRId32, val_mv);
+        /*
+         * If using differential mode, the 16 bit value
+         * in the ADC sample buffer should be a signed 2's
+         * complement value.
+         */
+        if (adc_channels[i].channel_cfg.differential)
+        { // differential default is 0.
+            val_mv = (int32_t) ((int16_t) buf);
+        }
+        else
+        {
+            val_mv = (int32_t) buf;
+        }
+        printf("%" PRId32, val_mv);
 
-		/* conversion to mV may not be supported, skip if not */
-		err = adc_raw_to_millivolts_dt(
-			&adc_channels[i], &val_mv
-		);
-		if (err < 0) {
-			printf(" (value in mV not available)\n");
-		} else {
-			printf(" = %" PRId32" mV\n", val_mv);
-		}
-	}
+        /* conversion to mV may not be supported, skip if not */
+        err = adc_raw_to_millivolts_dt(&adc_channels[i], &val_mv);
+        if (err < 0)
+        {
+            printf(" (value in mV not available)\n");
+        }
+        else
+        {
+            printf(" = %" PRId32 " mV\n", val_mv);
+        }
+    }
 }
 #endif
 
 void AppTask::Init_cluster_info(void)
 {
-    light_para_t *p_para = &light_para;
+    light_para_t * p_para = &light_para;
     Protocols::InteractionModel::Status status;
     bool onoff_sts;
-    status = Clusters::OnOff::Attributes::OnOff::Get(1, &(onoff_sts));
-    p_para->onoff = (uint8_t)onoff_sts;
+    status        = Clusters::OnOff::Attributes::OnOff::Get(1, &(onoff_sts));
+    p_para->onoff = (uint8_t) onoff_sts;
     app::DataModel::Nullable<uint8_t> brightness;
     // Read brightness value
     status = Clusters::LevelControl::Attributes::CurrentLevel::Get(kExampleEndpointId, brightness);
@@ -180,8 +184,8 @@ void AppTask::Init_cluster_info(void)
         p_para->level = brightness.Value();
     }
     // Read ColorMode value
-   
-    status = Clusters::ColorControl::Attributes::ColorMode::Get(1, (ColorControl::ColorModeEnum*) &(p_para->color_mode));
+
+    status = Clusters::ColorControl::Attributes::ColorMode::Get(1, (ColorControl::ColorModeEnum *) &(p_para->color_mode));
 
     // Read ColorTemperatureMireds value
     status = Clusters::ColorControl::Attributes::ColorTemperatureMireds::Get(1, &(p_para->color_temp_mireds));
@@ -194,7 +198,7 @@ void AppTask::Init_cluster_info(void)
 
     // Read EnhancedCurrentHue value
     status = Clusters::ColorControl::Attributes::EnhancedCurrentHue::Get(1, &(p_para->enhanced_current_hue));
- 
+
     // Read CurrentHue value
     status = Clusters::ColorControl::Attributes::CurrentHue::Get(1, &(p_para->cur_hue));
 
@@ -203,22 +207,21 @@ void AppTask::Init_cluster_info(void)
 
     // Read OnOffTransitionTime value
     status = Clusters::LevelControl::Attributes::OnOffTransitionTime::Get(1, &(p_para->onoff_transition));
-
 }
 
 void AppTask::Set_cluster_info(void)
 {
     printk("%%%%%%Set_cluster_info!!!!%%%%%%\n");
-    light_para_t *p_para = &light_para;
+    light_para_t * p_para = &light_para;
     Protocols::InteractionModel::Status status;
-    printk("%%%%%%Set_cluster_info:p_para->onoff:%d!!!!%%%%%%\n",p_para->onoff);
+    printk("%%%%%%Set_cluster_info:p_para->onoff:%d!!!!%%%%%%\n", p_para->onoff);
     status = Clusters::OnOff::Attributes::OnOff::Set(1, p_para->onoff);
     // Set brightness value
-    printk("%%%%%%Set_cluster_info:p_para->level:%d!!!!%%%%%%\n",p_para->level);
+    printk("%%%%%%Set_cluster_info:p_para->level:%d!!!!%%%%%%\n", p_para->level);
     status = Clusters::LevelControl::Attributes::CurrentLevel::Set(kExampleEndpointId, p_para->level);
     // Set ColorMode value
-    printk("%%%%%%Set_cluster_info:p_para->color_mode:%d!!!!%%%%%%\n",p_para->color_mode);
-    status = Clusters::ColorControl::Attributes::ColorMode::Set(1, (ColorControl::ColorModeEnum)p_para->color_mode);
+    printk("%%%%%%Set_cluster_info:p_para->color_mode:%d!!!!%%%%%%\n", p_para->color_mode);
+    status = Clusters::ColorControl::Attributes::ColorMode::Set(1, (ColorControl::ColorModeEnum) p_para->color_mode);
 
     // Set ColorTemperatureMireds value
     status = Clusters::ColorControl::Attributes::ColorTemperatureMireds::Set(1, p_para->color_temp_mireds);
@@ -231,7 +234,7 @@ void AppTask::Set_cluster_info(void)
 
     // Set EnhancedCurrentHue value
     status = Clusters::ColorControl::Attributes::EnhancedCurrentHue::Set(1, p_para->enhanced_current_hue);
- 
+
     // Set CurrentHue value
     status = Clusters::ColorControl::Attributes::CurrentHue::Set(1, p_para->cur_hue);
 
@@ -241,7 +244,6 @@ void AppTask::Set_cluster_info(void)
     // Set OnOffTransitionTime value
     status = Clusters::LevelControl::Attributes::OnOffTransitionTime::Set(1, p_para->onoff_transition);
 }
-
 
 #ifdef CONFIG_CHIP_ENABLE_POWER_ON_FACTORY_RESET
 void AppTask::PowerOnFactoryReset(void)
@@ -259,32 +261,36 @@ CHIP_ERROR AppTask::Init(void)
     SetExampleButtonCallbacks(LightingActionEventHandler);
     ReturnErrorOnFailure(InitCommonParts());
 
-        /*user mode means led control by the customer*/
-#if APP_LIGHT_USER_MODE_EN 
+    /*user mode means led control by the customer*/
+#if APP_LIGHT_USER_MODE_EN
     /* switch from zigbee , which means uncommission state .*/
-    if (user_para.val == USER_ZB_SW_VAL){
+    if (user_para.val == USER_ZB_SW_VAL)
+    {
         // read from flash , already proced in the AppTaskCommon::StartApp .
         Set_cluster_info();
-    }else if (user_para.val == USER_MATTER_PAIR_VAL){
-        // need to get the para from the flash , which means commissioned 
-        Init_cluster_info();
-    }else{
-        // will not proc .
-
     }
-    #if (APP_LIGHT_MODE == APP_LIGHT_I2C)
-        printk("app light mode is i2c\n");
-        i2c_demo_proc();// add i2c demo code to show the para part .
-    #elif (APP_LIGHT_MODE == APP_LIGHT_ADC)
-        printk("app light mode is adc\n");
-        adc_demo_proc();  // add adc demo code .
-    #elif (APP_LIGHT_MODE == APP_LIGHT_PWM)
-        /*add pwm proc here */
-        printk("app light mode is pwm\n");
-    #else
-        printk("Function expansion preset position\n");
-    #endif
-    
+    else if (user_para.val == USER_MATTER_PAIR_VAL)
+    {
+        // need to get the para from the flash , which means commissioned
+        Init_cluster_info();
+    }
+    else
+    {
+        // will not proc .
+    }
+#if (APP_LIGHT_MODE == APP_LIGHT_I2C)
+    printk("app light mode is i2c\n");
+    i2c_demo_proc(); // add i2c demo code to show the para part .
+#elif (APP_LIGHT_MODE == APP_LIGHT_ADC)
+    printk("app light mode is adc\n");
+    adc_demo_proc(); // add adc demo code .
+#elif (APP_LIGHT_MODE == APP_LIGHT_PWM)
+    /*add pwm proc here */
+    printk("app light mode is pwm\n");
+#else
+    printk("Function expansion preset position\n");
+#endif
+
 #else
     Protocols::InteractionModel::Status status;
 

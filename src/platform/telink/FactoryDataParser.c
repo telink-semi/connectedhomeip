@@ -128,10 +128,14 @@ bool ParseFactoryData(uint8_t * buffer, uint16_t bufferSize, struct FactoryData 
         else if (strncmp("dac_cert", (const char *) currentString.value, currentString.len) == 0)
         {
             res = res && zcbor_bstr_decode(states, (struct zcbor_string *) &factoryData->dac_cert);
+            // LOG_INF("DAC cert len=%u", currentString.len);
+            // LOG_HEXDUMP_INF(currentString.value, currentString.len, "DAC CERT");
         }
         else if (strncmp("dac_key", (const char *) currentString.value, currentString.len) == 0)
         {
             res = res && zcbor_bstr_decode(states, (struct zcbor_string *) &factoryData->dac_priv_key);
+            // LOG_INF("DAC priv key decrypted, len=%u", currentString.len);
+            // LOG_HEXDUMP_INF(currentString.value, currentString.len, "DAC PRIV KEY");
         }
         else if (strncmp("pai_cert", (const char *) currentString.value, currentString.len) == 0)
         {
@@ -185,3 +189,60 @@ bool ParseFactoryData(uint8_t * buffer, uint16_t bufferSize, struct FactoryData 
 
     return res && zcbor_list_map_end_force_decode(states);
 }
+
+#if CHIP_DEVICE_SECURE_PROGRAMMING
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+
+#include "aes.h"
+
+bool LoadDACCertAndKey(uint8_t * base_buffer, struct FactoryData * factoryData)
+{
+    size_t dac_priv_key_len;
+    uint8_t ieee_addr[8] = { 0 };
+    uint8_t chip_id[16]  = { 0 };
+    /* get the dac key pair info form the flash directly*/
+    uint8_t buffer[34]                 = { 0 };
+    const struct device * mFlashDevice = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
+    int ret = flash_read(mFlashDevice, FIXED_PARTITION_OFFSET(dac_keypair_partition), buffer, sizeof(buffer));
+    /* Do NOT forget flash dac partition. Or the app will crash due wrong len 0xffff */
+    dac_priv_key_len = buffer[0];
+    dac_priv_key_len |= (uint16_t) buffer[1] << 8;
+    factoryData->dac_priv_key.len = dac_priv_key_len;
+    if (!factoryData->dac_priv_key.len)
+    {
+        return false;
+    }
+
+    if (efuse_get_chip_id(chip_id))
+    {
+        aes_decrypt(chip_id, buffer + 2, dac_key_decrypt);
+        aes_decrypt(chip_id, buffer + 18, dac_key_decrypt + 16);
+
+        // LOG_INF("[LoadDACCertAndKey]DAC priv key decrypted, len=%u", dac_priv_key_len);
+        // LOG_HEXDUMP_INF(buffer + 2, dac_priv_key_len, "[LoadDACCertAndKey]Encrypted DAC PRIV KEY");
+        // LOG_HEXDUMP_INF(dac_key_decrypt, dac_priv_key_len, "[LoadDACCertAndKey]DAC PRIV KEY");
+        factoryData->dac_priv_key.data = dac_key_decrypt;
+    }
+    else
+    {
+        LOG_ERR("Failed to get chip ID.");
+        return false;
+    }
+
+    size_t dac_cert_len = 0;
+    flash_read(mFlashDevice, FIXED_PARTITION_OFFSET(dac_keypair_partition) + 100, buffer, 2);
+    dac_cert_len = buffer[0];
+    dac_cert_len |= (uint16_t) buffer[1] << 8;
+    factoryData->dac_cert.len = dac_cert_len;
+    if (!factoryData->dac_cert.len)
+    {
+        return false;
+    }
+    factoryData->dac_cert.data = (uint8_t *) (0x20000000 + FIXED_PARTITION_OFFSET(dac_keypair_partition) + 102);
+    // LOG_INF("[LoadDACCertAndKey]DAC cert len=%u", dac_cert_len);
+    // LOG_HEXDUMP_INF(factoryData->dac_cert.data, factoryData->dac_cert.len, "DAC CERT");
+
+    return true;
+}
+#endif

@@ -116,8 +116,8 @@ bool sHaveBLEConnections   = false;
 
 const struct device * flash_para_dev = USER_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
-uint8_t sBoot_zb           = 0;
-constexpr int kDnssTimeout = 60000; // for init will cost for about 5s
+uint8_t sBoot_zb                     = 0;
+constexpr int kDnssTimeout           = 60000; // for init will cost for about 5s
 #if !CONFIG_MCUMGR_TRANSPORT_BT
 /* Create sDnssTimer when dfu disable */
 static k_timer sDnssTimer;
@@ -286,16 +286,16 @@ int read_cluster_para(cluster_startup_para * data)
 
 /* Not modify reg addr by user */
 #define MATTER_ANALOG_REG_OTA_ADR (0x3b)
-#define MATTER_ANALOG_OTA_FLAG_VAL 0x55
+#define MATTER_ANALOG_OTA_FLAG_VAL (0x55)
 
 void AppTaskCommon::OtaSetAnaFlag(void)
 {
-    analog_write((unsigned char) MATTER_ANALOG_REG_OTA_ADR, MATTER_ANALOG_OTA_FLAG_VAL);
+    analog_write(MATTER_ANALOG_REG_OTA_ADR, MATTER_ANALOG_OTA_FLAG_VAL);
 }
 
 bool AppTaskCommon::OtaGetAnaFlag(void)
 {
-    if (analog_read((unsigned char) MATTER_ANALOG_REG_OTA_ADR) == MATTER_ANALOG_OTA_FLAG_VAL)
+    if (analog_read(MATTER_ANALOG_REG_OTA_ADR) == MATTER_ANALOG_OTA_FLAG_VAL)
     {
         return true;
     }
@@ -431,6 +431,22 @@ void AppTaskCommon::PrintFirmwareInfo(void)
     LOG_DBG("\t HAL commit: %.8s%s %s", TELINK_HAL_COMMIT_HASH, TELINK_HAL_LOCAL_STATUS, TELINK_HAL_COMMIT_DATE);
 #endif
 }
+
+#if INDEPENDENT_FACTORY_RESET_BUTTON
+void AppTaskCommon::IndependentFactoryReset(void)
+{
+    // Get Button Instance
+    ButtonManager & buttonManager = ButtonManager::getInstance();
+    // Button binding to factory_reset and add callback
+    buttonManager.addCallback(FactoryResetButtonEventHandler, 0, true);
+
+#if CONFIG_CHIP_BUTTON_MANAGER_IRQ_MODE // Independent Button Mode
+    buttonManager.linkBackend(ButtonPool::getInstance());
+#else
+    buttonManager.linkBackend(ButtonMatrix::getInstance());
+#endif // CONFIG_CHIP_BUTTON_MANAGER_IRQ_MODE
+}
+#endif
 
 CHIP_ERROR AppTaskCommon::InitCommonParts(void)
 {
@@ -1118,8 +1134,8 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
 #endif /* CONFIG_STARTUP_OPTIMIZATE */
 #endif /* APP_LIGHT_USER_MODE_EN */
         printk("Commissioning complete, set Matter commissionined flag");
-        break;
     }
+    break;
     case DeviceEventType::kFailSafeTimerExpired: {
         /* Erase and reset to Zigbee mode if commissioning fails */
         if (sBoot_zb)

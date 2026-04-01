@@ -406,9 +406,6 @@ config NET_PKT_TXTIME
 config NET_PKT_TIMESTAMP
     default y if OPENTHREAD_FTD
 
-config IEEE802154_2015
-    bool "support ssed device to add thread"
-    default y if OPENTHREAD_FTD && ZEPHYR_VERSION_3_3
 
 config NET_MAX_CONN
     default 1 if !WIFI

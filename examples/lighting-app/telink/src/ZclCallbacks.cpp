@@ -16,6 +16,7 @@
  *    limitations under the License.
  */
 
+#include "AppConfig.h"
 #include "AppTask.h"
 #include "ColorFormat.h"
 

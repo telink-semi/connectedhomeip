@@ -264,7 +264,7 @@ int main(void)
 /* Not modify by user */
 #define MATTER_ANALOG_REG_WDT_ADR (0x3c)
 #define MATTER_WDT_BY_CONTROL BIT(0)
-    if (!(analog_read((unsigned char) MATTER_ANALOG_REG_WDT_ADR) & MATTER_WDT_BY_CONTROL))
+    if (!(analog_read(MATTER_ANALOG_REG_WDT_ADR) & MATTER_WDT_BY_CONTROL))
     {
         printk("watchdog startup...\r\n");
     }
