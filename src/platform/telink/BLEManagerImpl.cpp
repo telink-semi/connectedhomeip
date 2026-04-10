@@ -1048,6 +1048,14 @@ BLEManagerImpl::HandleOperationalNetworkEnabled(const ChipDeviceEvent * event)
     ChipLogDetail(DeviceLayer, "HandleOperationalNetworkEnabled");
 
     CHIP_ERROR error = CHIP_NO_ERROR;
+    if (!ThreadStackMgrImpl().IsReadyToAttach())
+    {
+        // Ignore operational-network notifications once the one-time BLE->Thread
+        // handoff is complete. Pure Thread-to-Thread switches should be handled
+        // by the Thread stack directly.
+        return CHIP_NO_ERROR;
+    }
+
     /* On first commissioning BLE disconnects before switching to Thread operational network.
        All subsequent Thread operational network changes are handled in a bit different way */
     if (!mReadyToAttachThread)
@@ -1070,8 +1078,6 @@ BLEManagerImpl::HandleOperationalNetworkEnabled(const ChipDeviceEvent * event)
 
         error = PlatformMgr().PostEvent(&attachEvent);
         VerifyOrExit(error == CHIP_NO_ERROR, ChipLogError(DeviceLayer, "PostEvent err: %" CHIP_ERROR_FORMAT, error.Format()));
-
-        TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().CommitConfiguration();
     }
 
 exit:
@@ -1105,6 +1111,7 @@ void BLEManagerImpl::SwitchToIeee802154(void)
     // Init Thread
     ThreadStackMgrImpl().SetRadioBlocked(false);
     TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().SetThreadEnabled(true);
+    ThreadStackMgrImpl().SetReadyToAttach(false);
 }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 

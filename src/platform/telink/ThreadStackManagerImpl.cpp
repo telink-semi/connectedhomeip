@@ -103,6 +103,17 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
     if (dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && callback == nullptr)
         return CHIP_NO_ERROR;
 
+    if (dataset.IsCommissioned() && current_dataset.IsCommissioned() &&
+        !dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && IsThreadEnabled())
+    {
+        result = SetThreadProvision(dataset.AsByteSpan());
+        if (result == CHIP_NO_ERROR && callback != nullptr)
+        {
+            callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+        }
+        return result;
+    }
+
     if (mRadioBlocked || mReadyToAttach)
     {
         /* On Telink platform it's not possible to rise Thread network when its used by BLE,
@@ -111,7 +122,10 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
         if (result == CHIP_NO_ERROR)
         {
             mReadyToAttach = true;
-            callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+            if (callback != nullptr)
+            {
+                callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+            }
         }
     }
     else
