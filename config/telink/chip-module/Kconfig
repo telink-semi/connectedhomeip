@@ -334,7 +334,3 @@ config CHIP_LAST_FABRIC_REMOVED_ACTION_DELAY
 config DEFERRED_ATTR_STORAGE
 	bool "Defer the storage time of attributes"
 	default n
-
-config STARTUP_OPTIMIZATE
-	bool "Enable startup speed optimization"
-	default n

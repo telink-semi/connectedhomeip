@@ -299,7 +299,10 @@ bool AppTaskCommon::OtaGetAnaFlag(void)
     {
         return true;
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 class PlatformMgrDelegate : public DeviceLayer::PlatformManagerDelegate
@@ -452,16 +455,21 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
 {
     PrintFirmwareInfo();
 
+/* if use user mode, should disable the hardware init to avoid conflict */
+#if APP_LIGHT_USER_MODE_EN
+
 #if INDEPENDENT_FACTORY_RESET_BUTTON
     IndependentFactoryReset(); // Open the factory_reset button separately.
 #endif
 
+#else
     InitLeds();
     UpdateStatusLED();
 
     InitPwms();
 
     InitButtons();
+#endif
 
 #ifdef CONFIG_TFLM_FEATURE
     mThreadStateChangedEventCaptured = false;
