@@ -104,11 +104,53 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
+<<<<<<< HEAD
 #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE  || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+=======
+/**
+ * @brief Set deferred attributes storage
+ *
+ * @see Define a custom attribute persister which makes actual write of the CurrentHue, CurrentSaturation, CurrentLevel attributes
+ * value to the non-volatile storage only when it has remained constant for 5 seconds. This is to reduce the flash wearout when the
+ * attribute changes frequently as a result of MoveToLevel command. DeferredAttribute object describes a deferred attribute, but
+ * also holds a buffer with a value to be written, so it must live so long as the DeferredAttributePersistenceProvider object.
+ *
+ * @param ATTRIBUTES_ARRAY_SIZE The lenght of the DeferredAttribute array
+ * @param DEFERRED_STORAGE_TIME The deferred time(ms) to store attributes
+ */
+#define ATTRIBUTES_ARRAY_SIZE (3U)
+#define DEFERRED_STORAGE_TIME (500U)
+
+DeferredAttribute gPersisters[] = {
+#if CONFIG_DEFERRED_ATTR_STORAGE
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id, Clusters::ColorControl::Attributes::CurrentHue::Id)),
+    DeferredAttribute(ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id,
+                                            Clusters::ColorControl::Attributes::CurrentSaturation::Id)),
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::LevelControl::Id, Clusters::LevelControl::Attributes::CurrentLevel::Id))
+#endif // CONFIG_DEFERRED_ATTR_STORAGE
+};
+
+// Deferred persistence will be auto-initialized as soon as the default persistence is initialized
+DefaultAttributePersistenceProvider gSimpleAttributePersistence;
+DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
+                                                                 Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
+                                                                 System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
+>>>>>>> f7456986e6 (telink: 3238x: improve the speed of factory_reset.)
 #include <ext_driver/ext_pm.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
+/*MATTER NVS*/
+#define MATTER_NVS_PARTITION storage_partition
+#define MATTER_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_SIZE FIXED_PARTITION_SIZE(MATTER_NVS_PARTITION)
+const struct device * matter_nvs_dev    = MATTER_NVS_PARTITION_DEVICE;
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+
 
 #define OPCODE_FACTORY_RESET 0
 #define OPCODE_SWITCH_ZIGBEE 1 // include init state and matter paired state.
@@ -185,15 +227,10 @@ user_para_t user_para;
 #define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
 #define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
 
-/*MATTER NVS*/
-#define MATTER_NVS_PARTITION storage_partition
-#define MATTER_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(MATTER_NVS_PARTITION)
-#define MATTER_NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(MATTER_NVS_PARTITION)
-#define MATTER_NVS_PARTITION_SIZE FIXED_PARTITION_SIZE(MATTER_NVS_PARTITION)
 
 const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
-const struct device * matter_nvs_dev    = MATTER_NVS_PARTITION_DEVICE;
+
 
 constexpr int kDnssTimeout           = 60000;
 #if !CONFIG_MCUMGR_TRANSPORT_BT
@@ -824,10 +861,15 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         k_timer_stop(&sFactoryResetTimer);
         sFactoryResetCntr = 0;
 
-        chip::Server::GetInstance().ScheduleFactoryReset();
         #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_FACTORY_RESET);
+        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        dual_mode_auto_switch(OPCODE_FACTORY_RESET);
         #endif
+        /* clear matter nvs for unclean info in matter nvs */
+        LOG_INF("Factory Reset TC: Erase matter nvs directly and reboot");
+        flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
+        sys_reboot(SYS_REBOOT_WARM);
     }
 }
 
