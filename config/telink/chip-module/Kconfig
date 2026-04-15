@@ -333,3 +333,7 @@ config SECURE_PROGRAMMING
 config EXPOSE_CHIP_ID_VIA_BLE
 	bool "Enable CHIP-ID via ble"
     default n
+
+config DEFERRED_ATTR_STORAGE
+	bool "Defer the storage time of attributes"
+	default n
