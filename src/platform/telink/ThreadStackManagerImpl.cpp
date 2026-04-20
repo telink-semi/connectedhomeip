@@ -103,8 +103,8 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
     if (dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && callback == nullptr)
         return CHIP_NO_ERROR;
 
-    if (dataset.IsCommissioned() && current_dataset.IsCommissioned() && !dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) &&
-        IsThreadEnabled())
+    if (dataset.IsCommissioned() && current_dataset.IsCommissioned() &&
+        !dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && IsThreadEnabled())
     {
         result = SetThreadProvision(dataset.AsByteSpan());
         if (result == CHIP_NO_ERROR && callback != nullptr)
