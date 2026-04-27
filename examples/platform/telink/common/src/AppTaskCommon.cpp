@@ -349,6 +349,16 @@ static void DoDelayedFactoryReset(struct k_work * work)
         ChipLogProgress(DeviceLayer, "Rebooting board");
         sys_reboot(SYS_REBOOT_WARM);
     }
+    else
+    {
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        dual_mode_switch(OPCODE_FACTORY_RESET);
+        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        dual_mode_auto_switch(OPCODE_FACTORY_RESET);
+        #endif
+        ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
+        chip::Server::GetInstance().ScheduleFactoryReset();
+    }
 }
 
 static k_work_delayable sDelayedFactoryResetWork = Z_WORK_DELAYABLE_INITIALIZER(DoDelayedFactoryReset);
