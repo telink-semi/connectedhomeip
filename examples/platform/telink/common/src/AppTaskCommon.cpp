@@ -334,6 +334,54 @@ public:
 AppCallbacks sCallbacks;
 } // namespace
 
+<<<<<<< HEAD
+=======
+static void DoDelayedFactoryReset(struct k_work * work)
+{
+    ChipLogProgress(DeviceLayer, "Erasing settings partition");
+
+    // TC-OPCREDS-3.6 (device doesn't need to reboot automatically after the last fabric is removed) can't use FactoryReset
+    void * storage = nullptr;
+    int status     = settings_storage_get(&storage);
+
+    if (!status)
+    {
+        status = nvs_clear(static_cast<nvs_fs *>(storage));
+    }
+
+    if (!status)
+    {
+        status = nvs_mount(static_cast<nvs_fs *>(storage));
+    }
+
+    if (status)
+    {
+        ChipLogError(DeviceLayer, "Storage clear failed: %d", status);
+    }
+#ifdef CONFIG_TFLM_FEATURE
+    AppTask::MicroSpeechProcessStop();
+#endif
+    // Reboot in case of failed commissioning to allow new pairing via BLE
+    if (sIsCommissioningFailed)
+    {
+        ChipLogProgress(DeviceLayer, "Rebooting board");
+        sys_reboot(SYS_REBOOT_WARM);
+    }
+    else
+    {
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        dual_mode_switch(OPCODE_FACTORY_RESET);
+        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        dual_mode_auto_switch(OPCODE_FACTORY_RESET);
+        #endif
+        ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
+        chip::Server::GetInstance().ScheduleFactoryReset();
+    }
+}
+
+static k_work_delayable sDelayedFactoryResetWork = Z_WORK_DELAYABLE_INITIALIZER(DoDelayedFactoryReset);
+
+>>>>>>> 6ff99bb9a6 (telink: 3238x: fix incorrect factory reset logic for commissioned device.)
 class AppFabricTableDelegate : public FabricTable::Delegate
 {
     void OnFabricRemoved(const FabricTable & fabricTable, FabricIndex fabricIndex)
