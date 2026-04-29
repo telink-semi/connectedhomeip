@@ -110,7 +110,6 @@ CHIP_ERROR FactoryDataProvider<FlashFactoryData>::Init()
         return error;
     }
 
-
 #if CHIP_DEVICE_SECURE_PROGRAMMING
     if (!ParseFactoryData(factoryData + kFactoryDataOffset, factoryDataSize - kFactoryDataOffset, &mFactoryData))
 #else
@@ -129,7 +128,7 @@ CHIP_ERROR FactoryDataProvider<FlashFactoryData>::Init()
     LOG_HEXDUMP_INF(mFactoryData.dac_cert.data, mFactoryData.dac_cert.len, "DAC CERT");
 
 #if CHIP_DEVICE_SECURE_PROGRAMMING
-    if (!LoadDACCertAndKey(mFactoryDataBuffer , &mFactoryData))
+    if (!LoadDACCertAndKey(mFactoryDataBuffer, &mFactoryData))
     {
         ChipLogError(DeviceLayer, "Failed to inject dac data");
         free(ptr); // Only free on failure

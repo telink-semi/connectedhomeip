@@ -181,6 +181,7 @@ jobs:
                 platform-name: ESP32
 
     esp32_1:
+        if:false
         name: ESP32_1
 
         runs-on: ubuntu-latest

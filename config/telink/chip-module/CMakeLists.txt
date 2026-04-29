@@ -194,32 +194,54 @@ endif()
 # ==============================================================================
 
 set(BLOCK_SIZE "1024")
+set(CONFIG_DUAL_MODE_ARG 0)
 
-if(CONFIG_SOC_RISCV_TELINK_TL323X)
-set(SOC "TL323X")
+if(CONFIG_SOC_RISCV_TELINK_TL321X)
+    set(SOC "TL321X")
+elseif(CONFIG_SOC_RISCV_TELINK_TL322X)
+    set(SOC "TL322X")
+elseif(CONFIG_SOC_RISCV_TELINK_TL323X)
+    set(SOC "TL323X")
+    set(CONFIG_DUAL_MODE_ARG ${CONFIG_DUAL_MODE})
+elseif(CONFIG_SOC_RISCV_TELINK_TL721X)
+    set(SOC "TL721X")
+elseif(CONFIG_SOC_RISCV_TELINK_B91)
+    set(SOC "TLSR9518")
+elseif(CONFIG_SOC_RISCV_TELINK_B92)
+    set(SOC "TLSR9528")
+elseif(CONFIG_SOC_RISCV_TELINK_W91)
+    set(SOC "TLSR9118")
+endif()
 
+set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/SBOOT/Secure_Bootloader.bin")
+math(EXPR SKIP_BYTES_DECIMAL "${CONFIG_MCUBOOT_START_OFFSET} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+message(STATUS "SKIP_BYTES_DECIMAL: ${SKIP_BYTES_DECIMAL}")
+if (EXISTS ${SBOOT_FILE_PATH})
+    message(STATUS "Will merge sboot and mcuboot with offset ${CONFIG_MCUBOOT_START_OFFSET} bytes.")
+    set(MCUBOOT_START_OFFSET_ARG "${CONFIG_MCUBOOT_START_OFFSET}")
+    else()
+    message(WARNING "File ${SBOOT_FILE_PATH} does not exist. Set SKIP_BYTES_DECIMAL to 0, MCUBOOT will be built without offset.")
+    set(SKIP_BYTES_DECIMAL 0)
+    set(MCUBOOT_START_OFFSET_ARG "0")
+endif()
+
+set(ZB_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/ZB/Zigbee-SampleDemo.bin")
 # Calculate the offset of zigbee partition relative to slot0 start
 dt_nodelabel(slot0_partition_path NODELABEL "slot0_partition")
 dt_reg_addr(slot0_start PATH ${slot0_partition_path})
 dt_reg_size(slot0_size PATH ${slot0_partition_path})
 message(STATUS "slot0_start: ${slot0_start}")
 message(STATUS "slot0_size: ${slot0_size}")
-
-dt_nodelabel(zb_partition_path NODELABEL "slot0_zb_partition")
-dt_reg_addr(zb_start PATH ${zb_partition_path})
-message(STATUS "zb_start: ${zb_start}")
-
-math(EXPR zb_offset_bytes "${zb_start} - ${slot0_start}" OUTPUT_FORMAT DECIMAL)
-
-math(EXPR ZB_FW_OFFSET_DECIMAL "${zb_offset_bytes} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
-message(STATUS "ZB_FW_OFFSET_DECIMAL: ${ZB_FW_OFFSET_DECIMAL}")
-
-set(ZB_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/ZB/Zigbee-SampleDemo.bin")
-
-set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/SBOOT/Secure_Bootloader.bin")
-math(EXPR SKIP_BYTES_DECIMAL "${CONFIG_MCUBOOT_START_OFFSET} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
-message(STATUS "SKIP_BYTES_DECIMAL: ${SKIP_BYTES_DECIMAL}")
-
+if (EXISTS ${ZB_FILE_PATH})
+    dt_nodelabel(zb_partition_path NODELABEL "slot0_zb_partition")
+    dt_reg_addr(zb_start PATH ${zb_partition_path})
+    message(STATUS "zb_start: ${zb_start}")
+    math(EXPR zb_offset_bytes "${zb_start} - ${slot0_start}" OUTPUT_FORMAT DECIMAL)
+    math(EXPR ZB_FW_OFFSET_DECIMAL "${zb_offset_bytes} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+    message(STATUS "ZB_FW_OFFSET_DECIMAL: ${ZB_FW_OFFSET_DECIMAL}")
+else()
+    message(WARNING "File ${ZB_FILE_PATH} does not exist. ZB_FW_OFFSET_DECIMAL will be set to 0.")
+    set(ZB_FW_OFFSET_DECIMAL 0)
 endif()
 
 add_custom_target(
@@ -241,13 +263,15 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
     add_custom_target(build_mcuboot ALL
         COMMAND
         west build -b ${BASE_BOARD} -d build_mcuboot ${ZEPHYR_BASE}/../bootloader/mcuboot/boot/zephyr
-            -- -DCONFIG_DUAL_MODE=${CONFIG_DUAL_MODE} -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
+            -- -DCONFIG_MCUBOOT_START_OFFSET=${MCUBOOT_START_OFFSET_ARG} -DCONFIG_DUAL_MODE=${CONFIG_DUAL_MODE_ARG} -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
         COMMAND
         dd if=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin of=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin bs=${BLOCK_SIZE} skip=${SKIP_BYTES_DECIMAL} conv=notrunc
         COMMAND
         cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/zephyr.mcuboot.bin
         COMMAND
         cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/mcuboot_for_sign.bin
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
     )
     message(STATUS "mcuboot_for_sign.bin is for external signing.")
 
