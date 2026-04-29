@@ -181,8 +181,8 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessBlock(ByteSpan & aBlock)
             {
                 TEMPORARY_RETURN_IGNORED mDownloader->SkipData(downloadedBytesRestored - aBlock.size());
                 downloadedBytesRestored = 0;
-                TEMPORARY_RETURN_IGNORED SystemLayer().StartTimer(
-                    System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs), ResumeWatchdogHandler, this);
+                TEMPORARY_RETURN_IGNORED SystemLayer().StartTimer(System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs),
+                                                                  ResumeWatchdogHandler, this);
             }
             else
             {

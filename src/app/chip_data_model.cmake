@@ -170,6 +170,7 @@ function(chip_configure_data_model APP_TARGET)
         ${CHIP_APP_BASE_DIR}/util/util.cpp
         ${CHIP_APP_BASE_DIR}/persistence/AttributePersistenceProviderInstance.cpp
         ${CHIP_APP_BASE_DIR}/persistence/DefaultAttributePersistenceProvider.cpp
+        ${CHIP_APP_BASE_DIR}/persistence/DeferredAttributePersistenceProvider.cpp
         ${CODEGEN_DATA_MODEL_SOURCES}
         ${APP_GEN_FILES}
         ${APP_TEMPLATES_GEN_FILES}

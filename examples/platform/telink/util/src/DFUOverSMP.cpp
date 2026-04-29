@@ -24,6 +24,8 @@
 #include "OTAUtil.h"
 #include "Reboot.h"
 
+#include <vector>
+
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/DeviceInstanceInfoProvider.h>
 
@@ -67,7 +69,8 @@ int UploadProgressHandler(uint32_t event, int32_t rc, bool * abort_more, void * 
 
 {
 #if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
-    if (!canlTimerFlag) {
+    if (!canlTimerFlag)
+    {
         k_timer_stop(&sDnssTimer);
         canlTimerFlag = true;
         LOG_INF("[Telink] DnssTimer stopped; DFU-OTA Handler.\n");
