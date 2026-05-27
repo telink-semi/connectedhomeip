@@ -127,9 +127,9 @@ DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttribut
 
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 #include <ext_driver/ext_pm.h>
-#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X */
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
