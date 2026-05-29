@@ -552,7 +552,8 @@ void AppTaskCommon::PrintFirmwareInfo(void)
     LOG_DBG("OpenThread revision: ");
     LOG_DBG("\t path: %s", OPENTHREAD_PATH);
     LOG_DBG("\t remote: %s", OT_REMOTE_URL);
-    if(strlen(OT_TAG) > 0) {
+    if (strlen(OT_TAG) > 0)
+    {
         LOG_DBG("\t tag: %s", OT_TAG);
     }
     LOG_DBG("\t branch: %s %.8s%s %s", OT_BRANCH, OT_COMMIT_HASH, OT_LOCAL_STATUS, OT_COMMIT_DATE);
