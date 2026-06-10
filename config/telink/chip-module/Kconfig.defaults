@@ -340,6 +340,14 @@ config OPENTHREAD_CSMABACKOFF_OPTIMIZATION
     help
       Skip the first CSMA backoff period when sending data requests over IEEE 802.15.4.
 
+config OPENTHREAD_SED_RAM_CODE
+    bool "Place OpenThread SED standby code in RAM"
+	depends on OPENTHREAD_MTD
+	default y if PM && SOC_RISCV_TELINK_TL721X
+    default n
+	help
+	  Move SED standby critical path code to Retention RAM to reduce wakeup latency and power.    
+
 config IEEE802154_TLX_OPTIMIZATION
     bool "Optimize 802.15.4 RF performance for TLX SoCs"
     default y if PM && (SOC_RISCV_TELINK_TL323X || SOC_RISCV_TELINK_TL721X)
