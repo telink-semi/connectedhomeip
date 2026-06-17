@@ -27,6 +27,7 @@
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #include "ThreadUtil.h"
+#include <lib/support/ThreadOperationalDataset.h>
 #elif CHIP_DEVICE_CONFIG_ENABLE_WIFI
 #include <platform/Zephyr/InetUtils.h>
 #include <platform/telink/wifi/TelinkWiFiDriver.h>
@@ -386,6 +387,28 @@ void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
 }
 #endif
 
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+static void PowerOnNetworkCheck(void)
+{
+    Thread::OperationalDataset curDataset;
+    CHIP_ERROR err = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
+    bool hasDataset = (err == CHIP_NO_ERROR); // Check if stored OpenThread dataset
+
+    uint8_t fabricNum = chip::Server::GetInstance().GetFabricTable().FabricCount();
+
+    if (!hasDataset && fabricNum == 0) { // New device
+        return;
+    } else if (hasDataset && fabricNum > 0) { // Device successfully commissioned
+        return;
+    } else if (hasDataset && fabricNum == 0) {
+        ChipLogProgress(DeviceLayer, "Thread dataset exists, but matter uncommissioned\n");
+    } else {
+        return;
+    }
+    k_work_schedule(&sDelayedFactoryResetWork, K_SECONDS(2));
+}
+#endif
+
 CHIP_ERROR AppTaskCommon::StartApp(void)
 {
     CHIP_ERROR err = GetAppTask().Init();
@@ -562,6 +585,11 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     // Note that all the initialization code should happen prior to this point to avoid data races
     // between the main and the CHIP threads.
     LogErrorOnFailure(PlatformMgr().AddEventHandler(ChipEventHandler, 0));
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    // TODO: Defer this validation until chip::Server is fully initialized to avoid crashes
+    PowerOnNetworkCheck();
+#endif
 
     return CHIP_NO_ERROR;
 }
