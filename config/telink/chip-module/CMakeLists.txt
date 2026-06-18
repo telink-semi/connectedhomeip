@@ -235,7 +235,7 @@ dt_reg_addr(slot0_start PATH ${slot0_partition_path})
 dt_reg_size(slot0_size PATH ${slot0_partition_path})
 message(STATUS "slot0_start: ${slot0_start}")
 message(STATUS "slot0_size: ${slot0_size}")
-if (EXISTS ${ZB_FILE_PATH})
+if (CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH})
     dt_nodelabel(zb_partition_path NODELABEL "slot0_zb_partition")
     dt_reg_addr(zb_start PATH ${zb_partition_path})
     message(STATUS "zb_start: ${zb_start}")
@@ -243,7 +243,11 @@ if (EXISTS ${ZB_FILE_PATH})
     math(EXPR ZB_FW_OFFSET_DECIMAL "${zb_offset_bytes} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
     message(STATUS "ZB_FW_OFFSET_DECIMAL: ${ZB_FW_OFFSET_DECIMAL}")
 else()
-    message(WARNING "File ${ZB_FILE_PATH} does not exist. ZB_FW_OFFSET_DECIMAL will be set to 0.")
+    if (NOT CONFIG_DUAL_MODE)
+        message(STATUS "CONFIG_DUAL_MODE is 0, skipping Zigbee merge setup")
+    else()
+        message(WARNING "File ${ZB_FILE_PATH} does not exist. ZB_FW_OFFSET_DECIMAL will be set to 0.")
+    endif()
     set(ZB_FW_OFFSET_DECIMAL 0)
 endif()
 
@@ -252,7 +256,7 @@ add_custom_target(
     COMMAND ${Python3_EXECUTABLE} ${CHIP_ROOT}/scripts/tools/telink/process_binaries.py
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
-if(EXISTS ${ZB_FILE_PATH} AND CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RISCV_TELINK_TLX))
+if(CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH} AND CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RISCV_TELINK_TLX))
     add_dependencies(process_binaries west_sign)
 else()
     add_dependencies(process_binaries ${ZEPHYR_FINAL_EXECUTABLE})
@@ -295,12 +299,12 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
         message(WARNING "File ${SBOOT_FILE_PATH} does not exist. merge_sboot target will not be created.")
     endif()
 
-    if (EXISTS ${ZB_FILE_PATH})
+    if (CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH})
         add_custom_target(merge_zigbee ALL
             COMMAND
             cp ${PROJECT_BINARY_DIR}/zephyr.bin ${PROJECT_BINARY_DIR}/zephyr.matter.bin # store matter firmware
             COMMAND
-            dd if=/dev/zero bs=${BLOCK_SIZE} count=${ZB_FW_OFFSETZB_FW_OFFSET} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/dm_merged.bin
+            dd if=/dev/zero bs=${BLOCK_SIZE} count=${ZB_FW_OFFSET_DECIMAL} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/dm_merged.bin
             COMMAND
             dd if=${PROJECT_BINARY_DIR}/zephyr.matter.bin of=${PROJECT_BINARY_DIR}/dm_merged.bin conv=notrunc
             COMMAND
@@ -317,7 +321,11 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
         add_dependencies(merge_zigbee ${ZEPHYR_FINAL_EXECUTABLE})
         add_dependencies(west_sign merge_zigbee)
     else()
-        message(WARNING "File ${ZB_FILE_PATH} does not exist. merge_zigbee target will not be created.")
+        if (NOT CONFIG_DUAL_MODE)
+            message(STATUS "CONFIG_DUAL_MODE is 0, skipping merge_zigbee and west_sign targets")
+        else()
+            message(WARNING "File ${ZB_FILE_PATH} does not exist. merge_zigbee target will not be created.")
+        endif()
     endif()
 endif()
 
