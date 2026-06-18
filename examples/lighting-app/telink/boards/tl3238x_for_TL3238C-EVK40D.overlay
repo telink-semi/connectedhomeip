@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2026 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		led0 = &led_white;
+		led1 = &led_green;
+		led2 = &led_red;
+		led3 = &led_blue;
+		sw0 = &key_1;
+		sw1 = &key_2;
+		sw2 = &key_3;
+		sw3 = &key_4;
+		pwm-led0 = &pwm_led_blue;
+		mcuboot-button0 = &key_dfu;
+		mcuboot-led0 = &led_blue;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led_red: led_0 {
+			gpios = <&gpioa 4 0>; /* LEDR-PA4 */
+			label = "LED Red";
+		};
+		led_blue: led_1 {
+			gpios = <&gpioa 2 0>; /* LEDB-PA2 */
+			label = "LED Blue";
+		};
+		led_white: led_2 {
+			gpios = <&gpiob 7 0>; /* LEDW-PB7 */
+			label = "LED White";
+		};
+		led_green: led_3 {
+			gpios = <&gpioa 3 0>; /* LEDG-PA3 */
+			label = "LED Green";
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+		key_1: button_1 {
+			label = "User KEY1";
+			gpios = <&gpioc 3 11>; /* KEY1-PC3, GPIO_INPUT | GPIO_PULL_UP */
+		};
+		key_2: button_2 {
+			label = "User KEY2";
+			gpios = <&gpioc 2 11>; /* KEY2-PC2, GPIO_INPUT | GPIO_PULL_UP */
+		};
+		key_3: button_3 {
+			label = "User KEY3";
+			gpios = <&gpioc 1 11>; /* KEY3-PC1, GPIO_INPUT | GPIO_PULL_UP */
+		};
+		key_4: button_4 {
+			label = "User KEY4";
+			gpios = <&gpioc 0 11>; /* KEY4-PC0, GPIO_INPUT | GPIO_PULL_UP */
+		};
+		key_dfu: button_dfu {
+			label = "USB DFU";
+			gpios = <&gpioa 0 32>; /* 保持原有DFU按键配置 */
+		};
+	};
+
+	key_matrix {
+		compatible = "gpio-keys";
+		col {
+			gpios = <&gpioc 2 0>, <&gpioc 3 0>; /* COL0-PC2, COL1-PC3 */
+		};
+		row {
+			gpios = <&gpioc 0 32>, <&gpioc 1 32>; /* ROW0-PC0, ROW1-PC1, GPIO_INPUT */
+		};
+	};
+
+	key_pool {
+		compatible = "gpio-keys";
+		inp {
+			gpios = <&gpioc 0 11>, <&gpioc 1 11>, <&gpioc 2 11>, <&gpioc 3 11>;
+		};
+	};
+
+	led_pool {
+		compatible = "gpio-leds";
+		out {
+			gpios = <&gpiob 7 0>; /* LEDW-PB7 */
+		};
+	};
+};

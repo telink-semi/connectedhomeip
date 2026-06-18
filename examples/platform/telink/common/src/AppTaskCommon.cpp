@@ -764,6 +764,10 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
+    // for action dual mode, press button to switch to zigbee mode
+    // #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+    //     dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
+    // #endif
     LOG_INF("StartBleAdvHandler");
 
     // Disable manual Matter service BLE advertising after device provisioning.
