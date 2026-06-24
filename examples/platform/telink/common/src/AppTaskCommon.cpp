@@ -317,8 +317,8 @@ public:
     void OnCommissioningSessionStopped() override { isComissioningStarted = false; }
     void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override
     {
-        AppTaskCommon::sIsCommissioningFailed = true;
-        isComissioningStarted                 = false;
+        sIsCommissioningFailed = true;
+        isComissioningStarted  = false;
     }
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     void OnCommissioningWindowClosed() override
@@ -453,18 +453,25 @@ void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
 static void PowerOnNetworkCheck(void)
 {
     Thread::OperationalDataset curDataset;
-    CHIP_ERROR err = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
+    CHIP_ERROR err  = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
     bool hasDataset = (err == CHIP_NO_ERROR); // Check if stored OpenThread dataset
 
     uint8_t fabricNum = chip::Server::GetInstance().GetFabricTable().FabricCount();
 
-    if (!hasDataset && fabricNum == 0) { // New device
+    if (!hasDataset && fabricNum == 0)
+    { // New device
         return;
-    } else if (hasDataset && fabricNum > 0) { // Device successfully commissioned
+    }
+    else if (hasDataset && fabricNum > 0)
+    { // Device successfully commissioned
         return;
-    } else if (hasDataset && fabricNum == 0) {
+    }
+    else if (hasDataset && fabricNum == 0)
+    {
         ChipLogProgress(DeviceLayer, "Thread dataset exists, but matter uncommissioned\n");
-    } else {
+    }
+    else
+    {
         return;
     }
     k_work_schedule(&sDelayedFactoryResetWork, K_SECONDS(2));

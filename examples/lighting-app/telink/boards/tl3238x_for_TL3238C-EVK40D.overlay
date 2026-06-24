@@ -59,7 +59,7 @@
 		};
 		key_dfu: button_dfu {
 			label = "USB DFU";
-			gpios = <&gpioa 0 32>; /* 保持原有DFU按键配置 */
+			gpios = <&gpioa 0 32>; /* keep previous DFU button set-up */
 		};
 	};
 
