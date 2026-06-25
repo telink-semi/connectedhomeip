@@ -863,7 +863,10 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
-    // for action dual mode, press button to switch to zigbee mode
+    // Enabling this code will change the function of the start BLE adv button
+    // to manually switch to Zigbee firmware and run another firmware,
+    // which overrides the original function.
+    // Hence, it is commented out for dual mode switch testing purposes.
     // #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
     //     dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
     // #endif
