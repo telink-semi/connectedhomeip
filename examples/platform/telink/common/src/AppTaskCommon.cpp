@@ -863,13 +863,14 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
-    // Enabling this code will change the function of the start BLE adv button
+    // This will change the function of the start BLE adv button
     // to manually switch to Zigbee firmware and run another firmware,
     // which overrides the original function.
-    // Hence, it is commented out for dual mode switch testing purposes.
-    // #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
-    //     dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
-    // #endif
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+    LOG_INF("switch to Zigbee Mode");
+    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
+#endif
+
     LOG_INF("StartBleAdvHandler");
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
