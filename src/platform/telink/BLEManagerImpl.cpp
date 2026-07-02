@@ -173,9 +173,13 @@ BLEManagerImpl BLEManagerImpl::sInstance;
 CHIP_ERROR BLEManagerImpl::_Init(void)
 {
     mBLERadioInitialized  = false;
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     mReadyToAttachThread  = false;
+#endif
     mconId                = NULL;
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     mInternalScanCallback = new InternalScanCallback(this);
+#endif
 
     mServiceMode = ConnectivityManager::kCHIPoBLEServiceMode_Enabled;
     mFlags.ClearAll().Set(Flags::kAdvertisingEnabled, CHIP_DEVICE_CONFIG_CHIPOBLE_ENABLE_ADVERTISING_AUTOSTART);
@@ -185,8 +189,17 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
     memset(mSubscribedConns, 0, sizeof(mSubscribedConns));
 
     ReturnErrorOnFailure(InitBLEMACAddress());
+
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: BLE and Thread can coexist, init BLE stack immediately.
+    int err = bt_enable(NULL);
+    VerifyOrReturnError(err == 0, MapErrorZephyr(err));
+    mBLERadioInitialized = true;
+#else
+    // Non-concurrent mode: defer BLE init until after Thread scan.
     // int err = bt_enable(NULL); // Can't init BLE stack here due to abscense of non-cuncurrent mode
     // VerifyOrReturnError(err == 0, MapErrorZephyr(err));
+#endif
 
     memset(&mConnCallbacks, 0, sizeof(mConnCallbacks));
     mConnCallbacks.connected    = HandleConnect;
@@ -345,15 +358,28 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 
         err = CHIP_ERROR_INCORRECT_STATE;
     }
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    else
+    {
+        // Concurrent mode: BLE is already initialized, start advertising directly.
+        err = StartAdvertisingProcess();
+    }
+#else
     else if (!mBLERadioInitialized)
     {
+        // Non-concurrent mode: scan Thread networks first, then switch radio to BLE.
         TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().StartThreadScan(mInternalScanCallback);
     }
     else
-#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
     {
         err = StartAdvertisingProcess();
     }
+#endif // CONFIG_CHIP_CONCURRENT_MODE
+#else
+    {
+        err = StartAdvertisingProcess();
+    }
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     return err;
 }
@@ -364,11 +390,13 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
 
     if (!mBLERadioInitialized)
     {
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-        // Deinit Thread
+        // Non-concurrent mode: disable Thread and block radio before enabling BLE.
         TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().SetThreadEnabled(false);
         ThreadStackMgrImpl().SetRadioBlocked(true);
 #endif
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
         if (!BleLayer::IsInitialized())
         {
@@ -755,6 +783,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
         err = HandleBleConnectionClosed(event);
         break;
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kThreadStateChange:
         err = HandleThreadStateChange(event);
@@ -764,6 +793,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
         err = HandleOperationalNetworkEnabled(event);
         break;
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
     default:
         break;
@@ -1001,12 +1031,14 @@ CHIP_ERROR BLEManagerImpl::HandleBleConnectionClosed(const ChipDeviceEvent * eve
     pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
 #endif
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     if (ThreadStackMgrImpl().IsReadyToAttach())
     {
         SwitchToIeee802154();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
     return CHIP_NO_ERROR;
 }
@@ -1041,7 +1073,7 @@ ssize_t BLEManagerImpl::HandleChipIDRead(struct bt_conn * conId, const struct bt
 }
 #endif
 
-#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD && !defined(CONFIG_CHIP_CONCURRENT_MODE)
 CHIP_ERROR
 BLEManagerImpl::HandleOperationalNetworkEnabled(const ChipDeviceEvent * event)
 {
@@ -1113,7 +1145,7 @@ void BLEManagerImpl::SwitchToIeee802154(void)
     TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().SetThreadEnabled(true);
     ThreadStackMgrImpl().SetReadyToAttach(false);
 }
-#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD && !defined(CONFIG_CHIP_CONCURRENT_MODE)
 
 } // namespace Internal
 } // namespace DeviceLayer
