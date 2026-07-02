@@ -39,7 +39,9 @@ namespace Internal {
 
 using namespace chip::Ble;
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 class InternalScanCallback;
+#endif
 
 /**
  * Concrete implementation of the BLEManager singleton object for the Zephyr platforms.
@@ -109,7 +111,9 @@ private:
     PacketBufferHandle c3CharDataBufferHandle;
 #endif
     bool mBLERadioInitialized;
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     bool mReadyToAttachThread;
+#endif
     bool mNeedToResetFailSafeTimer;
 
     void DriveBLEState(void);
@@ -123,6 +127,7 @@ private:
     CHIP_ERROR HandleTXCharComplete(const ChipDeviceEvent * event);
     CHIP_ERROR HandleBleConnectionClosed(const ChipDeviceEvent * event);
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     /*
         WORKAROUND: Due to abscense of non-cuncurrent mode in Matter
         we are emulating connection to Thread with this events and manually
@@ -136,6 +141,7 @@ private:
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     InternalScanCallback * mInternalScanCallback;
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
     CHIP_ERROR PrepareC3CharData(void);
@@ -179,14 +185,17 @@ public:
                                     uint16_t offset);
 #endif
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Switch context from BLE to Thread
     void SwitchToIeee802154(void);
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
     CHIP_ERROR StartAdvertisingProcess(void);
 };
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 class InternalScanCallback : public DeviceLayer::NetworkCommissioning::ThreadDriver::ScanCallback
 {
 public:
@@ -200,6 +209,7 @@ public:
 private:
     BLEManagerImpl * mBLEManagerImpl;
 };
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
 /**
  * Returns a reference to the public interface of the BLEManager singleton object.

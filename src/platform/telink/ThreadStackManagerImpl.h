@@ -59,9 +59,11 @@ class ThreadStackManagerImpl final : public ThreadStackManager,
 public:
     // ===== Methods that implement the ThreadStackManager abstract interface.
     CHIP_ERROR _InitThreadStack();
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     void SetRadioBlocked(bool state) { mRadioBlocked = state; }
     void SetReadyToAttach(bool state) { mReadyToAttach = state; }
     bool IsReadyToAttach(void) const { return mReadyToAttach; }
+#endif
     void Finalize(void);
     CHIP_ERROR CommitConfiguration(void);
 
@@ -94,9 +96,11 @@ private:
 
     static ThreadStackManagerImpl sInstance;
 
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     // ===== Private members for use by this class only.
     bool mRadioBlocked;
     bool mReadyToAttach;
+#endif
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     k_sem mSrpClearAllSemaphore;

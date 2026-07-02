@@ -214,6 +214,16 @@ config CHIP_ENABLE_PM_DURING_BLE
 	help
 	  Enable PM during BLE operation.
 
+config CHIP_CONCURRENT_MODE
+	bool "Enable concurrent BLE + Thread mode"
+	default n
+	help
+	  Enable when hardware supports simultaneous BLE and Thread operation
+	  (dual-radio). When enabled, BLE and Thread stacks are initialized
+	  independently and can run at the same time without radio switching.
+	  When disabled, the legacy non-concurrent mode is used where BLE and
+	  Thread share a single radio and must be time-multiplexed.
+
 config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
 	default 255 if SHELL_BACKEND_SERIAL
 
