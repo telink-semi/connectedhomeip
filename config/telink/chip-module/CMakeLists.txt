@@ -266,11 +266,16 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
             COMMAND
             cp ${PROJECT_BINARY_DIR}/bootloader_merged.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
         )
-        add_dependencies(merge_sboot build_mcuboot)
         message(WARNING "merged secure boot to mcuboot..")
     else()
-        message(WARNING "File ${SBOOT_FILE_PATH} does not exist. merge_sboot target will not be created.")
+        # Since there is no secure boot, no offset is needed.
+        # Simultaneously check if CONFIG_MCUBOOT_START_OFFSET is 0x0.
+        add_custom_target(merge_sboot ALL
+            cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        )
+        message(WARNING "File ${SBOOT_FILE_PATH} does not exist.")
     endif()
+    add_dependencies(merge_sboot build_mcuboot)
 
     if (EXISTS ${ZB_FILE_PATH})
         add_custom_target(merge_zigbee ALL
