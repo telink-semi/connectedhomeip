@@ -315,7 +315,11 @@ public:
     void OnCommissioningSessionEstablishmentStarted() override { sIsCommissioningFailed = false; }
     void OnCommissioningSessionStarted() override { isComissioningStarted = true; }
     void OnCommissioningSessionStopped() override { isComissioningStarted = false; }
-    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override { sIsCommissioningFailed = true; }
+    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override
+    {
+        sIsCommissioningFailed = true;
+        isComissioningStarted  = false;
+    }
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     void OnCommissioningWindowClosed() override
     {
@@ -449,18 +453,25 @@ void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
 static void PowerOnNetworkCheck(void)
 {
     Thread::OperationalDataset curDataset;
-    CHIP_ERROR err = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
+    CHIP_ERROR err  = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
     bool hasDataset = (err == CHIP_NO_ERROR); // Check if stored OpenThread dataset
 
     uint8_t fabricNum = chip::Server::GetInstance().GetFabricTable().FabricCount();
 
-    if (!hasDataset && fabricNum == 0) { // New device
+    if (!hasDataset && fabricNum == 0)
+    { // New device
         return;
-    } else if (hasDataset && fabricNum > 0) { // Device successfully commissioned
+    }
+    else if (hasDataset && fabricNum > 0)
+    { // Device successfully commissioned
         return;
-    } else if (hasDataset && fabricNum == 0) {
+    }
+    else if (hasDataset && fabricNum == 0)
+    {
         ChipLogProgress(DeviceLayer, "Thread dataset exists, but matter uncommissioned\n");
-    } else {
+    }
+    else
+    {
         return;
     }
     k_work_schedule(&sDelayedFactoryResetWork, K_SECONDS(2));
@@ -852,10 +863,14 @@ void AppTaskCommon::StartBleAdvButtonEventHandler(void)
 
 void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
-    // for action dual mode, press button to switch to zigbee mode
-    // #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
-    //     dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
-    // #endif
+    // This will change the function of the start BLE adv button
+    // to manually switch to Zigbee firmware and run another firmware,
+    // which overrides the original function.
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+    LOG_INF("switch to Zigbee Mode");
+    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
+#endif
+
     LOG_INF("StartBleAdvHandler");
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
