@@ -1,4 +1,4 @@
-TL3238X Retention Light-Switch App Build Guide
+TL3238X Retention Contact-Sensor App Build Guide
 =================================================
 
 1. 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA)

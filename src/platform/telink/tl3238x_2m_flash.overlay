@@ -11,33 +11,13 @@
 			label = "mcuboot";
 			reg = <0x00000000 0x15000>; 
 		};
-// currently the reset flash is 0x1e0000- 0x15000() = 0x1cb000 = 1836k (the total of slot0,and slot1)
-// tralor = 20k
-// slot0_fw = (1836-20)/1.6/4*4 = 1132 (suppose as LZMA:60%)
-// slot0 area = 1132+20 = 1152(0x120000)
 		slot0_partition: partition@15000 {
 			label = "image-0";
-			reg = <0x15000 0x120000>; // total slot0 is 1152k
+			reg = <0x15000 0xe5000>; // total slot0 is 916k
 		};
-// add information , increase part for matter & zigbee
-// suppose the matter application layer is 30k, zigbee is 60k
-// currently , basic matter fw is 813k, zigbee is 140k , so just suppose matter is 916k, and zigbee is 216, reserve 20k for matter ota trailor
-		slot0_matter_partition: partition@15000_1 {
-			label = "image-0-matter";
-			reg = <0x15000 0xe5000>; // suppose matter is 916k (0xe5000)
-		};
-		slot0_zb_partition: partition@fa000 {
-			label = "image-0-zb";
-			reg = <0xfa000 0x36000>; // suppose zigbee is 216k (0x36000)
-		};
-		slot0_trailor_partition: partition@130000 {
-			label = "image-0-trailor";
-			reg = <0x130000 0x5000>; // suppose trailor is 20k
-		};
-// the total fw area is 1836k, and slot0 cost 1152, so the value is 1836 - 1152 = 684k (0xac000) */
-		slot1_partition: partition@135000 {
+		slot1_partition: partition@fa000 {
 			label = "image-1";
-			reg = <0x135000 0xab000>; 
+			reg = <0xfa000 0xe6000>; // total slot1 is 920k
 		};
 		user_rfu_partition: partition@1e0000 {
  			label = "user_rfu";
