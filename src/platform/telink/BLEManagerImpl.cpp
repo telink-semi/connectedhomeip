@@ -55,6 +55,7 @@ extern "C" {
 extern __attribute__((noinline)) int b9x_bt_blc_mac_init(uint8_t * bt_mac);
 #elif defined(CONFIG_BT_TLX)
 extern __attribute__((noinline)) int tlx_bt_blc_mac_init(uint8_t * bt_mac);
+extern __attribute__((noinline)) void tlx_bt_802154_dual_mode_start();
 #elif defined(CONFIG_BT_W91)
 extern __attribute__((noinline)) void telink_bt_blc_mac_init(uint8_t * bt_mac);
 #endif
@@ -443,6 +444,8 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
         bt_le_adv_start(&params, mAdvertisingRequest.advertisingData.data(), mAdvertisingRequest.advertisingData.size(),
                         mAdvertisingRequest.scanResponseData.data(), mAdvertisingRequest.scanResponseData.size())));
     ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
+
+    tlx_bt_802154_dual_mode_start();
 
     // Transition to the Advertising state...
     if (!mFlags.Has(Flags::kAdvertising))
@@ -1023,6 +1026,7 @@ ssize_t BLEManagerImpl::HandleC3Read(struct bt_conn * conId, const struct bt_gat
 
 CHIP_ERROR BLEManagerImpl::HandleBleConnectionClosed(const ChipDeviceEvent * event)
 {
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     // Deinit BLE
     bt_disable();
     mBLERadioInitialized = false;
@@ -1031,14 +1035,18 @@ CHIP_ERROR BLEManagerImpl::HandleBleConnectionClosed(const ChipDeviceEvent * eve
     pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
 #endif
 
-#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     if (ThreadStackMgrImpl().IsReadyToAttach())
     {
         SwitchToIeee802154();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
-#endif // !CONFIG_CHIP_CONCURRENT_MODE
+#else  // CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: BLE and Thread share the radio hardware.
+    // Do NOT call bt_disable() here, as it would tear down the shared radio
+    // controller and corrupt Thread's OpenThread state.
+    // The BLE stack remains initialized; only the connection is closed.
+#endif // CONFIG_CHIP_CONCURRENT_MODE
 
     return CHIP_NO_ERROR;
 }
