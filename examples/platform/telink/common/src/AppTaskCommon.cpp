@@ -972,8 +972,10 @@ void AppTaskCommon::StartThreadHandler(AppEvent * aEvent)
     {
         // Switch context from BLE to Thread
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
         Internal::BLEManagerImpl sInstance;
         sInstance.SwitchToIeee802154();
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 #else
         ThreadStackMgrImpl().SetRadioBlocked(false);
         ThreadStackMgrImpl().SetThreadEnabled(true);
