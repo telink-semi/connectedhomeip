@@ -97,12 +97,12 @@ screenshots) is in Chapter **Environment Setup (Manual)** of the
 [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/);
 the high-level steps are:
 
-1. **Set up the host (Ubuntu 24.04 LTS)** — install the OS packages
-   required by Zephyr and the Matter build: `git`, `python3` + `pip` + `venv`,
-   `make`, `gcc`, `g++`, `cmake`, `dfu-util`, `device-tree-compiler`,
-   `libssl-dev`, `libffi-dev`, `libudev-dev`, `usbutils` and the `curl`/`wget`
-   downloaders. Add the user to the `dialout`/`plugdev` groups and install the
-   Telink USB udev rules so the programmer is reachable without `sudo`.
+1. **Set up the host (Ubuntu 24.04 LTS)** — install the OS packages required by
+   Zephyr and the Matter build: `git`, `python3` + `pip` + `venv`, `make`,
+   `gcc`, `g++`, `cmake`, `dfu-util`, `device-tree-compiler`, `libssl-dev`,
+   `libffi-dev`, `libudev-dev`, `usbutils` and the `curl`/`wget` downloaders.
+   Add the user to the `dialout`/`plugdev` groups and install the Telink USB
+   udev rules so the programmer is reachable without `sudo`.
 
 2. **Install `west`** — Zephyr's multi-repository meta-tool. It is pulled in as
    a Python package and must be available on `PATH` before any `west` command is
