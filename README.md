@@ -97,7 +97,7 @@ screenshots) is in Chapter **Environment Setup (Manual)** of the
 [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/);
 the high-level steps are:
 
-1. **Set up the host (Ubuntu 20.04/22.04 LTS)** — install the OS packages
+1. **Set up the host (Ubuntu 24.04 LTS)** — install the OS packages
    required by Zephyr and the Matter build: `git`, `python3` + `pip` + `venv`,
    `make`, `gcc`, `g++`, `cmake`, `dfu-util`, `device-tree-compiler`,
    `libssl-dev`, `libffi-dev`, `libudev-dev`, `usbutils` and the `curl`/`wget`

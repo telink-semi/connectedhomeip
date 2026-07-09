@@ -53,7 +53,7 @@ Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
 | Issue             | Description                                                                   |
 | ----------------- | ----------------------------------------------------------------------------- |
 | **Network State** | Check Matter network state when power-on to ensure correct commissioning flow |
-| **Tercel V2**     | Update hal_v1 to hal_v2 for TL721X                                            |
+| **TL721X HAL V2** | Update hal_v1 to hal_v2 for TL721X                                            |
 | **PM Stability**  | Improve power management stability on retention RAM configurations            |
 | **OTA Recovery**  | Fix OTA recovery flow on TL323X series                                        |
 
@@ -143,7 +143,7 @@ support.
 | -------- | ----------------------------- |
 | TLSR921X | C1T213A20_V1.3                |
 | TLSR952X | C1T266A20_V1.3                |
-| TLSR911X | C1TxxxA20_V1.x                |
+| TLSR911X | C1T301A20_V2.1                |
 | TL721X   | C1T315A20_V1.2                |
 | TL321X   | C1T331A20_V1.0/C1T335A20_V1.3 |
 | TL323X   | C1T388A20_V1.1                |
