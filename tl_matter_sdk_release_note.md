@@ -7,9 +7,9 @@
 ---
 
 -   **Release Type:** Pre-Release (Beta)
--   **Branch:** dev-tlk_v1.5
--   **Tag Version:** tl_v1.0.1-beta-v1.5.1.0
--   **Target Commit:** f4a8cf98ada4ad4f439b45e360800693cc5f1391
+-   **Branch:** [dev-tlk_v1.5](https://github.com/telink-semi/connectedhomeip/tree/dev-tlk_v1.5)
+-   **Tag Version:** [tl_v1.0.1-beta-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-beta-v1.5.1.0)
+-   **Target Commit:** [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)
 
 ---
 
@@ -115,11 +115,11 @@ support.
 | **Commit**             | [f4a8cf9](https://github.com/project-chip/connectedhomeip/commit/f4a8cf98ada4ad4f439b45e360800693cc5f1391) (the previous one of [15a68d7](https://github.com/project-chip/connectedhomeip/commit/15a68d7026b1cd34a0d4cf35dadc7558e503d2cb) that community upgraded Matter version to 1.6) |
 | **Toolchain**          | Zephyr SDK v0.17.0 riscv64-zephyr-elf                                                                                                                                                                                                                                                     |
 
-### Telink SDK
+### Telink Matter SDK
 
 | Property          | Version                                                                                                        |
 | ----------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Branch**        | dev-tlk_v1.5                                                                                                   |
+| **Branch**        | [dev-tlk_v1.5](https://github.com/telink-semi/connectedhomeip/tree/dev-tlk_v1.5)                               |
 | **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)      |
 | **Tag Name**      | [tl_v1.0.1-beta-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-beta-v1.5.1.0) |
 | **Release Type**  | Pre-Release (Beta)                                                                                             |
@@ -197,7 +197,7 @@ example and the Telink chip platforms that support it (see
     additionally supports bridge-app and window-app.
 -   The light-switch-app on TL321X/TL323X/TL721X uses the `*_retention` board
     target (power management with retention RAM).
--   For build commands per board/app, refer to the per-board `*_README.txt`
+-   For build commands per board/app, refer to the per-board `*_README.md`
     files inside each example's `boards/` directory.
 
 ---

@@ -140,7 +140,7 @@ the high-level steps are:
 ### Building Examples
 
 Matter builds use `west build` directly from each example's `telink` directory.
-Each supported board ships a dedicated `*_README.txt` under
+Each supported board ships a dedicated `*_README.md` under
 `examples/<app>/telink/boards/` that lists the exact build commands for every
 configuration of that board (default, OTA + LZMA, dual-mode Matter + Zigbee, 4
 MB flash, Software Version 2 for DFU/OTA images, etc.).
@@ -150,21 +150,21 @@ Refer to the board README for the app + board combination you want to build:
 #### Lighting App (TL3238X / TL7218X)
 
 -   TL3238X:
-    [`examples/lighting-app/telink/boards/tl3238x_README.txt`](examples/lighting-app/telink/boards/tl3238x_README.txt)
+    [`examples/lighting-app/telink/boards/tl3238x_README.md`](examples/lighting-app/telink/boards/tl3238x_README.md)
 -   TL7218X:
-    [`examples/lighting-app/telink/boards/tl7218x_README.txt`](examples/lighting-app/telink/boards/tl7218x_README.txt)
+    [`examples/lighting-app/telink/boards/tl7218x_README.md`](examples/lighting-app/telink/boards/tl7218x_README.md)
 
 #### Light Switch App (TL3238X Retention / TL7218X Retention)
 
 -   TL3238X Retention:
-    [`examples/light-switch-app/telink/boards/tl3238x_retention_README.txt`](examples/light-switch-app/telink/boards/tl3238x_retention_README.txt)
+    [`examples/light-switch-app/telink/boards/tl3238x_retention_README.md`](examples/light-switch-app/telink/boards/tl3238x_retention_README.md)
 -   TL7218X Retention:
-    [`examples/light-switch-app/telink/boards/tl7218x_retention_README.txt`](examples/light-switch-app/telink/boards/tl7218x_retention_README.txt)
+    [`examples/light-switch-app/telink/boards/tl7218x_retention_README.md`](examples/light-switch-app/telink/boards/tl7218x_retention_README.md)
 
 > **Note:** LZMA compression is **required** for 2 MB flash with OTA. Build
-> Software Version 2 (via the flag documented in each `*_README.txt`) to
+> Software Version 2 (via the flag documented in each `*_README.md`) to
 > generate the DFU/OTA upgrade images (`merged_dfu.lzma.bin`, `matter.ota`). The
-> same `*_README.txt` files also cover dual-mode (Matter + Zigbee) and 4 MB
+> same `*_README.md` files also cover dual-mode (Matter + Zigbee) and 4 MB
 > flash configurations.
 
 ### Flashing Firmware
