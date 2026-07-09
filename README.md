@@ -162,10 +162,10 @@ Refer to the board README for the app + board combination you want to build:
     [`examples/light-switch-app/telink/boards/tl7218x_retention_README.md`](examples/light-switch-app/telink/boards/tl7218x_retention_README.md)
 
 > **Note:** LZMA compression is **required** for 2 MB flash with OTA. Build
-> Software Version 2 (via the flag documented in each `*_README.md`) to
-> generate the DFU/OTA upgrade images (`merged_dfu.lzma.bin`, `matter.ota`). The
-> same `*_README.md` files also cover dual-mode (Matter + Zigbee) and 4 MB
-> flash configurations.
+> Software Version 2 (via the flag documented in each `*_README.md`) to generate
+> the DFU/OTA upgrade images (`merged_dfu.lzma.bin`, `matter.ota`). The same
+> `*_README.md` files also cover dual-mode (Matter + Zigbee) and 4 MB flash
+> configurations.
 
 ### Flashing Firmware
 

@@ -7,9 +7,12 @@
 ---
 
 -   **Release Type:** Pre-Release (Beta)
--   **Branch:** [dev-tlk_v1.5](https://github.com/telink-semi/connectedhomeip/tree/dev-tlk_v1.5)
--   **Tag Version:** [tl_v1.0.1-beta-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-beta-v1.5.1.0)
--   **Target Commit:** [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)
+-   **Branch:**
+    [dev-tlk_v1.5](https://github.com/telink-semi/connectedhomeip/tree/dev-tlk_v1.5)
+-   **Tag Version:**
+    [tl_v1.0.1-beta-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-beta-v1.5.1.0)
+-   **Target Commit:**
+    [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)
 
 ---
 
@@ -197,8 +200,8 @@ example and the Telink chip platforms that support it (see
     additionally supports bridge-app and window-app.
 -   The light-switch-app on TL321X/TL323X/TL721X uses the `*_retention` board
     target (power management with retention RAM).
--   For build commands per board/app, refer to the per-board `*_README.md`
-    files inside each example's `boards/` directory.
+-   For build commands per board/app, refer to the per-board `*_README.md` files
+    inside each example's `boards/` directory.
 
 ---
 

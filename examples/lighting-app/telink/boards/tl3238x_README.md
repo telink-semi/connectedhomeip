@@ -3,18 +3,22 @@
 ## 1. 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA)
 
 **Kconfig:** boards/tl3238x.conf (default)
-- CONFIG_CHIP_OTA_REQUESTOR=n
-- CONFIG_CHIP_DFU_OVER_BT_SMP=n, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=n,
-- CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
-- CONFIG_DUAL_MODE=0
 
-**Note**: This configuration disables OTA, does not use MCUBoot, and cannot be upgraded
+-   CONFIG_CHIP_OTA_REQUESTOR=n
+-   CONFIG_CHIP_DFU_OVER_BT_SMP=n, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=n,
+-   CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
+-   CONFIG_DUAL_MODE=0
+
+**Note**: This configuration disables OTA, does not use MCUBoot, and cannot be
+upgraded
 
 **DTS Overlay:** src/platform/telink/tl3238x_2m_flash.overlay (default)
-- slot0: 0x15000, size 0xe5000 (916KB)
-- slot1: 0xfa000, size 0xe6000 (920KB)
+
+-   slot0: 0x15000, size 0xe5000 (916KB)
+-   slot1: 0xfa000, size 0xe6000 (920KB)
 
 **Build:**
+
 ```bash
 west build -p -b tl3238x -d build_tl3238x_default -- \
 > build_tl3238x_default.log
@@ -23,24 +27,29 @@ west build -p -b tl3238x -d build_tl3238x_default -- \
 ```
 
 **Output:**
+
 ```bash
 build_tl3238x_default/zephyr/zephyr.bin          -> flash this
 ```
 
 ## 2. 2MB Flash (Matter only, enable BT DFU, LZMA compressed, SW - 1 and 2)
+
 **IMPORTANT**: LZMA compression is REQUIRED for 2MB flash with OTA.
 
 **Kconfig:** boards/tl3238x_2m_flash_ota_lzma.conf (explicitly specified)
-- CONFIG_CHIP_OTA_REQUESTOR=y
-- CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
-- CONFIG_LZMA=y, CONFIG_COMPRESS_LZMA=y
-- CONFIG_DUAL_MODE=0
+
+-   CONFIG_CHIP_OTA_REQUESTOR=y
+-   CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
+-   CONFIG_LZMA=y, CONFIG_COMPRESS_LZMA=y
+-   CONFIG_DUAL_MODE=0
 
 **DTS Overlay:** src/platform/telink/tl3238x_2m_flash_lzma.overlay (default)
-- slot0: 0x15000, size 0x120000 (1152KB)
-- slot1: 0x135000, size 0xAB000 (684KB)
+
+-   slot0: 0x15000, size 0x120000 (1152KB)
+-   slot1: 0x135000, size 0xAB000 (684KB)
 
 **Build Software Version 1:**
+
 ```bash
 west build -p -b tl3238x -d build_tl3238x_2m_flash_lzma_v1 -- \
 -DCONF_FILE="prj.conf boards/tl3238x_2m_flash_ota_lzma.conf" \
@@ -50,6 +59,7 @@ west build -p -b tl3238x -d build_tl3238x_2m_flash_lzma_v1 -- \
 ```
 
 **Build Software Version 2:**
+
 ```bash
 west build -p -b tl3238x -d build_tl3238x_2m_flash_lzma_v2 -- \
 -DCONF_FILE="prj.conf boards/tl3238x_2m_flash_ota_lzma.conf" \
@@ -59,6 +69,7 @@ west build -p -b tl3238x -d build_tl3238x_2m_flash_lzma_v2 -- \
 ```
 
 **Output:**
+
 ```bash
 build_tl3238x_2m_flash_lzma_v1/zephyr/merged.bin          -> flash this
 build_tl3238x_2m_flash_lzma_v2/zephyr/merged_dfu.lzma.bin -> DFU over BLE SMP
@@ -68,6 +79,7 @@ build_tl3238x_2m_flash_lzma_v2/zephyr/matter.ota          -> OTA upgrade
 ## 3. 4MB Flash (Matter + Zigbee dual mode, no LZMA)
 
 **Prerequisite:** copy Zigbee firmware
+
 ```bash
 cp <zigbee_fw>.bin ${ZEPHYR_BASE}/TL323X_FW/ZB/Zigbee-SampleDemo.bin
 e.g.
@@ -75,19 +87,24 @@ cp ${ZEPHYR_BASE}/TL323X_FW/ZB/dual_matter_sampleLight_bleAdv_tl323x.bin ${ZEPHY
 ```
 
 **Kconfig:** boards/tl3238x_4m_flash_dual_mode_ota.conf (explicitly specified)
-- CONFIG_CHIP_OTA_REQUESTOR=y
-- CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
-- CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
-- CONFIG_DUAL_MODE=2 (auto-switch mode)
+
+-   CONFIG_CHIP_OTA_REQUESTOR=y
+-   CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
+-   CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
+-   CONFIG_DUAL_MODE=2 (auto-switch mode)
 
 **DTS Overlay:** src/platform/telink/tl3238x_4m_flash.overlay (default)
-- slot0: 0x16000, size 0x1E5000 (1940KB)
-- slot1: 0x1FB000, size 0x1E5000 (1940KB)
 
-**Board DTS Overlay:** boards/tl3238x_for_TL3238C-EVK40D.overlay (explicitly specified)
-- LED/Key definitions for TL3238C-EVK40D board
+-   slot0: 0x16000, size 0x1E5000 (1940KB)
+-   slot1: 0x1FB000, size 0x1E5000 (1940KB)
+
+**Board DTS Overlay:** boards/tl3238x_for_TL3238C-EVK40D.overlay (explicitly
+specified)
+
+-   LED/Key definitions for TL3238C-EVK40D board
 
 **Build:**
+
 ```bash
 west build -p -b tl3238x -d build_tl3238x_4m_dual_mode -- \
 -DFLASH_SIZE=4m \
@@ -98,6 +115,7 @@ west build -p -b tl3238x -d build_tl3238x_4m_dual_mode -- \
 ```
 
 **Output:**
+
 ```bash
 build_tl3238x_4m_dual_mode/zephyr/merged.bin      -> flash this (sboot+mcuboot+matter+zb)
 build_tl3238x_4m_dual_mode/zephyr/merged_dfu.bin  -> DFU over BLE SMP
@@ -105,17 +123,24 @@ build_tl3238x_4m_dual_mode/zephyr/matter.ota      -> OTA upgrade
 ```
 
 ## 4. WARNING: 2MB Flash with OTA but NO LZMA (NOT RECOMMENDED)
-**This configuration will show a warning during build and may fail at link time.**
+
+**This configuration will show a warning during build and may fail at link
+time.**
 
 **Kconfig:** boards/tl3238x_ota.conf (explicitly specified)
-- CONFIG_CHIP_OTA_REQUESTOR=y
-- CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
-- CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
-- CONFIG_DUAL_MODE=0
+
+-   CONFIG_CHIP_OTA_REQUESTOR=y
+-   CONFIG_CHIP_DFU_OVER_BT_SMP=y, CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD=y,
+-   CONFIG_LZMA=n, CONFIG_COMPRESS_LZMA=n
+-   CONFIG_DUAL_MODE=0
 
 **WARNING**: Building this configuration will show a warning:
-> "tl3238x with 2MB flash and OTA requires LZMA compression. Please use a config with 'lzma' suffix and set CONFIG_COMPRESS_LZMA=y. Continuing compilation anyway..."
 
-**Note**: Build may fail at link time if firmware size exceeds 916KB (0xe5000) partition limit.
+> "tl3238x with 2MB flash and OTA requires LZMA compression. Please use a config
+> with 'lzma' suffix and set CONFIG_COMPRESS_LZMA=y. Continuing compilation
+> anyway..."
+
+**Note**: Build may fail at link time if firmware size exceeds 916KB (0xe5000)
+partition limit.
 
 **Solution**: Use the LZMA-enabled configuration (target #2) instead.
