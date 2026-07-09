@@ -135,6 +135,16 @@ static void FactoryResetOnBoot(void)
 
 int main(void)
 {
+#if CONFIG_WATCHDOG_AUTO
+    /* Not modify by user */
+    #define MATTER_ANALOG_REG_WDT_ADR   (unsigned char)(0x3c)
+    #define MATTER_WDT_BY_CONTROL       BIT(0)
+    if (!(analog_read(MATTER_ANALOG_REG_WDT_ADR) & MATTER_WDT_BY_CONTROL))
+    {
+        printk("watchdog startup...\r\n");
+    }
+#endif /* CONFIG_WATCHDOG_AUTO */
+
 #if defined(CONFIG_USB_DEVICE_STACK) && !defined(CONFIG_CHIP_PW_RPC)
     usb_enable(NULL);
 #endif /* CONFIG_USB_DEVICE_STACK */

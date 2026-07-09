@@ -17,7 +17,7 @@
  */
 
 #pragma once
-
+#include <analog.h>
 #include "AppConfig.h"
 #include "AppEventCommon.h"
 
@@ -144,6 +144,10 @@ protected:
     static void ChipEventHandler(const chip::DeviceLayer::ChipDeviceEvent * event, intptr_t arg);
 
     static void UpdateStatusLED(void);
+
+    static void OtaEventsHandler(const ChipDeviceEvent * event);
+    static void OtaSetAnaFlag(void);
+    static bool OtaGetAnaFlag(void);
 
 #if CONFIG_CHIP_FACTORY_DATA
     chip::DeviceLayer::FactoryDataProvider<chip::DeviceLayer::ExternalFlashFactoryData> mFactoryDataProvider;
