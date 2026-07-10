@@ -20,6 +20,7 @@
 
 #include "AppConfig.h"
 #include "AppEventCommon.h"
+#include <analog.h>
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
@@ -114,6 +115,7 @@ protected:
     virtual void LinkPwms(PwmManager & pwmManager);
     void InitButtons(void);
     virtual void LinkButtons(ButtonManager & buttonManager);
+    static void IndependentFactoryReset(void);
     static void DnssTimerTimeoutCallback(k_timer * timer);
     static void FactoryResetTimerTimeoutCallback(k_timer * timer);
     static void FactoryResetTimerEventHandler(AppEvent * aEvent);
@@ -145,6 +147,10 @@ protected:
 
     static void UpdateStatusLED(void);
 
+    static void OtaEventsHandler(const ChipDeviceEvent * event);
+    static void OtaSetAnaFlag(void);
+    static bool OtaGetAnaFlag(void);
+
 #if CONFIG_CHIP_FACTORY_DATA
     chip::DeviceLayer::FactoryDataProvider<chip::DeviceLayer::ExternalFlashFactoryData> mFactoryDataProvider;
 #endif
@@ -174,6 +180,26 @@ protected:
 #define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
 #define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
 #define ZB_NVS_SEC_SIZE FIXED_PARTITION_SIZE(ZB_NVS_PARTITION)
+
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+#define USER_CLUSTER_PARTITION user_cluster_partition
+#define USER_CLUSTER_PARTITION_DEVICE FIXED_PARTITION_DEVICE(USER_CLUSTER_PARTITION)
+#define USER_CLUSTER_PARTITION_OFFSET FIXED_PARTITION_OFFSET(USER_CLUSTER_PARTITION)
+#define USER_CLUSTER_PARTITION_SIZE FIXED_PARTITION_SIZE(USER_CLUSTER_PARTITION)
+
+typedef struct
+{
+    uint8_t onoff;
+    uint8_t level;
+    uint8_t rfu[30];
+} cluster_startup_para;
+
+void init_cluster_partition(void);
+int store_cluster_para(cluster_startup_para * data);
+int read_cluster_para(cluster_startup_para * data);
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
 
 typedef struct
 {

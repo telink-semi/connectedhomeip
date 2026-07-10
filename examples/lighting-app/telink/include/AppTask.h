@@ -52,6 +52,9 @@ private:
     friend class AppTaskCommon;
 
     CHIP_ERROR Init(void);
+    void Init_cluster_info(void);
+    void Set_cluster_info(void);
+
     void LinkLeds(LedManager & ledManager);
 
 #ifdef CONFIG_TFLM_FEATURE

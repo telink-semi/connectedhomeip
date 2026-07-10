@@ -153,6 +153,25 @@ void DefaultOTARequestor::OnQueryImageResponse(void * context, const QueryImageR
             TEMPORARY_RETURN_IGNORED requestorCore->RecordErrorUpdateState(err);
             return;
         }
+        /* meta data proc */
+        if(requestorCore->mMetadataForProvider.HasValue()){
+            // if the device is debug or develop, the provide should be the same, or it will fail.
+            if (response.metadataForRequestor.HasValue()){
+                uint8_t reqestor_meta = * (requestorCore->mMetadataForProvider.Value().data());
+                uint8_t provider_meta = * (response.metadataForRequestor.Value().data());
+                if(reqestor_meta != provider_meta) {
+                    ChipLogError(SoftwareUpdate, "the type between debug or dev should be the same requestor:%x , provider:%x" , reqestor_meta , provider_meta);
+                    requestorCore->RecordErrorUpdateState(CHIP_ERROR_INCORRECT_STATE);
+                    return;
+                }
+            } else {
+                ChipLogError(SoftwareUpdate, "debug or dev can not ota to product verserion");
+                requestorCore->RecordErrorUpdateState(CHIP_ERROR_INCORRECT_STATE);
+                return;
+            }
+        } else {
+             // if the device is product, can ota to debug and develop.
+        }
 
         // This should never happen since receiving a response implies that a CASE session had previously been established with a
         // valid provider
@@ -781,6 +800,10 @@ CHIP_ERROR DefaultOTARequestor::SendQueryImageRequest(Messaging::ExchangeManager
     }
 
     args.metadataForProvider = mMetadataForProvider;
+    /* get meta data infomation */
+    if(args.metadataForProvider.HasValue()){
+        ChipLogDetail(SoftwareUpdate, "QueryImageCmd's metadata value is %x, size is %x", *(args.metadataForProvider.Value().data()), args.metadataForProvider.Value().size());
+    }
     Controller::ClusterBase cluster(exchangeMgr, sessionHandle, mProviderLocation.Value().endpoint);
 
     return cluster.InvokeCommand(args, this, OnQueryImageResponse, OnQueryImageFailure);
