@@ -49,6 +49,13 @@
 #include <OTAUtil.h>
 #endif
 
+#include "AppConfig.h"
+#include <zephyr/device.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+#include <zephyr/sys/reboot.h>
+#include <app-common/zap-generated/attributes/Accessors.h>
+
 #ifdef CONFIG_MCUMGR_TRANSPORT_BT
 #include <DFUOverSMP.h>
 #endif
@@ -102,6 +109,12 @@ bool sIsNetworkProvisioned = false;
 bool sIsNetworkEnabled     = false;
 bool sIsNetworkAttached    = false;
 bool sHaveBLEConnections   = false;
+
+const struct device * flash_para_dev = USER_PARTITION_DEVICE;
+const struct device * zb_para_dev = ZB_NVS_PARTITION_DEVICE;
+k_timer sDnssTimer;
+uint8_t sBoot_zb = 0;
+constexpr int kDnssTimeout = 60000; // for init will cost for about 5s
 
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
@@ -189,8 +202,32 @@ void AppTaskCommon::PowerOnFactoryReset(void)
 }
 #endif /* CONFIG_CHIP_ENABLE_POWER_ON_FACTORY_RESET */
 
+light_para_t light_para;
+user_para_t user_para;
+unsigned char para_lightness = 0;
 CHIP_ERROR AppTaskCommon::StartApp(void)
 {
+    /* Proc ota boot flag , and erase flag */
+    flash_read(flash_para_dev, USER_PARTITION_OFFSET, &user_para, sizeof(user_para));
+    /* Boot from Zigbee , need to clean the user parameters sector first and set a flag */
+    if (user_para.val == USER_ZB_SW_VAL){
+        // if switch from zb , need to get all the cluster info from zb
+        flash_read(flash_para_dev, USER_PARTITION_OFFSET+sizeof(user_para), &light_para, sizeof(light_para));
+        //flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+        sBoot_zb = 1;
+        /* Ensure lightness is at least 2 to avoid display error on HomePod Mini */
+        if(light_para.level < 2){
+            light_para.level = 2;
+        }
+        /* Pass the value to the init part to avoid gaps in pwm_pool init */
+        if(light_para.onoff){
+            para_lightness = light_para.level;
+        }
+        k_timer_init(&sDnssTimer, &AppTask::DnssTimerTimeoutCallback, nullptr);
+        k_timer_start(&sDnssTimer, K_MSEC(kDnssTimeout), K_NO_WAIT);
+        printk("Matter: start timer to protect Dnss initialized \r\n");
+    }
+
     CHIP_ERROR err = GetAppTask().Init();
 
     if (err != CHIP_NO_ERROR)
@@ -597,7 +634,12 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
     {
         k_timer_stop(&sFactoryResetTimer);
         sFactoryResetCntr = 0;
+        // Erase user parameters partition and reset to Zigbee mode upon factory reset
+        flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+        // Need to erase zb nvs part 
+        flash_erase(zb_para_dev, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
 
+        printk("Factory reset triggered by button, resetting to Zigbee mode.\r\n");
         chip::Server::GetInstance().ScheduleFactoryReset();
     }
 }
@@ -613,6 +655,22 @@ void AppTaskCommon::FactoryResetTimerTimeoutCallback(k_timer * timer)
     event.Type    = AppEvent::kEventType_Timer;
     event.Handler = FactoryResetTimerEventHandler;
     GetAppTask().PostEvent(&event);
+}
+
+void SwitchBackToZigbee(void)
+{
+    uint8_t switch_flag  = USER_MATTER_BACK_ZB;
+    flash_write(flash_para_dev,USER_PARTITION_OFFSET,&switch_flag,1);
+    sys_reboot(SYS_REBOOT_WARM);
+}
+
+void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
+{
+    printk("Matter: DnssTimer expired.\r\n");
+    /* If initialization of Dnss takes longer than 90 seconds, the device will reboot and revert to Zigbee mode */
+    if (sBoot_zb){
+         SwitchBackToZigbee();
+    }
 }
 
 void AppTaskCommon::FactoryResetTimerEventHandler(AppEvent * aEvent)
@@ -806,6 +864,31 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
 #endif
         }
         break;
+     case DeviceEventType::kCommissioningComplete:
+     {
+        unsigned char val = USER_MATTER_PAIR_VAL;
+        /*clear zigbee switch flag*/
+        sBoot_zb = 0;
+        /*write commission suc flag*/
+        flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+        flash_write(flash_para_dev, USER_PARTITION_OFFSET, &val, 1);
+        printk("Commissioning complete, set Matter commissionined flag.\r\n");
+    }
+        break;
+    case DeviceEventType::kFailSafeTimerExpired:
+    {
+        /* Erase and reset to Zigbee mode if commissioning fails */
+        if (sBoot_zb)
+        {
+            printk("FailSafeTimer expired, Matter commissioning failed, rebooting to Zigbee mode.\r\n");
+            SwitchBackToZigbee();
+        }
+        else
+        {
+            printk("FailSafeTimer expired, Matter commissioning failed.\r\n");
+        } 
+    }
+        break;
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
 #if CONFIG_CHIP_OTA_REQUESTOR
@@ -819,6 +902,10 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
 #if CONFIG_CHIP_OTA_REQUESTOR
         }
 #endif
+        if(sBoot_zb){
+            k_timer_stop(&sDnssTimer);
+            printk("Dnss Timer stopped, Matter commissioning kDnssdInitialized.\r\n");
+        }
         break;
     case DeviceEventType::kThreadStateChange:
         sIsNetworkProvisioned = ConnectivityMgr().IsThreadProvisioned();
