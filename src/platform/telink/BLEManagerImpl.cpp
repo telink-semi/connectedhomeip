@@ -27,6 +27,10 @@
 
 #include <platform/telink/BLEManagerImpl.h>
 
+#if defined(CONFIG_BT_CHANNEL_SOUNDING)
+#include "CsReflector.h"
+#endif
+
 #include <ble/Ble.h>
 #include <lib/support/CHIPMemString.h>
 #include <lib/support/CodeUtils.h>
@@ -34,6 +38,8 @@
 #include <lib/support/logging/CHIPLogging.h>
 #include <platform/DeviceInstanceInfoProvider.h>
 #include <platform/internal/BLEManager.h>
+
+#include <zephyr/settings/settings.h>
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
 #include <setup_payload/AdditionalDataPayloadGenerator.h>
 #endif
@@ -196,6 +202,30 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
     int err = bt_enable(NULL);
     VerifyOrReturnError(err == 0, MapErrorZephyr(err));
     mBLERadioInitialized = true;
+
+    settings_load();
+
+    // Start a minimal BLE advertisement so that tlx_bt_802154_dual_mode_start()
+    // can successfully insert the BLE task before Thread auto-starts.
+    // Without this, Thread's tlx_start_radio() will block forever on
+    // ieee802154_task_ready_sem because tlksdk_thd_checkIsInsertTask1() returns 0.
+    // The real CHIPoBLE advertisement will replace this minimal one later in
+    // StartAdvertisingProcess().
+    {
+        static const struct bt_data minimal_ad[] = {
+            BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR),
+        };
+        const struct bt_le_adv_param params = BT_LE_ADV_PARAM_INIT(
+            BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_1, BT_GAP_ADV_FAST_INT_MAX_1, NULL);
+        err = bt_le_adv_start(&params, minimal_ad, ARRAY_SIZE(minimal_ad), NULL, 0);
+        if (err != 0)
+        {
+            ChipLogError(DeviceLayer, "Failed to start minimal BLE advertisement: %d", err);
+        }
+    }
+
+    tlx_bt_802154_dual_mode_start();
+
 #else
     // Non-concurrent mode: defer BLE init until after Thread scan.
     // int err = bt_enable(NULL); // Can't init BLE stack here due to abscense of non-cuncurrent mode
@@ -353,19 +383,17 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: BLE and Thread can coexist, always allow advertising
+    // even when Thread is already provisioned (e.g. for Channel Sounding).
+    err = StartAdvertisingProcess();
+#else
     if (ConnectivityMgr().IsThreadProvisioned())
     {
         ChipLogProgress(DeviceLayer, "Device provisioned, can't StartAdvertising");
 
         err = CHIP_ERROR_INCORRECT_STATE;
     }
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    else
-    {
-        // Concurrent mode: BLE is already initialized, start advertising directly.
-        err = StartAdvertisingProcess();
-    }
-#else
     else if (!mBLERadioInitialized)
     {
         // Non-concurrent mode: scan Thread networks first, then switch radio to BLE.
@@ -431,6 +459,15 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
         mFlags.Set(Flags::kChipoBleGattServiceRegister);
     }
 
+#if defined(CONFIG_BT_CHANNEL_SOUNDING)
+    // Register RAS GATT service (must be after settings load)
+    if (!mFlags.Has(Flags::kRasGattServiceRegistered))
+    {
+        CsReflector::Init();
+        mFlags.Set(Flags::kRasGattServiceRegistered);
+    }
+#endif
+
     // Initialize C3 characteristic data
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
     ReturnErrorOnFailure(PrepareC3CharData());
@@ -481,14 +518,14 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
 
 CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
 {
-#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD && !defined(CONFIG_CHIP_CONCURRENT_MODE)
     if (ConnectivityMgr().IsThreadProvisioned())
     {
         ChipLogProgress(DeviceLayer, "Device provisioned, StopAdvertising done");
 
         return CHIP_ERROR_INCORRECT_STATE;
     }
-#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD && !defined(CONFIG_CHIP_CONCURRENT_MODE)
 
     ReturnErrorOnFailure(System::MapErrorZephyr(bt_le_adv_stop()));
 
@@ -974,6 +1011,10 @@ void BLEManagerImpl::HandleConnect(struct bt_conn * conId, uint8_t err)
 
     PlatformMgr().LockChipStack();
 
+#if defined(CONFIG_BT_CHANNEL_SOUNDING)
+    CsReflector::OnConnected(conId, err);
+#endif
+
     // Don't handle BLE connecting events when it is not related to CHIPoBLE
     VerifyOrExit(sInstance.mFlags.Has(Flags::kChipoBleGattServiceRegister), );
 
@@ -992,6 +1033,10 @@ void BLEManagerImpl::HandleDisconnect(struct bt_conn * conId, uint8_t reason)
     ChipDeviceEvent event;
 
     PlatformMgr().LockChipStack();
+
+#if defined(CONFIG_BT_CHANNEL_SOUNDING)
+    CsReflector::OnDisconnected(conId);
+#endif
 
     // Don't handle BLE disconnecting events when it is not related to CHIPoBLE
     VerifyOrExit(sInstance.mFlags.Has(Flags::kChipoBleGattServiceRegister), );
@@ -1159,7 +1204,7 @@ void BLEManagerImpl::SwitchToIeee802154(void)
 } // namespace DeviceLayer
 } // namespace chip
 
-#if !defined(CONFIG_ZEPHYR_VERSION_3_3)
+#if !defined(CONFIG_ZEPHYR_VERSION_3_3) && !defined(CONFIG_BT_HOST_CRYPTO)
 // Implementation for Zephyr Bluetooth host.
 int bt_rand(void * buf, size_t len)
 {

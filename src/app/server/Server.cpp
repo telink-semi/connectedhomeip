@@ -543,9 +543,15 @@ CHIP_ERROR Server::Init(const ServerInitParams & initParams)
     if (GetFabricTable().FabricCount() != 0)
     {
 #if CONFIG_NETWORK_LAYER_BLE
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
         // The device is already commissioned, proactively disable BLE advertisement.
         ChipLogProgress(AppServer, "Fabric already commissioned. Disabling BLE advertisement");
         TEMPORARY_RETURN_IGNORED DeviceLayer::ConnectivityMgr().SetBLEAdvertisingEnabled(false);
+#else
+        // Concurrent mode: keep BLE advertising enabled for Channel Sounding.
+        ChipLogProgress(AppServer, "Fabric already commissioned. Enabling BLE advertisement for concurrent mode");
+        TEMPORARY_RETURN_IGNORED DeviceLayer::ConnectivityMgr().SetBLEAdvertisingEnabled(true);
+#endif
 #endif
     }
     else if (initParams.advertiseCommissionableIfNoFabrics)
