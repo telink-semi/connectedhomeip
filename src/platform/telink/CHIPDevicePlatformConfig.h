@@ -124,6 +124,12 @@
 #define CHIP_DEVICE_CONFIG_SUPPORTS_CONCURRENT_CONNECTION 0
 #endif
 
+#ifdef CONFIG_EXPOSE_CHIP_ID_VIA_BLE
+#define CHIP_DEVICE_EXPOSE_CHIP_ID_VIA_BLE CONFIG_EXPOSE_CHIP_ID_VIA_BLE
+#else
+#define CHIP_DEVICE_EXPOSE_CHIP_ID_VIA_BLE 0
+#endif
+
 // ========== Platform-specific Configuration =========
 
 // These are configuration options that are unique to Zephyr platforms.

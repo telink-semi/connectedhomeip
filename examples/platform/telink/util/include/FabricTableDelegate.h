@@ -24,6 +24,8 @@
 #ifdef CONFIG_CHIP_WIFI
 #include "WiFiManager.h"
 #endif
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
 
 class AppFabricTableDelegate : public chip::FabricTable::Delegate
 {
@@ -45,6 +47,18 @@ private:
 
         if (server.GetFabricTable().FabricCount() == 0)
         {
+            ChipLogProgress(DeviceLayer, "Performing erasing of settings partition");
+            /* Erase the user parameters partition to reset mode settings */
+            flash_erase(USER_PARTITION_DEVICE, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+            /* Need to erase zb nvs part */
+            flash_erase(ZB_NVS_PARTITION_DEVICE, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+            // Need to erase cluster para part.
+            flash_erase(USER_CLUSTER_PARTITION_DEVICE, USER_CLUSTER_PARTITION_OFFSET, USER_CLUSTER_PARTITION_SIZE);
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
+            printk("Erasing user parameters and resetting to Zigbee mode");
             // ScheduleFactoryReset in case of failed commissioning
             if (AppTaskCommon::IsCommissioningFailed())
             {
