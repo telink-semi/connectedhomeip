@@ -3206,7 +3206,7 @@ endpoint 0 {
   }
 }
 endpoint 1 {
-  device type ma_dimmablelight = 257, version 1;
+  device type ma_extendedcolorlight = 269, version 1;
 
 
   server cluster Identify {
@@ -3239,7 +3239,7 @@ endpoint 1 {
   }
 
   server cluster OnOff {
-    persist  attribute onOff default = 0x00;
+    persist  attribute onOff default = 0x01;
     ram      attribute globalSceneControl default = 0x01;
     ram      attribute onTime default = 0x0000;
     ram      attribute offWaitTime default = 0x0000;
@@ -3259,9 +3259,9 @@ endpoint 1 {
   }
 
   server cluster LevelControl {
-    persist  attribute currentLevel default = 0x01;
+    persist  attribute currentLevel default = 0xFE;
     ram      attribute remainingTime default = 0x0000;
-    ram      attribute minLevel default = 0x00;
+    ram      attribute minLevel default = 0x01;
     ram      attribute maxLevel default = 0xFE;
     ram      attribute options default = 0x00;
     ram      attribute onOffTransitionTime default = 0x0000;
@@ -3318,11 +3318,11 @@ endpoint 1 {
   }
 
   server cluster ColorControl {
-    persist  attribute currentHue default = 0x00;
-    persist  attribute currentSaturation default = 0x00;
+    persist  attribute currentHue default = 0x18;
+    persist  attribute currentSaturation default = 0xC9;
     ram      attribute remainingTime default = 0x0000;
-    persist  attribute currentX default = 0x616B;
-    persist  attribute currentY default = 0x607D;
+    persist  attribute currentX default = 0x753F;
+    persist  attribute currentY default = 0x68F6;
     persist  attribute colorTemperatureMireds default = 0x00FA;
     persist  attribute colorMode default = 0x01;
     ram      attribute options default = 0x00;
@@ -3338,7 +3338,7 @@ endpoint 1 {
     ram      attribute colorTempPhysicalMinMireds default = 0x0000;
     ram      attribute colorTempPhysicalMaxMireds default = 0xFEFF;
     ram      attribute coupleColorTempToLevelMinMireds;
-    persist  attribute startUpColorTemperatureMireds;
+    persist  attribute startUpColorTemperatureMireds default = 0;
     callback attribute generatedCommandList;
     callback attribute acceptedCommandList;
     callback attribute attributeList;
@@ -3377,3 +3377,5 @@ endpoint 1 {
     callback attribute clusterRevision;
   }
 }
+
+

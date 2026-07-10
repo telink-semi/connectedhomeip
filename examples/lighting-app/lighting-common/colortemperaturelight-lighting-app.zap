@@ -6191,18 +6191,18 @@
       "id": 3,
       "name": "Anonymous Endpoint Type",
       "deviceTypeRef": {
-        "code": 257,
+        "code": 268,
         "profileId": 259,
-        "label": "MA-dimmablelight",
-        "name": "MA-dimmablelight",
+        "label": "MA-colortemperaturelight",
+        "name": "MA-colortemperaturelight",
         "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
-          "code": 257,
+          "code": 268,
           "profileId": 259,
-          "label": "MA-dimmablelight",
-          "name": "MA-dimmablelight",
+          "label": "MA-colortemperaturelight",
+          "name": "MA-colortemperaturelight",
           "deviceTypeOrder": 0
         }
       ],
@@ -6210,10 +6210,10 @@
         1
       ],
       "deviceIdentifiers": [
-        257
+        268
       ],
-      "deviceTypeName": "MA-dimmablelight",
-      "deviceTypeCode": 257,
+      "deviceTypeName": "MA-colortemperaturelight",
+      "deviceTypeCode": 268,
       "deviceTypeProfileId": 259,
       "clusters": [
         {
@@ -6612,7 +6612,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00",
+              "defaultValue": "0x01",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6848,7 +6848,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x01",
+              "defaultValue": "0xFE",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6880,7 +6880,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00",
+              "defaultValue": "0x01",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7667,7 +7667,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00",
+              "defaultValue": "0x18",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7683,7 +7683,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00",
+              "defaultValue": "0xC9",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7715,7 +7715,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x616B",
+              "defaultValue": "0x753F",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7731,7 +7731,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x607D",
+              "defaultValue": "0x68F6",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7747,8 +7747,8 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00FA",
-              "reportable": 1,
+              "defaultValue": "0x0172",
+              "reportable": 0,
               "minInterval": 1,
               "maxInterval": 65534,
               "reportableChange": 0

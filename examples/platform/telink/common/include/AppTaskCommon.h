@@ -41,6 +41,7 @@
 #include <cstdint>
 #include <zephyr/fs/nvs.h>
 #include <zephyr/settings/settings.h>
+#include "ColorFormat.h"
 
 using namespace ::chip;
 using namespace ::chip::app;
@@ -145,6 +146,12 @@ protected:
 
     static void ChipEventHandler(const chip::DeviceLayer::ChipDeviceEvent * event, intptr_t arg);
 
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+    static void GetStartupClusterInfo(void);
+#endif
+#endif
+
     static void UpdateStatusLED(void);
 
     static void OtaEventsHandler(const ChipDeviceEvent * event);
@@ -190,14 +197,36 @@ protected:
 
 typedef struct
 {
-    uint8_t onoff;
-    uint8_t level;
-    uint8_t rfu[30];
+    uint8_t onOff;
+    // DataModel::Nullable<chip::app::Clusters::OnOff::StartUpOnOffEnum> startUpOnOff;
+    uint8_t startUpOnOff;
+
+    uint8_t currentLevel;
+    uint8_t minLevel;
+    uint8_t maxLevel;
+    // DataModel::Nullable<uint8_t> startUpCurrentLevel;
+    uint8_t startUpCurrentLevel;
+    uint8_t preCurrentLevel;
+
+    HsvColor_t hsv;
+    XyColor_t xy;
+    uint16_t colorTemperatureMireds;
+    uint8_t usecolorMode;
+    uint8_t colorMode;
+    uint16_t enhancedCurrentHue;
+    uint8_t enhancedColorMode;
+    // DataModel::Nullable<uint16_t> startUpColorTemperatureMireds;
+    uint16_t startUpColorTemperatureMireds;
+    uint16_t preColorTemperatureMireds;
+
+    uint8_t rfu[7];
 } cluster_startup_para;
 
 void init_cluster_partition(void);
 int store_cluster_para(cluster_startup_para * data);
 int read_cluster_para(cluster_startup_para * data);
+
+extern cluster_startup_para g_light_cluster_para;
 #endif /* CONFIG_STARTUP_OPTIMIZATE */
 #endif /* APP_LIGHT_USER_MODE_EN */
 
