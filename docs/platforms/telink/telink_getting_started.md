@@ -8,14 +8,14 @@ platforms.
 
 ### Supported Chips and Boards
 
-| Board target            | Chip Family        | Flash (default) | Notes                                  |
-| ----------------------- | ------------------ | :-------------: | -------------------------------------- |
-| `tlsr9518adk80d`        | TLSR951X / B91     | 2 MB            | Legacy; broad sample coverage          |
-| `tlsr9528a`             | TLSR952X / B92     | 2 MB            | `_retention` variant for low-power     |
-| `tlsr9118bdk40d`        | TLSR911X / W91     | 2 MB            | Legacy; broad sample coverage          |
-| `tl3218x`               | TL321X             | 2 MB            | `_retention` variant for low-power     |
-| `tl3238x`               | TL323X             | 2 MB            | Dual-mode (Matter + Zigbee) supported  |
-| `tl7218x`               | TL721X             | 2 MB            | `_retention` variant for low-power     |
+| Board target     | Chip Family    | Flash (default) | Notes                                 |
+| ---------------- | -------------- | :-------------: | ------------------------------------- |
+| `tlsr9518adk80d` | TLSR951X / B91 |      2 MB       | Legacy; broad sample coverage         |
+| `tlsr9528a`      | TLSR952X / B92 |      2 MB       | `_retention` variant for low-power    |
+| `tlsr9118bdk40d` | TLSR911X / W91 |      2 MB       | Legacy; broad sample coverage         |
+| `tl3218x`        | TL321X         |      2 MB       | `_retention` variant for low-power    |
+| `tl3238x`        | TL323X         |      2 MB       | Dual-mode (Matter + Zigbee) supported |
+| `tl7218x`        | TL721X         |      2 MB       | `_retention` variant for low-power    |
 
 > See the [Release Notes](./releases/telink_release_notes.md) for the exact chip
 > versions, EVK versions, and per-example support matrix validated in each
@@ -26,10 +26,10 @@ platforms.
 The Telink Matter SDK is built **on top of** the Telink Zephyr SDK. The two are
 tightly coupled and must be used as a matched pair:
 
-- The **Telink Zephyr SDK** provides Zephyr RTOS, the Telink HAL, the BLE
-  stack, MCUBoot, OpenThread, and the WEST build toolchain.
-- The **Telink Matter SDK** (this repository) builds upon that foundation to
-  deliver the Matter protocol stack and Telink example applications.
+-   The **Telink Zephyr SDK** provides Zephyr RTOS, the Telink HAL, the BLE
+    stack, MCUBoot, OpenThread, and the WEST build toolchain.
+-   The **Telink Matter SDK** (this repository) builds upon that foundation to
+    deliver the Matter protocol stack and Telink example applications.
 
 Both are required — the Matter SDK cannot be built without the Zephyr SDK, and
 the Zephyr SDK alone does not provide Matter support.
@@ -41,8 +41,8 @@ the Zephyr SDK alone does not provide Matter support.
 
 ## Step 1: Set up the Telink Zephyr SDK
 
-The Telink Matter examples use `west build` and require the Telink Zephyr SDK
-to be installed and exported via `TELINK_ZEPHYR_BASE`.
+The Telink Matter examples use `west build` and require the Telink Zephyr SDK to
+be installed and exported via `TELINK_ZEPHYR_BASE`.
 
 ### 1.1 Install host dependencies
 
@@ -158,9 +158,8 @@ source scripts/bootstrap.sh
 
 ## Step 3: Build a Matter example
 
-Telink Matter examples live under `examples/<app-name>/telink/`. Each example
-is built with `west build` (which invokes the Zephyr build system under the
-hood).
+Telink Matter examples live under `examples/<app-name>/telink/`. Each example is
+built with `west build` (which invokes the Zephyr build system under the hood).
 
 ### 3.1 Activate the environment
 
@@ -216,11 +215,11 @@ Common target options include `-compress-lzma`, `-ota`, `-dfu-smp`,
 TL3238X supports several configurations depending on flash size and dual-mode
 (Matter + Zigbee) needs. Key combinations:
 
-| Config                                | Flash | OTA | LZMA | Dual-mode | Conf file                                  |
-| ------------------------------------- | :---: | :-: | :--: | :-------: | ------------------------------------------ |
-| Default (no OTA, no MCUBoot)          | 2 MB  | No  | No   | No        | `boards/tl3238x.conf`                      |
-| OTA + BT DFU + LZMA                   | 2 MB  | Yes | Yes  | No        | `boards/tl3238x_2m_flash_ota_lzma.conf`    |
-| Dual-mode (Matter + Zigbee) + OTA     | 4 MB  | Yes | No   | Yes       | `boards/tl3238x_4m_flash_dual_mode_ota.conf` |
+| Config                            | Flash | OTA | LZMA | Dual-mode | Conf file                                    |
+| --------------------------------- | :---: | :-: | :--: | :-------: | -------------------------------------------- |
+| Default (no OTA, no MCUBoot)      | 2 MB  | No  |  No  |    No     | `boards/tl3238x.conf`                        |
+| OTA + BT DFU + LZMA               | 2 MB  | Yes | Yes  |    No     | `boards/tl3238x_2m_flash_ota_lzma.conf`      |
+| Dual-mode (Matter + Zigbee) + OTA | 4 MB  | Yes |  No  |    Yes    | `boards/tl3238x_4m_flash_dual_mode_ota.conf` |
 
 > ⚠️ For 2 MB Flash + OTA, LZMA compression is **required** — a non-LZMA build
 > will not fit.
@@ -259,8 +258,8 @@ A typical Linux BDT session:
 ```
 
 > For B92 / TL321X / TL721X, run `./bdt <chip> ulf` to unlock the flash before
-> erasing. For TL322X / TL323X, use the **TGui-BDT** tool (or `sctool` on
-> Linux) with the on-board programmer.
+> erasing. For TL322X / TL323X, use the **TGui-BDT** tool (or `sctool` on Linux)
+> with the on-board programmer.
 
 ### 4.3 UART console
 
@@ -278,8 +277,9 @@ Baud rate: **115200** bits/s.
 
 ### 5.1 Build chip-tool
 
-Follow the [chip-tool guide](../../development_controllers/chip-tool/chip_tool_guide.md)
-to build the Matter controller.
+Follow the
+[chip-tool guide](../../development_controllers/chip-tool/chip_tool_guide.md) to
+build the Matter controller.
 
 ### 5.2 Set up a Thread border router
 
@@ -313,20 +313,20 @@ Example:
 
 The on-board buttons and LEDs provide basic control and status feedback:
 
-| Button   | Function               | Description                                                            |
-| :------- | :--------------------- | :--------------------------------------------------------------------- |
-| Button 1 | Factory reset          | Press 3 times to forget the commissioned Thread network                |
-| Button 2 | App control            | Manually triggers the application state (e.g. toggle lighting)         |
-| Button 3 | Thread start           | Commission with static credentials and enable Thread                   |
-| Button 4 | Open commission window | Opens the BLE commissioning window                                     |
+| Button   | Function               | Description                                                    |
+| :------- | :--------------------- | :------------------------------------------------------------- |
+| Button 1 | Factory reset          | Press 3 times to forget the commissioned Thread network        |
+| Button 2 | App control            | Manually triggers the application state (e.g. toggle lighting) |
+| Button 3 | Thread start           | Commission with static credentials and enable Thread           |
+| Button 4 | Open commission window | Opens the BLE commissioning window                             |
 
 **Red LED** — Thread network state:
 
-| State                    | Meaning                                                       |
-| :----------------------- | :------------------------------------------------------------ |
-| Short pulses             | Not commissioned; Thread disabled                             |
-| Frequent pulses          | Commissioned; joining the Thread network                      |
-| Wide pulses              | Joined to the Thread network as a CHILD                       |
+| State           | Meaning                                  |
+| :-------------- | :--------------------------------------- |
+| Short pulses    | Not commissioned; Thread disabled        |
+| Frequent pulses | Commissioned; joining the Thread network |
+| Wide pulses     | Joined to the Thread network as a CHILD  |
 
 **Green LED** — Identify (blinks when the Identify command is received).
 
@@ -338,20 +338,20 @@ OTA on other examples, set `CONFIG_CHIP_OTA_REQUESTOR=y` in the example's
 
 After building with OTA enabled, the following artifacts are generated:
 
-| File                  | Purpose                                              |
-| --------------------- | ---------------------------------------------------- |
-| `merged.bin`          | Main binary to flash (MCUBoot + app), for first flash|
-| `matter.ota`          | OTA image for the OTA Provider                       |
-| `merged_dfu.lzma.bin` | LZMA-compressed DFU image for BLE SMP DFU            |
+| File                  | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `merged.bin`          | Main binary to flash (MCUBoot + app), for first flash |
+| `matter.ota`          | OTA image for the OTA Provider                        |
+| `merged_dfu.lzma.bin` | LZMA-compressed DFU image for BLE SMP DFU             |
 
 To test OTA with a Linux OTA Provider, refer to the
 [OTA section in the lighting-app README](../../../examples/lighting-app/telink/README.md#ota-with-linux-ota-provider).
 
 ## Next steps
 
-- [Telink Release Notes](./releases/telink_release_notes.md) — version info, chip/EVK
-  versions, per-example support matrix, and resource usage tables.
-- [Telink Zephyr Getting Started](https://github.com/telink-semi/zephyr/blob/develop/doc/telink/getting_started/index.md)
-  — Zephyr SDK setup, BDT flashing details, and board overviews.
-- Per-example `README.md` files under `examples/<app>/telink/` — example-specific
-  build commands, button/LED mappings, and chip-tool usage.
+-   [Telink Release Notes](./releases/telink_release_notes.md) — version info,
+    chip/EVK versions, per-example support matrix, and resource usage tables.
+-   [Telink Zephyr Getting Started](https://github.com/telink-semi/zephyr/blob/develop/doc/telink/getting_started/index.md)
+    — Zephyr SDK setup, BDT flashing details, and board overviews.
+-   Per-example `README.md` files under `examples/<app>/telink/` —
+    example-specific build commands, button/LED mappings, and chip-tool usage.
