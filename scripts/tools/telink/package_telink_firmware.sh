@@ -139,7 +139,7 @@ while [ $# -gt 0 ]; do
             GENERATE_TL7218X=true
             shift
             ;;
-        build_tl3238x*|build_tl7218x*)
+        build_tl3238x* | build_tl7218x*)
             TARGETS+=("$1")
             shift
             ;;
@@ -197,7 +197,7 @@ source scripts/activate.sh
 should_generate() {
     local target="$1"
     if [ ${#TARGETS[@]} -eq 0 ]; then
-        return 0  # No targets specified, generate all
+        return 0 # No targets specified, generate all
     fi
     for arg in "${TARGETS[@]}"; do
         if [ "$arg" = "$target" ]; then
@@ -273,7 +273,7 @@ generate_lighting_app() {
             echo "=== TL3238X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x -d "$BUILD_DIR" -- \
-              2>&1 | tee "$BUILD_DIR.log"
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_2m_flash_lzma_v1; then
@@ -282,9 +282,9 @@ generate_lighting_app() {
             echo "=== TL3238X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
-              -DCONF_FILE="prj.conf;boards/tl3238x_2m_flash_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl3238x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_2m_flash_lzma_v2; then
@@ -293,9 +293,9 @@ generate_lighting_app() {
             echo "=== TL3238X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
-              -DCONF_FILE="prj.conf;boards/tl3238x_2m_flash_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl3238x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_4m_dual_mode; then
@@ -311,10 +311,10 @@ generate_lighting_app() {
             fi
 
             west build -p -b tl3238x -d "$BUILD_DIR" -- \
-              -DFLASH_SIZE=4m \
-              -DCONF_FILE="prj.conf;boards/tl3238x_4m_flash_dual_mode_ota.conf" \
-              -DDTC_OVERLAY_FILE="boards/tl3238x_for_TL3238C-EVK40D.overlay" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DFLASH_SIZE=4m \
+                -DCONF_FILE="prj.conf;boards/tl3238x_4m_flash_dual_mode_ota.conf" \
+                -DDTC_OVERLAY_FILE="boards/tl3238x_for_TL3238C-EVK40D.overlay" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
     fi
 
@@ -325,7 +325,7 @@ generate_lighting_app() {
             echo "=== TL7218X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x -d "$BUILD_DIR" -- \
-              2>&1 | tee "$BUILD_DIR.log"
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl7218x_2m_flash_lzma_v1; then
@@ -334,9 +334,9 @@ generate_lighting_app() {
             echo "=== TL7218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
-              -DCONF_FILE="prj.conf;boards/tl7218x_2m_flash_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl7218x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl7218x_2m_flash_lzma_v2; then
@@ -345,9 +345,9 @@ generate_lighting_app() {
             echo "=== TL7218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
-              -DCONF_FILE="prj.conf;boards/tl7218x_2m_flash_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl7218x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
     fi
 }
@@ -365,7 +365,7 @@ generate_light_switch() {
             echo "=== TL3238X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x_retention -d "$BUILD_DIR" -- \
-              2>&1 | tee "$BUILD_DIR.log"
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_retention_lzma_v1; then
@@ -374,9 +374,9 @@ generate_light_switch() {
             echo "=== TL3238X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x_retention -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
-              -DCONF_FILE="prj.conf;boards/tl3238x_retention_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl3238x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_retention_lzma_v2; then
@@ -385,9 +385,9 @@ generate_light_switch() {
             echo "=== TL3238X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl3238x_retention -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
-              -DCONF_FILE="prj.conf;boards/tl3238x_retention_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl3238x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl3238x_retention_dual_mode; then
@@ -406,8 +406,8 @@ generate_light_switch() {
             fi
 
             west build -p -b tl3238x_retention -d "$BUILD_DIR" -- \
-              -DCONF_FILE="prj.conf;boards/tl3238x_retention_dual_mode_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONF_FILE="prj.conf;boards/tl3238x_retention_dual_mode_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
     fi
 
@@ -418,7 +418,7 @@ generate_light_switch() {
             echo "=== TL7218X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x_retention -d "$BUILD_DIR" -- \
-              2>&1 | tee "$BUILD_DIR.log"
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl7218x_retention_lzma_v1; then
@@ -427,9 +427,9 @@ generate_light_switch() {
             echo "=== TL7218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x_retention -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
-              -DCONF_FILE="prj.conf;boards/tl7218x_retention_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl7218x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
 
         if should_generate build_tl7218x_retention_lzma_v2; then
@@ -438,9 +438,9 @@ generate_light_switch() {
             echo "=== TL7218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
             echo "Generate directory: $BUILD_DIR"
             west build -p -b tl7218x_retention -d "$BUILD_DIR" -- \
-              -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
-              -DCONF_FILE="prj.conf;boards/tl7218x_retention_ota_lzma.conf" \
-              2>&1 | tee "$BUILD_DIR.log"
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl7218x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
         fi
     fi
 }
@@ -489,7 +489,7 @@ extract_firmware() {
     mkdir -p "$PKG_DIR/feature-test/contact-sensor/tl3238x"
     mkdir -p "$PKG_DIR/feature-test/contact-sensor/tl7218x"
     echo "Package directory: $PKG_DIR"
-    echo "$PKG_DIR" > "$BASE_PKG_DIR/.last_pkg_dir"
+    echo "$PKG_DIR" >"$BASE_PKG_DIR/.last_pkg_dir"
 
     # TL3238X Targets
     BUILD_32_DEFAULT=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl3238x_default")
@@ -685,7 +685,7 @@ extract_firmware() {
 add_firmware_entry() {
     local file="$1"
     local desc="$2"
-    echo "| $file | $desc |" >> "$PKG_DIR/README.md"
+    echo "| $file | $desc |" >>"$PKG_DIR/README.md"
 }
 
 # Generate README function
@@ -750,7 +750,7 @@ generate_readme() {
         HAL_TELINK_BRANCH="(detached HEAD)"
     fi
 
-    cat > "$PKG_DIR/README.md" << EOF
+    cat >"$PKG_DIR/README.md" <<EOF
 # TL3238X & TL7218X Matter Firmware Package
 
 **Generated on:** $(date +%Y-%m-%d)
@@ -795,7 +795,7 @@ EOF
     fi
 
     # TL7218X Light Switch
-    cat >> "$PKG_DIR/README.md" << EOF
+    cat >>"$PKG_DIR/README.md" <<EOF
 
 ## 2.2 Light Switch App (light-switch/tl7218x)
 
@@ -817,7 +817,7 @@ EOF
     fi
 
     # TL3238X Lighting
-    cat >> "$PKG_DIR/README.md" << EOF
+    cat >>"$PKG_DIR/README.md" <<EOF
 
 ## 2.3 Lighting App (lighting/tl3238x)
 
@@ -842,7 +842,7 @@ EOF
     fi
 
     # TL7218X Lighting
-    cat >> "$PKG_DIR/README.md" << EOF
+    cat >>"$PKG_DIR/README.md" <<EOF
 
 ## 2.4 Lighting App (lighting/tl7218x)
 
@@ -863,7 +863,7 @@ EOF
         add_firmware_entry "lighting/tl7218x/lighting-app_2m_flash_lzma_v2_dfu.lzma.bin" "BLE DFU image v2 (LZMA, 2MB Flash)"
     fi
 
-    cat >> "$PKG_DIR/README.md" << EOF
+    cat >>"$PKG_DIR/README.md" <<EOF
 
 ## 3. Testing Recommendations
 
@@ -916,8 +916,8 @@ snapshot_release_note() {
     # 1. Prefer an exact tag on the current commit.
     # 2. Fall back to the most recently created `tl_v*` tag.
     local version=""
-    version=$(git -C "$CONNECTEDHOME_DIR" describe --tags --exact-match 2>/dev/null \
-        | grep '^tl_v' | head -1 || true)
+    version=$(git -C "$CONNECTEDHOME_DIR" describe --tags --exact-match 2>/dev/null |
+        grep '^tl_v' | head -1 || true)
     if [ -z "$version" ]; then
         version=$(git -C "$CONNECTEDHOME_DIR" tag --list 'tl_v*' \
             --sort=-creatordate | head -1)
