@@ -924,12 +924,12 @@ snapshot_release_note() {
     fi
 
     if [ -z "$version" ]; then
-        echo "Warning: no `tl_v*` git tag found; skipping release note snapshot."
+        echo "Warning: no $(tl_v*) git tag found; skipping release note snapshot."
         echo "  Tag the release (e.g. \`git tag tl_v1.0.0\`) to enable snapshotting."
         return 0
     fi
 
-    local snapshot="$releases_dir/telink_release_notes_${version}.md"
+    local snapshot="$releases_dir/telink_release_notes_$version.md"
 
     if [ -f "$snapshot" ]; then
         echo "Versioned snapshot already exists, leaving untouched:"
