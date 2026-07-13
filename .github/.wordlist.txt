@@ -1719,3 +1719,12 @@ Zigbee
 zigbeealliance
 zigbeethread
 zsdk
+bdk
+Changelog
+changelog
+devicetree
+DLM
+downloaders
+ILM
+tlk
+udev
