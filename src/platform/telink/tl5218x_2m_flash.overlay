@@ -18,7 +18,7 @@
 // Image size (0xe3653) + trailer (0x3030), so modify slot1 size to 924k.
 		slot1_partition: partition@fc000 {
 			label = "image-1";
-			reg = <0xfc000 0xe7000>; // total slot0 is 924k
+			reg = <0xfc000 0xe7000>; // total slot1 is 924k
 		};
 		user_rfu_partition: partition@1e3000 {
  			label = "user_rfu";

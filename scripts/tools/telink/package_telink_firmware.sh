@@ -20,7 +20,7 @@ set -e
 # Unified Package script for Telink TL3238X/TL7218X Matter firmware
 # This script combines generate, extract, readme, and zip functionality
 #
-# Usage: package_telink_firmware.sh [--build] [--extract] [--readme] [--zip] [--all] [--lighting] [--switch] [--tl3238x] [--tl7218x] [target1 target2...]
+# Usage: package_telink_firmware.sh [--build] [--extract] [--readme] [--zip] [--all] [--lighting] [--switch] [--tl3238x] [--tl5218x] [--tl7218x] [target1 target2...]
 #
 # --build      : Build firmware targets
 # --extract    : Extract firmware from build directories
@@ -52,6 +52,25 @@ set -e
 #       - build_tl3238x_retention_v2
 #       - build_tl3238x_retention_lzma_v1
 #       - build_tl3238x_retention_lzma_v2
+#
+#   TL5218X:
+#     Lighting App:
+#       - build_tl5218x_default
+#       - build_tl5218x_2m_flash_lzma_v1
+#       - build_tl5218x_2m_flash_lzma_v2
+#       - build_tl5218x_4m_dual_mode
+#
+#     Light Switch App:
+#       - build_tl5218x_retention_default
+#       - build_tl5218x_retention_lzma_v1
+#       - build_tl5218x_retention_lzma_v2
+#       - build_tl5218x_retention_dual_mode
+#
+#     Contact Sensor App:
+#       - build_tl5218x_retention_v1
+#       - build_tl5218x_retention_v2
+#       - build_tl5218x_retention_lzma_v1
+#       - build_tl5218x_retention_lzma_v2
 #
 #   TL7218X:
 #     Lighting App:
@@ -91,6 +110,7 @@ GENERATE_LIGHTING=false
 GENERATE_SWITCH=false
 GENERATE_CONTACT=false
 GENERATE_TL3238X=false
+GENERATE_TL5218X=false
 GENERATE_TL7218X=false
 TARGETS=()
 
@@ -135,17 +155,21 @@ while [ $# -gt 0 ]; do
             GENERATE_TL3238X=true
             shift
             ;;
+        --tl5218x)
+            GENERATE_TL5218X=true
+            shift
+            ;;
         --tl7218x)
             GENERATE_TL7218X=true
             shift
             ;;
-        build_tl3238x* | build_tl7218x*)
+        build_tl3238x* | build_tl5218x* | build_tl7218x*)
             TARGETS+=("$1")
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--build] [--extract] [--readme] [--zip] [--all] [--lighting] [--switch] [--contact] [--tl3238x] [--tl7218x] [target1 target2...]"
+            echo "Usage: $0 [--build] [--extract] [--readme] [--zip] [--all] [--lighting] [--switch] [--contact] [--tl3238x] [--tl5218x] [--tl7218x] [target1 target2...]"
             exit 1
             ;;
     esac
@@ -165,14 +189,15 @@ if [ "$DO_BUILD" = true ] && [ ${#TARGETS[@]} -eq 0 ]; then
     GENERATE_SWITCH=true
     GENERATE_CONTACT=true
     GENERATE_TL3238X=true
+    GENERATE_TL5218X=true
     GENERATE_TL7218X=true
 elif [ "$DO_BUILD" = true ]; then
     # Check which apps are needed based on targets
     for target in "${TARGETS[@]}"; do
-        if [[ "$target" == build_tl3238x_* ]] || [[ "$target" == build_tl7218x_* ]]; then
+        if [[ "$target" == build_tl3238x_* ]] || [[ "$target" == build_tl5218x_* ]] || [[ "$target" == build_tl7218x_* ]]; then
             GENERATE_LIGHTING=true
         fi
-        if [[ "$target" == build_tl3238x_retention* ]] || [[ "$target" == build_tl7218x_retention* ]]; then
+        if [[ "$target" == build_tl3238x_retention* ]] || [[ "$target" == build_tl5218x_retention* ]] || [[ "$target" == build_tl7218x_retention* ]]; then
             # Check if it's contact sensor or light switch
             if [[ "$target" == *contact* ]]; then
                 GENERATE_CONTACT=true
@@ -182,6 +207,9 @@ elif [ "$DO_BUILD" = true ]; then
         fi
         if [[ "$target" == build_tl3238x* ]]; then
             GENERATE_TL3238X=true
+        fi
+        if [[ "$target" == build_tl5218x* ]]; then
+            GENERATE_TL5218X=true
         fi
         if [[ "$target" == build_tl7218x* ]]; then
             GENERATE_TL7218X=true
@@ -318,6 +346,57 @@ generate_lighting_app() {
         fi
     fi
 
+    if [ "$GENERATE_TL5218X" = true ]; then
+        if should_generate build_tl5218x_default; then
+            BUILD_DIR="build_tl5218x_default_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x -d "$BUILD_DIR" -- \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_2m_flash_lzma_v1; then
+            BUILD_DIR="build_tl5218x_2m_flash_lzma_v1_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x -d "$BUILD_DIR" -- \
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl5218x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_2m_flash_lzma_v2; then
+            BUILD_DIR="build_tl5218x_2m_flash_lzma_v2_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x -d "$BUILD_DIR" -- \
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl5218x_2m_flash_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_4m_dual_mode; then
+            BUILD_DIR="build_tl5218x_4m_dual_mode_$DATE"
+            echo ""
+            echo "=== TL5218X: 4MB Flash (Matter + Zigbee dual mode, no LZMA) ==="
+            echo "Generate directory: $BUILD_DIR"
+
+            # Copy lighting app specific Zigbee firmware
+            if [ -f "$ZEPHYR_BASE/TL323X_FW/ZB/dual_matter_sampleLight_bleAdv_tl323x.bin" ]; then
+                cp "$ZEPHYR_BASE/TL323X_FW/ZB/dual_matter_sampleLight_bleAdv_tl323x.bin" "$ZEPHYR_BASE/TL323X_FW/ZB/Zigbee-SampleDemo.bin"
+                echo "Copied dual_matter_sampleLight_bleAdv_tl323x.bin to Zigbee-SampleDemo.bin"
+            fi
+
+            west build -p -b tl5218x -d "$BUILD_DIR" -- \
+                -DFLASH_SIZE=4m \
+                -DCONF_FILE="prj.conf;boards/tl5218x_4m_flash_dual_mode_ota.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+    fi
+
     if [ "$GENERATE_TL7218X" = true ]; then
         if should_generate build_tl7218x_default; then
             BUILD_DIR="build_tl7218x_default_$DATE"
@@ -411,6 +490,59 @@ generate_light_switch() {
         fi
     fi
 
+    if [ "$GENERATE_TL5218X" = true ]; then
+        if should_generate build_tl5218x_retention_default; then
+            BUILD_DIR="build_tl5218x_retention_default_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, NO OTA/MCUBoot, NO LZMA) ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x_retention -d "$BUILD_DIR" -- \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_retention_lzma_v1; then
+            BUILD_DIR="build_tl5218x_retention_lzma_v1_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v1 ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x_retention -d "$BUILD_DIR" -- \
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=1 \
+                -DCONF_FILE="prj.conf;boards/tl5218x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_retention_lzma_v2; then
+            BUILD_DIR="build_tl5218x_retention_lzma_v2_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter only, enable BT DFU, LZMA compressed) - v2 ==="
+            echo "Generate directory: $BUILD_DIR"
+            west build -p -b tl5218x_retention -d "$BUILD_DIR" -- \
+                -DCONFIG_CHIP_DEVICE_SOFTWARE_VERSION=2 \
+                -DCONF_FILE="prj.conf;boards/tl5218x_retention_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+
+        if should_generate build_tl5218x_retention_dual_mode; then
+            BUILD_DIR="build_tl5218x_retention_dual_mode_$DATE"
+            echo ""
+            echo "=== TL5218X: 2MB Flash (Matter + Zigbee dual mode, LZMA compressed, enable BT DFU) ==="
+            echo "Generate directory: $BUILD_DIR"
+
+            # Copy light-switch app specific Zigbee firmware
+            if [ -f "$ZEPHYR_BASE/TL323X_FW/ZB/sampleSwitch_tl323x_log.bin" ]; then
+                cp "$ZEPHYR_BASE/TL323X_FW/ZB/sampleSwitch_tl323x_log.bin" "$ZEPHYR_BASE/TL323X_FW/ZB/Zigbee-SampleDemo.bin"
+                echo "Copied sampleSwitch_tl323x_log.bin to Zigbee-SampleDemo.bin"
+            elif [ -f "$ZEPHYR_BASE/TL323X_FW/ZB/sampleSwitch_tl323x-bak.bin" ]; then
+                cp "$ZEPHYR_BASE/TL323X_FW/ZB/sampleSwitch_tl323x-bak.bin" "$ZEPHYR_BASE/TL323X_FW/ZB/Zigbee-SampleDemo.bin"
+                echo "Copied sampleSwitch_tl323x-bak.bin to Zigbee-SampleDemo.bin"
+            fi
+
+            west build -p -b tl5218x_retention -d "$BUILD_DIR" -- \
+                -DCONF_FILE="prj.conf;boards/tl5218x_retention_dual_mode_ota_lzma.conf" \
+                2>&1 | tee "$BUILD_DIR.log"
+        fi
+    fi
+
     if [ "$GENERATE_TL7218X" = true ]; then
         if should_generate build_tl7218x_retention_default; then
             BUILD_DIR="build_tl7218x_retention_default_$DATE"
@@ -481,12 +613,15 @@ extract_firmware() {
     PARENT_DIR="$(cd "$CONNECTEDHOME_DIR/.." && pwd)"
     BASE_PKG_DIR="$PARENT_DIR/Matter_test_materials"
     mkdir -p "$BASE_PKG_DIR"
-    PKG_DIR="$BASE_PKG_DIR/TL3238X-TL7218X-Matter-DUT-firmware-images-$DATE"
+    PKG_DIR="$BASE_PKG_DIR/TL3238X-TL5218X-TL7218X-Matter-DUT-firmware-images-$DATE"
     mkdir -p "$PKG_DIR/feature-test/light-switch/tl3238x"
+    mkdir -p "$PKG_DIR/feature-test/light-switch/tl5218x"
     mkdir -p "$PKG_DIR/feature-test/light-switch/tl7218x"
     mkdir -p "$PKG_DIR/feature-test/lighting/tl3238x"
+    mkdir -p "$PKG_DIR/feature-test/lighting/tl5218x"
     mkdir -p "$PKG_DIR/feature-test/lighting/tl7218x"
     mkdir -p "$PKG_DIR/feature-test/contact-sensor/tl3238x"
+    mkdir -p "$PKG_DIR/feature-test/contact-sensor/tl5218x"
     mkdir -p "$PKG_DIR/feature-test/contact-sensor/tl7218x"
     echo "Package directory: $PKG_DIR"
     echo "$PKG_DIR" >"$BASE_PKG_DIR/.last_pkg_dir"
@@ -506,6 +641,22 @@ extract_firmware() {
     BUILD_32_CS_V2=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl3238x_retention_v2")
     BUILD_32_CS_LZMA_V1=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl3238x_retention_lzma_v1")
     BUILD_32_CS_LZMA_V2=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl3238x_retention_lzma_v2")
+
+    # TL5218X Targets
+    BUILD_52_DEFAULT=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl5218x_default")
+    BUILD_52_2M_FLASH_LZMA_V1=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl5218x_2m_flash_lzma_v1")
+    BUILD_52_2M_FLASH_LZMA_V2=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl5218x_2m_flash_lzma_v2")
+    BUILD_52_4M_DUAL=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl5218x_4m_dual_mode")
+
+    BUILD_52_RET_DEFAULT=$(get_build_dir "$LIGHT_SWITCH_APP_DIR" "build_tl5218x_retention_default")
+    BUILD_52_RET_LZMA_V1=$(get_build_dir "$LIGHT_SWITCH_APP_DIR" "build_tl5218x_retention_lzma_v1")
+    BUILD_52_RET_LZMA_V2=$(get_build_dir "$LIGHT_SWITCH_APP_DIR" "build_tl5218x_retention_lzma_v2")
+    BUILD_52_RET_DUAL=$(get_build_dir "$LIGHT_SWITCH_APP_DIR" "build_tl5218x_retention_dual_mode")
+
+    BUILD_52_CS_V1=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl5218x_retention_v1")
+    BUILD_52_CS_V2=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl5218x_retention_v2")
+    BUILD_52_CS_LZMA_V1=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl5218x_retention_lzma_v1")
+    BUILD_52_CS_LZMA_V2=$(get_build_dir "$CONTACT_SENSOR_APP_DIR" "build_tl5218x_retention_lzma_v2")
 
     # TL7218X Targets
     BUILD_72_DEFAULT=$(get_build_dir "$LIGHTING_APP_DIR" "build_tl7218x_default")
@@ -528,6 +679,10 @@ extract_firmware() {
         "$BUILD_32_4M_DUAL" "$BUILD_32_RET_DEFAULT" "$BUILD_32_RET_LZMA_V1" \
         "$BUILD_32_RET_LZMA_V2" "$BUILD_32_RET_DUAL" "$BUILD_32_CS_V1" \
         "$BUILD_32_CS_V2" "$BUILD_32_CS_LZMA_V1" "$BUILD_32_CS_LZMA_V2" \
+        "$BUILD_52_DEFAULT" "$BUILD_52_2M_FLASH_LZMA_V1" \
+        "$BUILD_52_2M_FLASH_LZMA_V2" "$BUILD_52_4M_DUAL" "$BUILD_52_RET_DEFAULT" \
+        "$BUILD_52_RET_LZMA_V1" "$BUILD_52_RET_LZMA_V2" "$BUILD_52_RET_DUAL" \
+        "$BUILD_52_CS_V1" "$BUILD_52_CS_V2" "$BUILD_52_CS_LZMA_V1" "$BUILD_52_CS_LZMA_V2" \
         "$BUILD_72_DEFAULT" "$BUILD_72_2M_FLASH_LZMA_V1" \
         "$BUILD_72_2M_FLASH_LZMA_V2" "$BUILD_72_RET_DEFAULT" "$BUILD_72_RET_LZMA_V1" \
         "$BUILD_72_RET_LZMA_V2" "$BUILD_72_CS_V1" \
@@ -559,6 +714,29 @@ extract_firmware() {
     if [ -n "$BUILD_32_4M_DUAL" ] && [ -f "$BUILD_32_4M_DUAL/zephyr/merged.bin" ]; then
         cp "$BUILD_32_4M_DUAL/zephyr/merged.bin" "$PKG_DIR/feature-test/lighting/tl3238x/lighting-app_4m_flash_dual_mode.bin"
         echo "Copied from $BUILD_32_4M_DUAL: $PKG_DIR/feature-test/lighting/tl3238x/lighting-app_4m_flash_dual_mode.bin"
+    fi
+
+    echo ""
+    echo "=== Copying Lighting App files (TL5218X) ==="
+    if [ -n "$BUILD_52_DEFAULT" ] && [ -f "$BUILD_52_DEFAULT/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_DEFAULT/zephyr/merged.bin" "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_default.bin"
+        echo "Copied from $BUILD_52_DEFAULT: $PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_default.bin"
+    fi
+    if [ -n "$BUILD_52_2M_FLASH_LZMA_V1" ] && [ -f "$BUILD_52_2M_FLASH_LZMA_V1/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_2M_FLASH_LZMA_V1/zephyr/merged.bin" "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v1.bin"
+        echo "Copied from $BUILD_52_2M_FLASH_LZMA_V1: $PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v1.bin"
+    fi
+    if [ -n "$BUILD_52_2M_FLASH_LZMA_V2" ] && [ -f "$BUILD_52_2M_FLASH_LZMA_V2/zephyr/matter.ota" ]; then
+        cp "$BUILD_52_2M_FLASH_LZMA_V2/zephyr/matter.ota" "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_ota.ota"
+        echo "Copied from $BUILD_52_2M_FLASH_LZMA_V2: $PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_ota.ota"
+    fi
+    if [ -n "$BUILD_52_2M_FLASH_LZMA_V2" ] && [ -f "$BUILD_52_2M_FLASH_LZMA_V2/zephyr/merged_dfu.lzma.bin" ]; then
+        cp "$BUILD_52_2M_FLASH_LZMA_V2/zephyr/merged_dfu.lzma.bin" "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_dfu.lzma.bin"
+        echo "Copied from $BUILD_52_2M_FLASH_LZMA_V2: $PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_dfu.lzma.bin"
+    fi
+    if [ -n "$BUILD_52_4M_DUAL" ] && [ -f "$BUILD_52_4M_DUAL/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_4M_DUAL/zephyr/merged.bin" "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_4m_flash_dual_mode.bin"
+        echo "Copied from $BUILD_52_4M_DUAL: $PKG_DIR/feature-test/lighting/tl5218x/lighting-app_4m_flash_dual_mode.bin"
     fi
 
     echo ""
@@ -601,6 +779,29 @@ extract_firmware() {
     if [ -n "$BUILD_32_RET_DUAL" ] && [ -f "$BUILD_32_RET_DUAL/zephyr/merged.bin" ]; then
         cp "$BUILD_32_RET_DUAL/zephyr/merged.bin" "$PKG_DIR/feature-test/light-switch/tl3238x/light-switch-app_2m_flash_dual_mode.bin"
         echo "Copied from $BUILD_32_RET_DUAL: $PKG_DIR/feature-test/light-switch/tl3238x/light-switch-app_2m_flash_dual_mode.bin"
+    fi
+
+    echo ""
+    echo "=== Copying Light Switch App files (TL5218X) ==="
+    if [ -n "$BUILD_52_RET_DEFAULT" ] && [ -f "$BUILD_52_RET_DEFAULT/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_RET_DEFAULT/zephyr/merged.bin" "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_default.bin"
+        echo "Copied from $BUILD_52_RET_DEFAULT: $PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_default.bin"
+    fi
+    if [ -n "$BUILD_52_RET_LZMA_V1" ] && [ -f "$BUILD_52_RET_LZMA_V1/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_RET_LZMA_V1/zephyr/merged.bin" "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v1.bin"
+        echo "Copied from $BUILD_52_RET_LZMA_V1: $PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v1.bin"
+    fi
+    if [ -n "$BUILD_52_RET_LZMA_V2" ] && [ -f "$BUILD_52_RET_LZMA_V2/zephyr/matter.ota" ]; then
+        cp "$BUILD_52_RET_LZMA_V2/zephyr/matter.ota" "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_ota.ota"
+        echo "Copied from $BUILD_52_RET_LZMA_V2: $PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_ota.ota"
+    fi
+    if [ -n "$BUILD_52_RET_LZMA_V2" ] && [ -f "$BUILD_52_RET_LZMA_V2/zephyr/merged_dfu.lzma.bin" ]; then
+        cp "$BUILD_52_RET_LZMA_V2/zephyr/merged_dfu.lzma.bin" "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_dfu.lzma.bin"
+        echo "Copied from $BUILD_52_RET_LZMA_V2: $PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_dfu.lzma.bin"
+    fi
+    if [ -n "$BUILD_52_RET_DUAL" ] && [ -f "$BUILD_52_RET_DUAL/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_RET_DUAL/zephyr/merged.bin" "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_dual_mode.bin"
+        echo "Copied from $BUILD_52_RET_DUAL: $PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_dual_mode.bin"
     fi
 
     echo ""
@@ -647,6 +848,33 @@ extract_firmware() {
     if [ -n "$BUILD_32_CS_LZMA_V2" ] && [ -f "$BUILD_32_CS_LZMA_V2/zephyr/merged_dfu.lzma.bin" ]; then
         cp "$BUILD_32_CS_LZMA_V2/zephyr/merged_dfu.lzma.bin" "$PKG_DIR/feature-test/contact-sensor/tl3238x/contact-sensor-app_2m_flash_lzma_v2_dfu.lzma.bin"
         echo "Copied from $BUILD_32_CS_LZMA_V2: $PKG_DIR/feature-test/contact-sensor/tl3238x/contact-sensor-app_2m_flash_lzma_v2_dfu.lzma.bin"
+    fi
+
+    echo ""
+    echo "=== Copying Contact Sensor App files (TL5218X) ==="
+    if [ -n "$BUILD_52_CS_V1" ] && [ -f "$BUILD_52_CS_V1/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_CS_V1/zephyr/merged.bin" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v1.bin"
+        echo "Copied from $BUILD_52_CS_V1: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v1.bin"
+    fi
+    if [ -n "$BUILD_52_CS_V2" ] && [ -f "$BUILD_52_CS_V2/zephyr/matter.ota" ]; then
+        cp "$BUILD_52_CS_V2/zephyr/matter.ota" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v2_ota.ota"
+        echo "Copied from $BUILD_52_CS_V2: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v2_ota.ota"
+    fi
+    if [ -n "$BUILD_52_CS_V2" ] && [ -f "$BUILD_52_CS_V2/zephyr/merged_dfu.bin" ]; then
+        cp "$BUILD_52_CS_V2/zephyr/merged_dfu.bin" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v2_dfu.bin"
+        echo "Copied from $BUILD_52_CS_V2: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_v2_dfu.bin"
+    fi
+    if [ -n "$BUILD_52_CS_LZMA_V1" ] && [ -f "$BUILD_52_CS_LZMA_V1/zephyr/merged.bin" ]; then
+        cp "$BUILD_52_CS_LZMA_V1/zephyr/merged.bin" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v1.bin"
+        echo "Copied from $BUILD_52_CS_LZMA_V1: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v1.bin"
+    fi
+    if [ -n "$BUILD_52_CS_LZMA_V2" ] && [ -f "$BUILD_52_CS_LZMA_V2/zephyr/matter.ota" ]; then
+        cp "$BUILD_52_CS_LZMA_V2/zephyr/matter.ota" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v2_ota.ota"
+        echo "Copied from $BUILD_52_CS_LZMA_V2: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v2_ota.ota"
+    fi
+    if [ -n "$BUILD_52_CS_LZMA_V2" ] && [ -f "$BUILD_52_CS_LZMA_V2/zephyr/merged_dfu.lzma.bin" ]; then
+        cp "$BUILD_52_CS_LZMA_V2/zephyr/merged_dfu.lzma.bin" "$PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v2_dfu.lzma.bin"
+        echo "Copied from $BUILD_52_CS_LZMA_V2: $PKG_DIR/feature-test/contact-sensor/tl5218x/contact-sensor-app_2m_flash_lzma_v2_dfu.lzma.bin"
     fi
 
     echo ""
@@ -751,7 +979,7 @@ generate_readme() {
     fi
 
     cat >"$PKG_DIR/README.md" <<EOF
-# TL3238X & TL7218X Matter Firmware Package
+# TL3238X & TL5218X & TL7218X Matter Firmware Package
 
 **Generated on:** $(date +%Y-%m-%d)
 
@@ -794,10 +1022,35 @@ EOF
         add_firmware_entry "light-switch/tl3238x/light-switch-app_2m_flash_dual_mode.bin" "Dual-mode firmware (Matter/Zigbee, 2MB Flash)"
     fi
 
+    # TL5218X Light Switch
+    cat >>"$PKG_DIR/README.md" <<EOF
+
+## 2.2 Light Switch App (light-switch/tl5218x)
+
+| Firmware File | Description |
+|---------------|-------------|
+EOF
+
+    if [ -f "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_default.bin" ]; then
+        add_firmware_entry "light-switch/tl5218x/light-switch-app_2m_flash_default.bin" "Basic firmware (2MB Flash, no OTA/DFU)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v1.bin" ]; then
+        add_firmware_entry "light-switch/tl5218x/light-switch-app_2m_flash_lzma_v1.bin" "App software version 1 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_ota.ota" ]; then
+        add_firmware_entry "light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_ota.ota" "Matter OTA image v2 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_dfu.lzma.bin" ]; then
+        add_firmware_entry "light-switch/tl5218x/light-switch-app_2m_flash_lzma_v2_dfu.lzma.bin" "BLE DFU image v2 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/light-switch/tl5218x/light-switch-app_2m_flash_dual_mode.bin" ]; then
+        add_firmware_entry "light-switch/tl5218x/light-switch-app_2m_flash_dual_mode.bin" "Dual-mode firmware (Matter/Zigbee, 2MB Flash)"
+    fi
+
     # TL7218X Light Switch
     cat >>"$PKG_DIR/README.md" <<EOF
 
-## 2.2 Light Switch App (light-switch/tl7218x)
+## 2.3 Light Switch App (light-switch/tl7218x)
 
 | Firmware File | Description |
 |---------------|-------------|
@@ -819,7 +1072,7 @@ EOF
     # TL3238X Lighting
     cat >>"$PKG_DIR/README.md" <<EOF
 
-## 2.3 Lighting App (lighting/tl3238x)
+## 2.4 Lighting App (lighting/tl3238x)
 
 | Firmware File | Description |
 |---------------|-------------|
@@ -841,10 +1094,35 @@ EOF
         add_firmware_entry "lighting/tl3238x/lighting-app_4m_flash_dual_mode.bin" "Dual-mode firmware (Matter/Zigbee, 4MB Flash)"
     fi
 
+    # TL5218X Lighting
+    cat >>"$PKG_DIR/README.md" <<EOF
+
+## 2.5 Lighting App (lighting/tl5218x)
+
+| Firmware File | Description |
+|---------------|-------------|
+EOF
+
+    if [ -f "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_default.bin" ]; then
+        add_firmware_entry "lighting/tl5218x/lighting-app_2m_flash_default.bin" "Basic firmware (2MB Flash, no OTA/DFU)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v1.bin" ]; then
+        add_firmware_entry "lighting/tl5218x/lighting-app_2m_flash_lzma_v1.bin" "App software version 1 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_ota.ota" ]; then
+        add_firmware_entry "lighting/tl5218x/lighting-app_2m_flash_lzma_v2_ota.ota" "Matter OTA image v2 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_2m_flash_lzma_v2_dfu.lzma.bin" ]; then
+        add_firmware_entry "lighting/tl5218x/lighting-app_2m_flash_lzma_v2_dfu.lzma.bin" "BLE DFU image v2 (LZMA, 2MB Flash)"
+    fi
+    if [ -f "$PKG_DIR/feature-test/lighting/tl5218x/lighting-app_4m_flash_dual_mode.bin" ]; then
+        add_firmware_entry "lighting/tl5218x/lighting-app_4m_flash_dual_mode.bin" "Dual-mode firmware (Matter/Zigbee, 4MB Flash)"
+    fi
+
     # TL7218X Lighting
     cat >>"$PKG_DIR/README.md" <<EOF
 
-## 2.4 Lighting App (lighting/tl7218x)
+## 2.6 Lighting App (lighting/tl7218x)
 
 | Firmware File | Description |
 |---------------|-------------|
@@ -881,7 +1159,8 @@ EOF
 - Perform upgrade testing using v2 DFU image
 
 ### 3.4 Dual-mode Testing (Optional)
-- Verify dual-mode functionality (Matter/Zigbee) of lighting-app_4m_flash_dual_mode.bin
+- Verify dual-mode functionality (Matter/Zigbee) of lighting-app_4m_flash_dual_mode.bin (TL3238X/TL5218X)
+- Verify dual-mode functionality (Matter/Zigbee) of light-switch-app_2m_flash_dual_mode.bin (TL3238X/TL5218X)
 EOF
 
     echo "Generated README.md at: $PKG_DIR/README.md"
