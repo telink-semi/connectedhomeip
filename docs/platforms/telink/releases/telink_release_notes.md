@@ -18,10 +18,10 @@
 
 ## 📖 Introduction
 
-This release is based on the latest commit of `release-v1.0-v1.5-branch` branch, providing
-Matter protocol support for Telink RISC-V SoC platforms. It integrates the
-Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices on
-Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
+This release is based on the latest commit of `release-v1.0-v1.5-branch` branch,
+providing Matter protocol support for Telink RISC-V SoC platforms. It integrates
+the Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices
+on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
 
 ---
 
@@ -81,8 +81,8 @@ Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
 
 ## ⚠️ Important Notes
 
-**This is a pre-release version for demonstration, development and testing purposes. Not
-recommended for production use.**
+**This is a pre-release version for demonstration, development and testing
+purposes. Not recommended for production use.**
 
 ### Telink Matter ↔ Telink Zephyr Dependency
 
@@ -120,12 +120,12 @@ support.
 
 ### Telink Matter SDK
 
-| Property          | Version                                                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)                               |
-| **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)      |
+| Property          | Version                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)     |
+| **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)    |
 | **Tag Name**      | [tl_v1.0.1-rc1-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5.1.0) |
-| **Release Type**  | Pre-Release (rc1)                                                                                             |
+| **Release Type**  | Pre-Release (rc1)                                                                                            |
 
 ### Chip &amp; Hardware Versions
 
