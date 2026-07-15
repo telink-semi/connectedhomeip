@@ -137,7 +137,7 @@ sudo apt-get install git gcc g++ pkg-config libssl-dev libdbus-1-dev \
 ```bash
 git clone https://github.com/telink-semi/connectedhomeip.git
 cd connectedhomeip
-git checkout <telink_matter_branch>     # e.g. dev-tlk_v1.5
+git checkout <telink_matter_branch>     # e.g. release-v1.0-v1.5-branch
 ./scripts/checkout_submodules.py --platform telink,linux
 ```
 

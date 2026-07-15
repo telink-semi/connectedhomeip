@@ -60,7 +60,7 @@ complete Matter-over-Thread support for Telink chips.
 | **Get Started Guide** | SDK Quick Start Guide                      | [Telink Matter Getting Started](docs/platforms/telink/telink_getting_started.md)                                             |
 | **Developer Guide**   | Telink Matter Developer Guide (online)     | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples**          | Matter Sample Applications                 | See [examples](examples/) (filter by `telink`)                                                                               |
-| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/zephyr/blob/dev-tlk_v4.1/README.md)                                       |
+| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/README.md)                                       |
 
 ---
 
@@ -87,8 +87,8 @@ Zephyr SDK **before** the Matter SDK.
 
 | Component                                                | Role                                                                                                               | Required |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | :------: |
-| **Telink Zephyr SDK** (`dev-tlk_v4.1` branch)            | Provides the Zephyr RTOS core, Telink HAL, BLE stack, MCUBoot, OpenThread, the WEST tool and build toolchain       |    ✅    |
-| **Telink Matter SDK** (`dev-tlk_v1.5` branch, this repo) | Provides Matter protocol stack and Telink Matter examples; consumes the Telink Zephyr SDK via `TELINK_ZEPHYR_BASE` |    ✅    |
+| **Telink Zephyr SDK** (`release-v1.0-v4.1-branch` branch)            | Provides the Zephyr RTOS core, Telink HAL, BLE stack, MCUBoot, OpenThread, the WEST tool and build toolchain       |    ✅    |
+| **Telink Matter SDK** (`release-v1.0-v1.5-branch` branch, this repo) | Provides Matter protocol stack and Telink Matter examples; consumes the Telink Zephyr SDK via `TELINK_ZEPHYR_BASE` |    ✅    |
 
 #### Setup Steps
 
@@ -110,7 +110,7 @@ the high-level steps are:
    used.
 
 3. **Get the Telink Zephyr SDK** — `west init` the Zephyr manifest repository
-   and then check out Telink SDK (branch `dev-tlk_v4.1`) . Run `west update` to
+   and then check out Telink SDK. Run `west update` to
    fetch Zephyr itself, the Telink HAL, OpenThread, MCUBoot. Download and
    install Zephyr SDK toolchain (which provides the `riscv64-zephyr-elf` GCC
    cross-compiler). See Chapter **Install Zephyr Project Environment** in the
@@ -122,7 +122,7 @@ the high-level steps are:
    `./hal_v2/fetch_sdk.sh` inside `modules/hal/telink/` of the Zephyr SDK to
    download the pre-built BLE stack.
 
-5. **Get the Telink Matter SDK (this repo)** — clone the `dev-tlk_v1.5` branch
+5. **Get the Telink Matter SDK (this repo)** — clone the `release-v1.0-v1.5-branch` branch
    of this repository next to the Zephyr SDK.
 
 6. **Point the Matter SDK at the Zephyr SDK** — export `TELINK_ZEPHYR_BASE` so
