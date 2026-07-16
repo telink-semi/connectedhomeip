@@ -178,15 +178,20 @@ our
 
 ## 📱 Supported Boards
 
-| Board          | Chip Family | Series | Status               |
+<!-- | Board          | Chip Family | Series | Status               |
 | -------------- | ----------- | ------ | -------------------- |
 | tlsr9518adk80d | TLSR951X    | B91    | Telink Zephyr HAL_V1 |
 | tlsr9528a      | TLSR952X    | B92    | Telink Zephyr HAL_V1 |
 | tlsr9118bdk40d | TLSR911X    | W91    | -                    |
 | tl3218x        | TL321X      | -      | Telink Zephyr HAL_V1 |
 | tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
-| tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 |
+| tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 | -->
 
+
+| Board          | Chip Family | Series | Status               |
+| -------------- | ----------- | ------ | -------------------- |
+| tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
+| tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 |
 ---
 
 ## 📝 Release Information

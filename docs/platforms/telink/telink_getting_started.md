@@ -8,12 +8,17 @@ platforms.
 
 ### Supported Chips and Boards
 
-| Board target     | Chip Family    | Flash (default) | Notes                                 |
+<!-- | Board target     | Chip Family    | Flash (default) | Notes                                 |
 | ---------------- | -------------- | :-------------: | ------------------------------------- |
 | `tlsr9518adk80d` | TLSR951X / B91 |      2 MB       | Legacy; broad sample coverage         |
 | `tlsr9528a`      | TLSR952X / B92 |      2 MB       | `_retention` variant for low-power    |
 | `tlsr9118bdk40d` | TLSR911X / W91 |      2 MB       | Legacy; broad sample coverage         |
 | `tl3218x`        | TL321X         |      2 MB       | `_retention` variant for low-power    |
+| `tl3238x`        | TL323X         |      2 MB       | Dual-mode (Matter + Zigbee) supported |
+| `tl7218x`        | TL721X         |      2 MB       | `_retention` variant for low-power    | -->
+
+| Board target     | Chip Family    | Flash (default) | Notes                                 |
+| ---------------- | -------------- | :-------------: | ------------------------------------- |
 | `tl3238x`        | TL323X         |      2 MB       | Dual-mode (Matter + Zigbee) supported |
 | `tl7218x`        | TL721X         |      2 MB       | `_retention` variant for low-power    |
 
@@ -244,7 +249,7 @@ west flash --erase
 
 ### 4.2 Option B: BDT (Telink flashing tool)
 
-Telink provides the **BDT** (Burning Debug Tool) for flashing. On Windows use
+<!-- Telink provides the **BDT** (Burning Debug Tool) for flashing. On Windows use
 the BDT GUI (`Telink BDT.exe`); on Linux use the `bdt` CLI. See the
 [Telink Zephyr Getting Started — Flash the Firmware](https://github.com/telink-semi/zephyr/blob/develop/doc/telink/getting_started/index.md#flash-the-firmware)
 section for the chip-to-BDT name mapping and the unlock/erase/write flow.
@@ -259,7 +264,10 @@ A typical Linux BDT session:
 
 > For B92 / TL321X / TL721X, run `./bdt <chip> ulf` to unlock the flash before
 > erasing. For TL322X / TL323X, use the **TGui-BDT** tool (or `sctool` on Linux)
-> with the on-board programmer.
+> with the on-board programmer. -->
+
+Telink provides the **BDT** (Burning Debug Tool) for flashing. On Windows use the BDT GUI (`Telink BDT.exe`).
+See the [Telink Zephyr Getting Started — Flash the Firmware](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/doc/telink/getting_started/index.md#Flash-the-Firmware)
 
 ### 4.3 UART console
 

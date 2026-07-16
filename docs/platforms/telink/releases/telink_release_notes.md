@@ -18,23 +18,36 @@
 
 ## 📖 Introduction
 
+<!-- This release is based on the latest commit of `release-v1.0-v1.5-branch` branch,
+providing Matter protocol support for Telink RISC-V SoC platforms. It integrates
+the Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices
+on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X. -->
+
+
 This release is based on the latest commit of `release-v1.0-v1.5-branch` branch,
 providing Matter protocol support for Telink RISC-V SoC platforms. It integrates
 the Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices
-on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
-
+on Telink chips including TL323X and TL721X.
 ---
 
 ## ✨ Highlights
 
-| Category            | Details                                                |
+<!-- | Category            | Details                                                |
 | ------------------- | ------------------------------------------------------ |
 | **Matter Support**  | Matter 1.5.1 protocol stack                            |
 | **Supported Chips** | TLSR951X, TLSR952X, TLSR911X, TL321X, TL323X, TL721X   |
 | **Sample Apps**     | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
 | **OTA**             | OTA requestor and compress-LZMA support                |
-| **Factory Data**    | Factory data provisioning support                      |
+| **Factory Data**    | Factory data provisioning support                      | -->
 
+
+| Category            | Details                                                |
+| ------------------- | ------------------------------------------------------ |
+| **Matter Support**  | Matter 1.5.1 protocol stack                            |
+| **Supported Chips** | TL323X, TL721X                                         |
+| **Sample Apps**     | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
+| **OTA**             | OTA requestor and compress-LZMA support                |
+| **Factory Data**    | Factory data provisioning support                      |
 ---
 
 ## 🆕 New Features
@@ -131,24 +144,34 @@ support.
 
 📦 **Chip Versions**
 
-| Chip Family            | Versions |
+<!-- | Chip Family            | Versions |
 | ---------------------- | -------- |
 | TLSR921X/TLSR951X(B91) | A2       |
 | TLSR922X/TLSR952X(B92) | A3/A4    |
 | TLSR911X(W91)          | A2       |
 | TL721X                 | A2/A3    |
 | TL321X                 | A1/A2/A3 |
+| TL323X                 | A0       | -->
+
+| Chip Family            | Versions |
+| ---------------------- | -------- |
+| TL721X                 | A2/A3    |
 | TL323X                 | A0       |
 
 🔧 **Hardware EVK Versions**
 
-| Chip     | EVK Version                   |
+<!-- | Chip     | EVK Version                   |
 | -------- | ----------------------------- |
 | TLSR921X | C1T213A20_V1.3                |
 | TLSR952X | C1T266A20_V1.3                |
 | TLSR911X | C1T301A20_V2.1                |
 | TL721X   | C1T315A20_V1.2                |
 | TL321X   | C1T331A20_V1.0/C1T335A20_V1.3 |
+| TL323X   | C1T388A20_V1.1                | -->
+
+| Chip     | EVK Version                   |
+| -------- | ----------------------------- |
+| TL721X   | C1T315A20_V1.2                |
 | TL323X   | C1T388A20_V1.1                |
 
 ---
@@ -164,7 +187,7 @@ example and the Telink chip platforms that support it (see
 > ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested
 > &nbsp;&nbsp; · = Untested
 
-| Example                  | Description                                                | B91 (TLSR951X) | B92 (TLSR952X) | W91 (TLSR911X) | TL321X | TL323X | TL721X |
+<!-- | Example                  | Description                                                | B91 (TLSR951X) | B92 (TLSR952X) | W91 (TLSR911X) | TL321X | TL323X | TL721X |
 | ------------------------ | ---------------------------------------------------------- | :------------: | :------------: | :------------: | :----: | :----: | :----: |
 | lighting-app             | Lighting (On/Off, Level, Color Control)                    |       🟡       |       ·        |       🟡       |   🟡   |   ✅   |   ✅   |
 | light-switch-app         | Light Switch (controller, switches a bound lighting-app)   |       ·        |       🟡       |       ·        |   🟡   |   ✅   |   ✅   |
@@ -179,11 +202,28 @@ example and the Telink chip platforms that support it (see
 | pump-controller-app      | Pump Controller                                            |       🟡       |       ·        |       ·        |   ·    |   ·    |   ·    |
 | shell                    | Shell (debug console)                                      |       🟡       |       ·        |       ·        |   ·    |   ·    |   ·    |
 | thermostat               | Thermostat                                                 |       ·        |       ·        |       🟡       |   ·    |   ·    |   ·    |
-| ota-requestor-app        | OTA Requestor (handles OTA image download)                 |       ·        |       ·        |       ·        |   🟡   |   ·    |   ·    |
+| ota-requestor-app        | OTA Requestor (handles OTA image download)                 |       ·        |       ·        |       ·        |   🟡   |   ·    |   ·    | -->
+
+| Example                  | Description                                                | TL323X | TL721X |
+| ------------------------ | ---------------------------------------------------------- | :----: | :----: |
+| lighting-app             | Lighting (On/Off, Level, Color Control)                    |   ✅   |   ✅   |
+| light-switch-app         | Light Switch (controller, switches a bound lighting-app)   |   ✅   |   ✅   |
+| bridge-app               | Bridge / Aggregator (bridges non-Matter devices to Matter) |   ·    |   🟡   |
+| window-app               | Window Covering (shades, blinds)                           |   ·    |   🟡   |
+| air-quality-sensor-app   | Air Quality Sensor                                         |   ·    |   ·    |
+| all-clusters-app         | All Clusters (full-featured test app)                      |   ·    |   ·    |
+| all-clusters-minimal-app | All Clusters Minimal (lightweight test app, NFC payload)   |   ·    |   ·    |
+| contact-sensor-app       | Contact Sensor (stateless contact sensing)                 |   ·    |   ·    |
+| lock-app                 | Door Lock (supports DFU over BLE SMP)                      |   ·    |   ·    |
+| smoke-co-alarm-app       | Smoke & CO Alarm                                           |   ·    |   ·    |
+| pump-controller-app      | Pump Controller                                            |   ·    |   ·    |
+| shell                    | Shell (debug console)                                      |   ·    |   ·    |
+| thermostat               | Thermostat                                                 |   ·    |   ·    |
+| ota-requestor-app        | OTA Requestor (handles OTA image download)                 |   ·    |   ·    |
 
 ### Notes on Platform Support
 
--   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
+<!-- -   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
     light-switch-app have been fully tested in this release.
 -   **Supported but untested (🟡):** All other build targets listed in the table
     are compiled successfully but have not been functionally validated in this
@@ -201,8 +241,23 @@ example and the Telink chip platforms that support it (see
 -   The light-switch-app on TL321X/TL323X/TL721X uses the `*_retention` board
     target (power management with retention RAM).
 -   For build commands per board/app, refer to the per-board `*_README.md` files
-    inside each example's `boards/` directory.
+    inside each example's `boards/` directory. -->
 
+
+-   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
+    light-switch-app have been fully tested in this release.
+-   **Supported but untested (🟡):** All other build targets listed in the table
+    are compiled successfully but have not been functionally validated in this
+    release. Use with caution.
+-   **Untested (·):** Combinations not listed are not built or validated in this
+    release.
+-   **TL323X / TL721X** are the latest Telink RISC-V SoC families.
+    Lighting and light-switch apps are supported across all three; TL721X
+    additionally supports bridge-app and window-app.
+-   The light-switch-app on TL323X/TL721X uses the `*_retention` board
+    target (power management with retention RAM).
+-   For build commands per board/app, refer to the per-board `*_README.md` files
+    inside each example's `boards/` directory.
 ---
 
 ## 📊 Resource Usage (Code Size)
@@ -212,14 +267,19 @@ platforms, built with the Matter SDK and Zephyr RTOS.
 
 ### Supported Boards
 
-| Board          | Chip Family  |
+<!-- | Board          | Chip Family  |
 | -------------- | ------------ |
 | tlsr9518adk80d | TLSR951X/B91 |
 | tlsr9528a      | TLSR952X/B92 |
 | tl3218x        | TL321X       |
 | tl3238x        | TL323X       |
 | tl7218x        | TL721X       |
-| tlsr9118bdk40d | TLSR911X/W91 |
+| tlsr9118bdk40d | TLSR911X/W91 | -->
+
+| Board          | Chip Family  |
+| -------------- | ------------ |
+| tl3238x        | TL323X       |
+| tl7218x        | TL721X       |
 
 ### TL323X/TL721X Matter (OTA + LZMA) Code Size
 
