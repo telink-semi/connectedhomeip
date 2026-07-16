@@ -374,7 +374,7 @@ To test OTA with a Linux OTA Provider, refer to the
 
 -   [Telink Release Notes](./releases/telink_release_notes.md) — version info,
     chip/EVK versions, per-example support matrix, and resource usage tables.
--   [Telink Zephyr Getting Started](https://github.com/telink-semi/zephyr/blob/develop/doc/telink/getting_started/index.md)
+-   [Telink Zephyr Getting Started](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/doc/telink/getting_started/index.md)
     — Zephyr SDK setup, BDT flashing details, and board overviews.
 -   Per-example `README.md` files under `examples/<app>/telink/` —
     example-specific build commands, button/LED mappings, and chip-tool usage.

@@ -139,18 +139,14 @@ on Telink chips including TL323X and TL721X.
 
 ## 📦 Updates / Dependencies
 
--   Updated Telink BLE SDK for improved RF performance
-    ([commit:46322e5b570e2a68373b18d4f08811acadd1266c](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c))
--   Updated Telink HAL Zephyr to support TL721X
-    hal_v2([commit:14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5))
--   Updated MCUBoot with Telink-specific flash operation
-    ([commit:ce0da85c39c749df49b0ec62b33d2ecdea24c927](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927))
--   Updated OpenThread Telink source code
-    ([commit:542aaab44e1308e1a8a24573dfbd413fade342ee](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee))
--   Updated OpenThread Telink library
-    ([commit:308dae2f80084f87073cfd4fbd30f1be0799be7b](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b))
--   Updated Telink Zephyr SDK to support TL323X and TL721X hal_v2
-    ([commit:e08fc42546e58d808bfd39f35c8df296f5617a44](https://github.com/telink-semi/zephyr/commit/e08fc42546e58d808bfd39f35c8df296f5617a44))
+| Component | Repository | Commit | Notes |
+|-----------|------------|--------|-------|
+| **Telink BLE SDK** | [telink-semi/tl_ble_sdk_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`46322e5`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c) | Required by all Telink SoCs; fetch via `./hal_v2/fetch_sdk.sh` (hal_v2) or `west blobs fetch hal_telink` (hal_v1) |
+| **Telink HAL Zephyr** | [telink-semi/hal_telink](https://github.com/telink-semi/hal_telink) | [`14c6149`](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5) | Contains both hal_v1 and hal_v2 sources |
+| **MCUBoot** | [telink-semi/mcuboot](https://github.com/telink-semi/mcuboot) | [`ce0da85`](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927) | Bootloader; required for OTA/DFU |
+| **OpenThread Telink** | [telink-semi/openthread](https://github.com/telink-semi/openthread) | [`542aaab`](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee) | OpenThread source adapted for Telink |
+| **OpenThread Telink Lib** | [telink-semi/openthread_telink_lib](https://github.com/telink-semi/openthread_telink_lib) | [`308dae2`](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b) | Pre-built OpenThread library for Telink |
+| **Telink Zephyr SDK** | [telink-semi/zephyr](https://github.com/telink-semi/zephyr) | [`7b102df`](https://github.com/telink-semi/zephyr/commit/7b102dfc9bc4c27e95dc84bd6291caf46b6b070c) | Telink Zephyr SDK; supports TL323X and TL721X hal_v2 |
 
 ---
 
@@ -218,7 +214,7 @@ example and the Telink chip platforms that support it (see
 | contact-sensor-app | Contact Sensor (stateless contact sensing)               |   ·    |   ·    |
 | lock-app           | Door Lock (supports DFU over BLE SMP)                    |   ·    |   ·    |
 
-<!-- Todos: More examples to test -->
+<!-- To do: lit more examples to test and tag the timeframe -->
 
 ### Notes on Platform Support
 

@@ -1,6 +1,6 @@
 # Telink Matter SDK Release Note
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v1.5.1.0-blue?style=flat-square)](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v1.5-blue?style=flat-square)](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](LICENSE)
 [![Matter](https://img.shields.io/badge/Matter-v1.5-green?style=flat-square)](https://github.com/project-chip/connectedhomeip/commit/f4a8cf98ada4ad4f439b45e360800693cc5f1391)
 
@@ -10,36 +10,111 @@
 -   **Branch:**
     [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)
 -   **Tag Version:**
-    [tl_v1.0.1-rc1-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5.1.0)
--   **Target Commit:**
-    [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)
+    [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5)
+    <!-- -   **Target Commit:**
+        [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17) -->
 
 ---
 
 ## 📖 Introduction
 
+<!-- This release is based on the latest commit of `release-v1.0-v1.5-branch` branch,
+providing Matter protocol support for Telink RISC-V SoC platforms. It integrates
+the Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices
+on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X. -->
+
 This release is based on the latest commit of `release-v1.0-v1.5-branch` branch,
 providing Matter protocol support for Telink RISC-V SoC platforms. It integrates
 the Matter SDK with the Telink Zephyr SDK to enable Matter-over-Thread devices
-on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
+on Telink chips including TL323X and TL721X.
+
+---
+
+## 📋 Version Information
+
+### Matter SDK &amp; Toolchain
+
+| Component              | Version                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Matter SDK Version** | Telink Matter v1.5                                                                                                                                                                                                                                                                        |
+| **Matter Branch**      | master                                                                                                                                                                                                                                                                                    |
+| **Commit**             | [f4a8cf9](https://github.com/project-chip/connectedhomeip/commit/f4a8cf98ada4ad4f439b45e360800693cc5f1391) (the previous one of [15a68d7](https://github.com/project-chip/connectedhomeip/commit/15a68d7026b1cd34a0d4cf35dadc7558e503d2cb) that community upgraded Matter version to 1.6) |
+| **Toolchain**          | Zephyr SDK v0.17.0 riscv64-zephyr-elf                                                                                                                                                                                                                                                     |
+
+### Telink Matter SDK
+
+<!-- | Property          | Version                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)     |
+| **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)    |
+| **Tag Name**      | [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5) |
+| **Release Type**  | Pre-Release (rc1)                                                                                            | -->
+
+| Property         | Version                                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------------------- |
+| **Branch**       | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch) |
+| **Tag Name**     | [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5)     |
+| **Release Type** | Pre-Release (rc1)                                                                                        |
+
+### Chip &amp; Hardware Versions
+
+📦 **Chip Versions**
+
+<!-- | Chip Family            | Versions |
+| ---------------------- | -------- |
+| TLSR921X/TLSR951X(B91) | A2       |
+| TLSR922X/TLSR952X(B92) | A3/A4    |
+| TLSR911X(W91)          | A2       |
+| TL721X                 | A2/A3    |
+| TL321X                 | A1/A2/A3 |
+| TL323X                 | A0       | -->
+
+| Chip Family | Versions |
+| ----------- | -------- |
+| TL721X      | A2/A3    |
+| TL323X      | A0       |
+
+🔧 **Hardware EVK Versions**
+
+<!-- | Chip     | EVK Version                   |
+| -------- | ----------------------------- |
+| TLSR921X | C1T213A20_V1.3                |
+| TLSR952X | C1T266A20_V1.3                |
+| TLSR911X | C1T301A20_V2.1                |
+| TL721X   | C1T315A20_V1.2                |
+| TL321X   | C1T331A20_V1.0/C1T335A20_V1.3 |
+| TL323X   | C1T388A20_V1.1                | -->
+
+| Chip   | EVK Version    |
+| ------ | -------------- |
+| TL721X | C1T315A20_V1.2 |
+| TL323X | C1T388A20_V1.1 |
 
 ---
 
 ## ✨ Highlights
 
-| Category            | Details                                                |
+<!-- | Category            | Details                                                |
 | ------------------- | ------------------------------------------------------ |
 | **Matter Support**  | Matter 1.5.1 protocol stack                            |
 | **Supported Chips** | TLSR951X, TLSR952X, TLSR911X, TL321X, TL323X, TL721X   |
 | **Sample Apps**     | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
 | **OTA**             | OTA requestor and compress-LZMA support                |
-| **Factory Data**    | Factory data provisioning support                      |
+| **Factory Data**    | Factory data provisioning support                      | -->
+
+| Category            | Details                                              |
+| ------------------- | ---------------------------------------------------- |
+| **Matter Support**  | Matter 1.5                                           |
+| **Supported Chips** | TL323X, TL721X                                       |
+| **Sample Apps**     | Lighting, Light Switch, window, contact sensor, etc. |
+| **OTA**             | OTA requestor and compress-LZMA support              |
+| **Factory Data**    | Factory data provisioning support                    |
 
 ---
 
 ## 🆕 New Features
 
--   ✅ Matter 1.5.1 protocol support for Telink platforms
+-   ✅ Matter 1.5 support for Telink platforms
 -   ✅ Full support for TL323X series chips in Matter
 -   ✅ Support for TL721X series chips in Matter
 -   ✅ LZMA compression support for OTA images
@@ -62,20 +137,16 @@ on Telink chips including TLSR9 Series, TL321X, TL323X, and TL721X.
 
 ---
 
-## 📦 Updates
+## 📦 Updates / Dependencies
 
--   Updated Telink BLE SDK for improved RF performance
-    ([commit:46322e5b570e2a68373b18d4f08811acadd1266c](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c))
--   Updated Telink HAL Zephyr to support TL721X
-    hal_v2([commit:14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5))
--   Updated MCUBoot with Telink-specific flash operation
-    ([commit:ce0da85c39c749df49b0ec62b33d2ecdea24c927](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927))
--   Updated OpenThread Telink source code
-    ([commit:542aaab44e1308e1a8a24573dfbd413fade342ee](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee))
--   Updated OpenThread Telink library
-    ([commit:308dae2f80084f87073cfd4fbd30f1be0799be7b](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b))
--   Updated Telink Zephyr SDK to support TL323X and TL721X hal_v2
-    ([commit:e08fc42546e58d808bfd39f35c8df296f5617a44](https://github.com/telink-semi/zephyr/commit/e08fc42546e58d808bfd39f35c8df296f5617a44))
+| Component | Repository | Commit | Notes |
+|-----------|------------|--------|-------|
+| **Telink BLE SDK** | [telink-semi/tl_ble_sdk_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`46322e5`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c) | Required by all Telink SoCs; fetch via `./hal_v2/fetch_sdk.sh` (hal_v2) or `west blobs fetch hal_telink` (hal_v1) |
+| **Telink HAL Zephyr** | [telink-semi/hal_telink](https://github.com/telink-semi/hal_telink) | [`14c6149`](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5) | Contains both hal_v1 and hal_v2 sources |
+| **MCUBoot** | [telink-semi/mcuboot](https://github.com/telink-semi/mcuboot) | [`ce0da85`](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927) | Bootloader; required for OTA/DFU |
+| **OpenThread Telink** | [telink-semi/openthread](https://github.com/telink-semi/openthread) | [`542aaab`](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee) | OpenThread source adapted for Telink |
+| **OpenThread Telink Lib** | [telink-semi/openthread_telink_lib](https://github.com/telink-semi/openthread_telink_lib) | [`308dae2`](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b) | Pre-built OpenThread library for Telink |
+| **Telink Zephyr SDK** | [telink-semi/zephyr](https://github.com/telink-semi/zephyr) | [`7b102df`](https://github.com/telink-semi/zephyr/commit/7b102dfc9bc4c27e95dc84bd6291caf46b6b070c) | Telink Zephyr SDK; supports TL323X and TL721X hal_v2 |
 
 ---
 
@@ -107,52 +178,6 @@ support.
 
 ---
 
-## 📋 Version Information
-
-### Matter SDK &amp; Toolchain
-
-| Component              | Version                                                                                                                                                                                                                                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Matter SDK Version** | Telink Matter v1.5.1.0                                                                                                                                                                                                                                                                    |
-| **Matter Branch**      | master                                                                                                                                                                                                                                                                                    |
-| **Commit**             | [f4a8cf9](https://github.com/project-chip/connectedhomeip/commit/f4a8cf98ada4ad4f439b45e360800693cc5f1391) (the previous one of [15a68d7](https://github.com/project-chip/connectedhomeip/commit/15a68d7026b1cd34a0d4cf35dadc7558e503d2cb) that community upgraded Matter version to 1.6) |
-| **Toolchain**          | Zephyr SDK v0.17.0 riscv64-zephyr-elf                                                                                                                                                                                                                                                     |
-
-### Telink Matter SDK
-
-| Property          | Version                                                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)     |
-| **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)    |
-| **Tag Name**      | [tl_v1.0.1-rc1-v1.5.1.0](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5.1.0) |
-| **Release Type**  | Pre-Release (rc1)                                                                                            |
-
-### Chip &amp; Hardware Versions
-
-📦 **Chip Versions**
-
-| Chip Family            | Versions |
-| ---------------------- | -------- |
-| TLSR921X/TLSR951X(B91) | A2       |
-| TLSR922X/TLSR952X(B92) | A3/A4    |
-| TLSR911X(W91)          | A2       |
-| TL721X                 | A2/A3    |
-| TL321X                 | A1/A2/A3 |
-| TL323X                 | A0       |
-
-🔧 **Hardware EVK Versions**
-
-| Chip     | EVK Version                   |
-| -------- | ----------------------------- |
-| TLSR921X | C1T213A20_V1.3                |
-| TLSR952X | C1T266A20_V1.3                |
-| TLSR911X | C1T301A20_V2.1                |
-| TL721X   | C1T315A20_V1.2                |
-| TL321X   | C1T331A20_V1.0/C1T335A20_V1.3 |
-| TL323X   | C1T388A20_V1.1                |
-
----
-
 ## 📱 Matter Community Examples
 
 This release provides Telink platform ports for the following Matter community
@@ -164,7 +189,7 @@ example and the Telink chip platforms that support it (see
 > ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested
 > &nbsp;&nbsp; · = Untested
 
-| Example                  | Description                                                | B91 (TLSR951X) | B92 (TLSR952X) | W91 (TLSR911X) | TL321X | TL323X | TL721X |
+<!-- | Example                  | Description                                                | B91 (TLSR951X) | B92 (TLSR952X) | W91 (TLSR911X) | TL321X | TL323X | TL721X |
 | ------------------------ | ---------------------------------------------------------- | :------------: | :------------: | :------------: | :----: | :----: | :----: |
 | lighting-app             | Lighting (On/Off, Level, Color Control)                    |       🟡       |       ·        |       🟡       |   🟡   |   ✅   |   ✅   |
 | light-switch-app         | Light Switch (controller, switches a bound lighting-app)   |       ·        |       🟡       |       ·        |   🟡   |   ✅   |   ✅   |
@@ -179,11 +204,21 @@ example and the Telink chip platforms that support it (see
 | pump-controller-app      | Pump Controller                                            |       🟡       |       ·        |       ·        |   ·    |   ·    |   ·    |
 | shell                    | Shell (debug console)                                      |       🟡       |       ·        |       ·        |   ·    |   ·    |   ·    |
 | thermostat               | Thermostat                                                 |       ·        |       ·        |       🟡       |   ·    |   ·    |   ·    |
-| ota-requestor-app        | OTA Requestor (handles OTA image download)                 |       ·        |       ·        |       ·        |   🟡   |   ·    |   ·    |
+| ota-requestor-app        | OTA Requestor (handles OTA image download)                 |       ·        |       ·        |       ·        |   🟡   |   ·    |   ·    | -->
+
+| Example            | Description                                              | TL323X | TL721X |
+| ------------------ | -------------------------------------------------------- | :----: | :----: |
+| lighting-app       | Lighting (On/Off, Level, Color Control)                  |   ✅   |   ✅   |
+| light-switch-app   | Light Switch (controller, switches a bound lighting-app) |   ✅   |   ✅   |
+| window-app         | Window Covering (shades, blinds)                         |   ·    |   🟡   |
+| contact-sensor-app | Contact Sensor (stateless contact sensing)               |   ·    |   ·    |
+| lock-app           | Door Lock (supports DFU over BLE SMP)                    |   ·    |   ·    |
+
+<!-- To do: lit more examples to test and tag the timeframe -->
 
 ### Notes on Platform Support
 
--   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
+<!-- -   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
     light-switch-app have been fully tested in this release.
 -   **Supported but untested (🟡):** All other build targets listed in the table
     are compiled successfully but have not been functionally validated in this
@@ -201,6 +236,21 @@ example and the Telink chip platforms that support it (see
 -   The light-switch-app on TL321X/TL323X/TL721X uses the `*_retention` board
     target (power management with retention RAM).
 -   For build commands per board/app, refer to the per-board `*_README.md` files
+    inside each example's `boards/` directory. -->
+
+-   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
+    light-switch-app have been fully tested in this release.
+-   **Supported but untested (🟡):** All other build targets listed in the table
+    are compiled successfully but have not been functionally validated in this
+    release. Use with caution.
+-   **Untested (·):** Combinations not listed are not built or validated in this
+    release.
+-   **TL323X / TL721X** are the latest Telink RISC-V SoC families. Lighting and
+    light-switch apps are supported across all three; TL721X additionally
+    supports bridge-app and window-app.
+-   The light-switch-app on TL323X/TL721X uses the `*_retention` board target
+    (power management with retention RAM).
+-   For build commands per board/app, refer to the per-board `*_README.md` files
     inside each example's `boards/` directory.
 
 ---
@@ -212,14 +262,19 @@ platforms, built with the Matter SDK and Zephyr RTOS.
 
 ### Supported Boards
 
-| Board          | Chip Family  |
+<!-- | Board          | Chip Family  |
 | -------------- | ------------ |
 | tlsr9518adk80d | TLSR951X/B91 |
 | tlsr9528a      | TLSR952X/B92 |
 | tl3218x        | TL321X       |
 | tl3238x        | TL323X       |
 | tl7218x        | TL721X       |
-| tlsr9118bdk40d | TLSR911X/W91 |
+| tlsr9118bdk40d | TLSR911X/W91 | -->
+
+<!-- | Board          | Chip Family  |
+| -------------- | ------------ |
+| tl3238x        | TL323X       |
+| tl7218x        | TL721X       | -->
 
 ### TL323X/TL721X Matter (OTA + LZMA) Code Size
 
@@ -260,8 +315,9 @@ output (`Memory region` summary) of the build logs.
 >     compression enabled.
 > -   The LZMA-compressed DFU image (`merged_dfu.lzma.bin`) is smaller than the
 >     signed image (e.g. 942630 B → 547530 B for TL7218X lighting).
-> -   For a detailed RAM/ROM symbol breakdown, run `west build -t ram_report` /
->     `west build -t rom_report` in the build directory.
+
+<!-- > -   For a detailed RAM/ROM symbol breakdown, run `west build -t ram_report` /
+>     `west build -t rom_report` in the build directory. -->
 
 ---
 
@@ -272,14 +328,13 @@ output (`Memory region` summary) of the build logs.
 -   **Build Config:** Matter builds use `west build` directly from each
     example's `telink` directory; CI builds use the Matter `build_examples.py`
     system with Telink targets
--   **Production Optimizations:** For production builds, disable debug logging
-    and enable appropriate optimizations to reduce RAM/ROM usage
+-   **Production Optimizations:** For production builds, preform further
+    develop, disable debug logging and enable appropriate optimizations to
+    reduce RAM/ROM usage
 -   **Bluetooth &amp; OpenThread:** Matter uses OpenThread for Thread networking
     and BLE for commissioning
 -   **OTA Images:** Signed OTA images (`zephyr.signed.bin`) are generated when
     OTA is enabled
-
----
 
 ---
 
