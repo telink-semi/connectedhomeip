@@ -11,8 +11,8 @@
     [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)
 -   **Tag Version:**
     [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5)
--   **Target Commit:**
-    [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)
+<!-- -   **Target Commit:**
+    [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17) -->
 
 ---
 
@@ -44,12 +44,19 @@ on Telink chips including TL323X and TL721X.
 
 ### Telink Matter SDK
 
-| Property          | Version                                                                                                      |
+<!-- | Property          | Version                                                                                                      |
 | ----------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)     |
 | **Target Commit** | [b4c04e3](https://github.com/telink-semi/connectedhomeip/commit/b4c04e3c1816fc242a100e305047ac1350457d17)    |
 | **Tag Name**      | [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5) |
+| **Release Type**  | Pre-Release (rc1)                                                                                            | -->
+
+| Property          | Version                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Branch**        | [release-v1.0-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/release-v1.0-v1.5-branch)     |
+| **Tag Name**      | [tl_v1.0.1-rc1-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.0.1-rc1-v1.5) |
 | **Release Type**  | Pre-Release (rc1)                                                                                            |
+
 
 ### Chip &amp; Hardware Versions
 
@@ -102,7 +109,7 @@ on Telink chips including TL323X and TL721X.
 | ------------------- | ------------------------------------------------------ |
 | **Matter Support**  | Matter 1.5                            |
 | **Supported Chips** | TL323X, TL721X                                         |
-| **Sample Apps**     | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
+| **Sample Apps**     | Lighting, Light Switch, window, contact sensor, etc.   |
 | **OTA**             | OTA requestor and compress-LZMA support                |
 | **Factory Data**    | Factory data provisioning support                      |
 
@@ -133,7 +140,7 @@ on Telink chips including TL323X and TL721X.
 
 ---
 
-## 📦 Updates
+## 📦 Updates / Dependencies
 
 -   Updated Telink BLE SDK for improved RF performance
     ([commit:46322e5b570e2a68373b18d4f08811acadd1266c](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c))
@@ -214,6 +221,8 @@ example and the Telink chip platforms that support it (see
 | contact-sensor-app       | Contact Sensor (stateless contact sensing)                 |   ·    |   ·    |
 | lock-app                 | Door Lock (supports DFU over BLE SMP)                      |   ·    |   ·    |
 
+<!-- Todos: More examples to test -->
+
 ### Notes on Platform Support
 
 <!-- -   **Tested combinations (✅):** Only TL323X and TL721X with lighting-app and
@@ -269,10 +278,10 @@ platforms, built with the Matter SDK and Zephyr RTOS.
 | tl7218x        | TL721X       |
 | tlsr9118bdk40d | TLSR911X/W91 | -->
 
-| Board          | Chip Family  |
+<!-- | Board          | Chip Family  |
 | -------------- | ------------ |
 | tl3238x        | TL323X       |
-| tl7218x        | TL721X       |
+| tl7218x        | TL721X       | -->
 
 ### TL323X/TL721X Matter (OTA + LZMA) Code Size
 

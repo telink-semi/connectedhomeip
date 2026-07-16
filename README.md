@@ -7,23 +7,6 @@
 
 ---
 
-> 📖 This is the README for the **Telink Matter SDK** (fork). For the upstream
-> Matter (Project CHIP) README, see [MATTER_README.md](MATTER_README.md).
-
-**A Matter protocol implementation for Telink RISC-V SoC platforms based on the
-Connected Home over IP (CHIP) project**
-
--   For development environment setup, SDK acquisition, and quick-start
-    instructions, refer to the
-    [Telink Matter Getting Started Guide](docs/platforms/telink/telink_getting_started.md).
--   For a deeper walkthrough, see the online
-    [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/)
-    (Chapter **Obtaining Matter Source Code** covers the initial setup).
--   For a detailed list of supported devices and resource usage, refer to the
-    [Release Note](docs/platforms/telink/releases/telink_release_notes.md)
-
----
-
 ## 📖 SDK Introduction
 
 Telink Matter SDK is a software development platform that implements the Matter
@@ -54,6 +37,13 @@ complete Matter-over-Thread support for Telink chips.
 
 ## 🚀 Quick Reference
 
+
+> 📖 This is the README for the **Telink Matter SDK** (fork). For the upstream
+> Matter (Project CHIP) README, see [MATTER_README.md](MATTER_README.md).
+
+**A Matter protocol implementation for Telink RISC-V SoC platforms based on the
+Connected Home over IP (CHIP) project**
+
 | Resource              | Description                                | Link                                                                                                                         |
 | --------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | **Release Note**      | Telink Matter SDK Changelog & New Features | [Telink Matter SDK Release Note](docs/platforms/telink/releases/telink_release_notes.md)                                     |
@@ -61,6 +51,15 @@ complete Matter-over-Thread support for Telink chips.
 | **Developer Guide**   | Telink Matter Developer Guide (online)     | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples**          | Matter Sample Applications                 | See [examples](examples/) (filter by `telink`)                                                                               |
 | **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/README.md)                           |
+
+-   For development environment setup, SDK acquisition, and quick-start
+    instructions, refer to the
+    [Telink Matter Getting Started Guide](docs/platforms/telink/telink_getting_started.md).
+-   For a deeper walkthrough, see the online
+    [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/)
+    (Chapter **Obtaining Matter Source Code** covers the initial setup).
+-   For a detailed list of supported devices and resource usage, refer to the
+    [Release Note](docs/platforms/telink/releases/telink_release_notes.md)
 
 ---
 
@@ -187,11 +186,14 @@ our
 | tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
 | tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 | -->
 
-
+<!-- 
 | Board          | Chip Family | Status               |
 | -------------- | ----------- | -------------------- |
 | tl3238x        | TL323X      | Telink Zephyr HAL_V2 |
-| tl7218x        | TL721X      | Telink Zephyr HAL_V2 |
+| tl7218x        | TL721X      | Telink Zephyr HAL_V2 | -->
+
+For the exact chip versions, EVK versions, see the [Release Notes](./releases/telink_release_notes.md).
+
 ---
 
 ## 📝 Release Information
