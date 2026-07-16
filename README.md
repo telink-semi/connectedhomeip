@@ -37,7 +37,6 @@ complete Matter-over-Thread support for Telink chips.
 
 ## 🚀 Quick Reference
 
-
 > 📖 This is the README for the **Telink Matter SDK** (fork). For the upstream
 > Matter (Project CHIP) README, see [MATTER_README.md](MATTER_README.md).
 
@@ -186,13 +185,14 @@ our
 | tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
 | tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 | -->
 
-<!-- 
+<!--
 | Board          | Chip Family | Status               |
 | -------------- | ----------- | -------------------- |
 | tl3238x        | TL323X      | Telink Zephyr HAL_V2 |
 | tl7218x        | TL721X      | Telink Zephyr HAL_V2 | -->
 
-For the exact chip versions, EVK versions, see the [Release Notes](./releases/telink_release_notes.md).
+For the exact chip versions, EVK versions, see the
+[Release Notes](./releases/telink_release_notes.md).
 
 ---
 

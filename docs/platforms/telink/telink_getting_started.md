@@ -17,9 +17,9 @@ platforms.
 | `tl3238x`        | TL323X         |      2 MB       | Dual-mode (Matter + Zigbee) supported |
 | `tl7218x`        | TL721X         |      2 MB       | `_retention` variant for low-power    | -->
 
-| Board target     | Chip Family    | EVK Version    | Flash (default) | Notes                                 |
-| ---------------- | -------------- | -------------- | :-------------: | ------------------------------------- |
-| `tl3238x`        | TL323X         | C1T388A20_V1.1 |      2 MB       | Dual-mode (Matter + Zigbee) supported |
+| Board target | Chip Family | EVK Version    | Flash (default) | Notes                                 |
+| ------------ | ----------- | -------------- | :-------------: | ------------------------------------- |
+| `tl3238x`    | TL323X      | C1T388A20_V1.1 |      2 MB       | Dual-mode (Matter + Zigbee) supported |
 
 > See the [Release Notes](./releases/telink_release_notes.md) for the exact chip
 > versions, EVK versions, and per-example support matrix validated in each
@@ -126,7 +126,6 @@ west build -p auto -b tlsr9518adk80d zephyr/samples/hello_world -d build_helloWo
 For more details, see the
 [Telink Zephyr Getting Started guide](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/doc/telink/getting_started/index.md).
 
-
 ## Step 2: Get the Matter source code
 
 ### 2.1 Install Matter host dependencies
@@ -188,7 +187,8 @@ Replace `<build_target>` with your board, e.g. `tlsr9518adk80d`, `tlsr9528a`,
 ```bash
 west build -b tl3238x
 ```
-<!-- 
+
+<!--
 If your board has a flash size other than the default 2 MB, specify it:
 
 ```bash
@@ -196,6 +196,7 @@ west build -b tl3238x -- -DFLASH_SIZE=4m
 ``` -->
 
 The built firmware is at `build/zephyr/zephyr.bin`.
+
 <!-- When MCUBoot + OTA is enabled, a merged `build/zephyr/merged.bin` (MCUBoot + app) is also generated. -->
 
 <!-- ### 3.3 Build with build_examples.py (CI-style)
@@ -246,7 +247,8 @@ west build -b tl3238x -- -DFLASH_SIZE=4m
 ```
 
 ## Step 4: Flash the firmware
-<!-- 
+
+<!--
 ### 4.1 Option A: west flash (recommended for development)
 
 If your board is connected via a supported debug probe:
@@ -276,8 +278,9 @@ A typical Linux BDT session:
 > erasing. For TL323X, use the **TGui-BDT** tool (or `sctool` on Linux)
 > with the on-board programmer. -->
 
-Telink provides the **BDT** (Burning Debug Tool) for flashing. On Windows use the BDT GUI (`Telink BDT.exe`).
-See the [Telink Zephyr Getting Started — Flash the Firmware](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/doc/telink/getting_started/index.md#Flash-the-Firmware)
+Telink provides the **BDT** (Burning Debug Tool) for flashing. On Windows use
+the BDT GUI (`Telink BDT.exe`). See the
+[Telink Zephyr Getting Started — Flash the Firmware](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/doc/telink/getting_started/index.md#Flash-the-Firmware)
 
 <!-- ### 4.3 UART console -->
 
