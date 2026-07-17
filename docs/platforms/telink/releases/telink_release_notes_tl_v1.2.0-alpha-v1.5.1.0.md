@@ -160,7 +160,7 @@ support.
 
 | Chip Family | Versions |
 | ----------- | -------- |
-| TL323X      | A0       |
+| TL323X      | A0/A1    |
 | TL521X      | A0       |
 | TL721X      | A2/A3    |
 
