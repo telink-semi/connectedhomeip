@@ -138,7 +138,7 @@ support.
 | TLSR911X(W91)          | A2       |
 | TL721X                 | A2/A3    |
 | TL321X                 | A1/A2/A3 |
-| TL323X                 | A0       |
+| TL323X                 | A0/A1    |
 
 🔧 **Hardware EVK Versions**
 
