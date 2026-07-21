@@ -254,9 +254,9 @@ bool LoadDACCertAndKey(uint8_t * base_buffer, struct FactoryData * factoryData)
         aes_decrypt(chip_id, buffer + 18, dac_key_decrypt + 16);
 #endif
 
-        LOG_INF("[LoadDACCertAndKey]DAC priv key decrypted, len=%u", dac_priv_key_len);
-        LOG_HEXDUMP_INF(buffer + 2, dac_priv_key_len, "[LoadDACCertAndKey]Encrypted DAC PRIV KEY");
-        LOG_HEXDUMP_INF(dac_key_decrypt, dac_priv_key_len, "[LoadDACCertAndKey]DAC PRIV KEY");
+        // LOG_INF("[LoadDACCertAndKey]DAC priv key decrypted, len=%u", dac_priv_key_len);
+        // LOG_HEXDUMP_INF(buffer + 2, dac_priv_key_len, "[LoadDACCertAndKey]Encrypted DAC PRIV KEY");
+        // LOG_HEXDUMP_INF(dac_key_decrypt, dac_priv_key_len, "[LoadDACCertAndKey]DAC PRIV KEY");
         factoryData->dac_priv_key.data = dac_key_decrypt;
     }
     else
