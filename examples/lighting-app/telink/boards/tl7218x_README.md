@@ -101,3 +101,64 @@ partition limit.
 
 **Important Note**: TL7218X does NOT support dual_mode (Matter + Zigbee)
 configuration.
+
+## 4. Concurrent Mode (Matter over Thread + BLE coexistence, NO OTA)
+
+**Kconfig:** boards/tl7218x_concurrent.conf (explicitly specified)
+
+-   CONFIG_CHIP_CONCURRENT_MODE=y
+-   CONFIG_IEEE802154_TLX_BLE_COEXIST=y
+-   CONFIG_CHIP_OTA_REQUESTOR=n
+-   CONFIG_DUAL_MODE=0
+
+**Note**: This configuration enables BLE + 802.15.4 coexistence for Matter over
+Thread with BLE advertising. OTA is disabled.
+
+**DTS Overlay:** src/platform/telink/tl7218x_2m_flash.overlay (default)
+
+**Build:**
+
+```bash
+west build -p -b tl7218x -d build_tl7218x_concurrent -- \
+-DCONF_FILE="prj.conf boards/tl7218x_concurrent.conf" > build_tl7218x_concurrent.log
+# Kconfig: explicitly specified (-DCONF_FILE="prj.conf boards/tl7218x_concurrent.conf")
+# DTS Overlay: default (src/platform/telink/tl7218x_2m_flash.overlay)
+```
+
+**Output:**
+
+```bash
+build_tl7218x_concurrent/zephyr/zephyr.bin          -> flash this
+```
+
+## 5. Concurrent Mode + Channel Sounding (Matter over Thread + BLE + CS, NO OTA)
+
+**Kconfig:** boards/tl7218x_concurrent_cs.conf (explicitly specified)
+
+-   CONFIG_CHIP_CONCURRENT_MODE=y
+-   CONFIG_IEEE802154_TLX_BLE_COEXIST=y
+-   CONFIG_BT_CHANNEL_SOUNDING=y, CONFIG_BT_TLX_CHANNEL_SOUNDING=y
+-   CONFIG_BT_SMP=y (unauthenticated pairing, LE Security Mode 1 Level 2)
+-   CONFIG_CHIP_OTA_REQUESTOR=n
+-   CONFIG_DUAL_MODE=0
+
+**Note**: This configuration enables BLE + 802.15.4 coexistence with Channel
+Sounding (RAS Reflector) support. BLE buffers, SMP bonding, and stack sizes are
+tuned for CS + OT coexistence. OTA is disabled.
+
+**DTS Overlay:** src/platform/telink/tl7218x_2m_flash.overlay (default)
+
+**Build:**
+
+```bash
+west build -p -b tl7218x -d build_tl7218x_concurrent_cs -- \
+-DCONF_FILE="prj.conf boards/tl7218x_concurrent_cs.conf" > build_tl7218x_concurrent_cs.log
+# Kconfig: explicitly specified (-DCONF_FILE="prj.conf boards/tl7218x_concurrent_cs.conf")
+# DTS Overlay: default (src/platform/telink/tl7218x_2m_flash.overlay)
+```
+
+**Output:**
+
+```bash
+build_tl7218x_concurrent_cs/zephyr/zephyr.bin          -> flash this
+```
