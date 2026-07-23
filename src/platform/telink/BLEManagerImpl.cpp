@@ -482,7 +482,9 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
                         mAdvertisingRequest.scanResponseData.data(), mAdvertisingRequest.scanResponseData.size())));
     ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
 
-    tlx_bt_802154_dual_mode_start();
+#ifdef CONFIG_CHIP_CONCURRENT_MODE 
+    tlx_bt_802154_dual_mode_start(); 
+#endif
 
     // Transition to the Advertising state...
     if (!mFlags.Has(Flags::kAdvertising))
