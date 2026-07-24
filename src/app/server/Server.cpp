@@ -547,6 +547,10 @@ CHIP_ERROR Server::Init(const ServerInitParams & initParams)
         // The device is already commissioned, proactively disable BLE advertisement.
         ChipLogProgress(AppServer, "Fabric already commissioned. Disabling BLE advertisement");
         TEMPORARY_RETURN_IGNORED DeviceLayer::ConnectivityMgr().SetBLEAdvertisingEnabled(false);
+#elif defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
+        // Concurrent mode with idle BLE: leave BLE stack initialized but
+        // do not auto-start advertising. The user can start it later (e.g. via button).
+        ChipLogProgress(AppServer, "Fabric already commissioned. BLE idle in concurrent mode");
 #else
         // Concurrent mode: keep BLE advertising enabled for Channel Sounding.
         ChipLogProgress(AppServer, "Fabric already commissioned. Enabling BLE advertisement for concurrent mode");

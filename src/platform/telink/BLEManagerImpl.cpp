@@ -260,7 +260,7 @@ void BLEManagerImpl::DriveBLEState(intptr_t arg)
     BLEMgrImpl().DriveBLEState();
 }
 
-#if defined(CONFIG_CHIP_CONCURRENT_MODE)
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && !defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
 void BLEManagerImpl::HandleConcurrentModeReAdv(intptr_t arg)
 {
     // Runs after CommissioningWindowManager::Cleanup() has disabled BLE advertising.
@@ -685,6 +685,17 @@ exit:
     // Unref bt_conn before scheduling DriveBLEState.
     bt_conn_unref(connEvent->BtConn);
 
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
+    // On Telink TLSR, bt_conn_unref() may trigger bt_le_adv_resume() (see
+    // conn.c: bt_conn_unref -> bt_le_adv_resume) which bypasses the BT_ADV_PERSIST
+    // and BT_ADV_ENABLED checks. In BLE idle mode, force-stop advertising to keep
+    // BLE idle after disconnection.
+    if (!mFlags.Has(Flags::kAdvertisingEnabled))
+    {
+        bt_le_adv_stop();
+    }
+#endif
+
     ChipLogProgress(DeviceLayer, "Current number of connections: %u/%u", NumConnections(), CONFIG_BT_MAX_CONN);
 
     ChipDeviceEvent disconnectEvent;
@@ -836,7 +847,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
         err = HandleBleConnectionClosed(event);
         break;
 
-#if defined(CONFIG_CHIP_CONCURRENT_MODE)
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && !defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
     case DeviceEventType::kCommissioningComplete:
         // Concurrent mode: re-enable BLE advertising after commissioning completes.
         // ScheduleWork defers this until after CommissioningWindowManager::Cleanup()

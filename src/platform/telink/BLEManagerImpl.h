@@ -153,7 +153,7 @@ private:
     uint32_t GetAdvertisingInterval();
 
     static void DriveBLEState(intptr_t arg);
-#if defined(CONFIG_CHIP_CONCURRENT_MODE)
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && !defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
     static void HandleConcurrentModeReAdv(intptr_t arg);
 #endif
 
