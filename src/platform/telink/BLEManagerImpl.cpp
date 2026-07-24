@@ -260,6 +260,17 @@ void BLEManagerImpl::DriveBLEState(intptr_t arg)
     BLEMgrImpl().DriveBLEState();
 }
 
+#if defined(CONFIG_CHIP_CONCURRENT_MODE)
+void BLEManagerImpl::HandleConcurrentModeReAdv(intptr_t arg)
+{
+    // Runs after CommissioningWindowManager::Cleanup() has disabled BLE advertising.
+    // Re-enable it so that BLE (e.g. Channel Sounding) remains available alongside Thread.
+    ChipLogProgress(AppServer, "Fabric already commissioned. Enabling BLE advertisement for concurrent mode");
+    VerifyOrReturn(BLEMgrImpl()._SetAdvertisingEnabled(true) == CHIP_NO_ERROR,
+                   ChipLogError(DeviceLayer, "Failed to re-enable BLE advertising"));
+}
+#endif
+
 void BLEManagerImpl::DriveBLEState()
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
@@ -482,9 +493,9 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
                         mAdvertisingRequest.scanResponseData.data(), mAdvertisingRequest.scanResponseData.size())));
     ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
 
-#ifdef CONFIG_CHIP_CONCURRENT_MODE 
-    tlx_bt_802154_dual_mode_start(); 
-#endif
+// #ifdef CONFIG_CHIP_CONCURRENT_MODE 
+//     tlx_bt_802154_dual_mode_start(); 
+// #endif
 
     // Transition to the Advertising state...
     if (!mFlags.Has(Flags::kAdvertising))
@@ -824,6 +835,17 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
     case DeviceEventType::kCHIPoBLEConnectionClosed:
         err = HandleBleConnectionClosed(event);
         break;
+
+#if defined(CONFIG_CHIP_CONCURRENT_MODE)
+    case DeviceEventType::kCommissioningComplete:
+        // Concurrent mode: re-enable BLE advertising after commissioning completes.
+        // ScheduleWork defers this until after CommissioningWindowManager::Cleanup()
+        // (which runs later in the application layer) has called SetBLEAdvertisingEnabled(false),
+        // so the re-enable is not immediately overridden.
+        VerifyOrReturn(PlatformMgr().ScheduleWork(HandleConcurrentModeReAdv, 0) == CHIP_NO_ERROR,
+                       ChipLogError(DeviceLayer, "Failed to schedule BLE re-advertising"));
+        break;
+#endif
 
 #ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
