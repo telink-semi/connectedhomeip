@@ -144,3 +144,35 @@ time.**
 partition limit.
 
 **Solution**: Use the LZMA-enabled configuration (target #2) instead.
+
+## 5. Concurrent Mode (Matter over Thread + BLE coexistence, NO OTA)
+
+**Kconfig:** boards/tl3238x_concurrent.conf (explicitly specified)
+
+-   CONFIG_CHIP_CONCURRENT_MODE=y
+-   CONFIG_IEEE802154_TLX_BLE_COEXIST=y
+-   CONFIG_CHIP_OTA_REQUESTOR=n
+-   CONFIG_DUAL_MODE=0
+
+**Note**: This configuration enables BLE + 802.15.4 coexistence for Matter over
+Thread with BLE advertising. OTA is disabled.
+
+**DTS Overlay:** src/platform/telink/tl3238x_2m_flash.overlay (default)
+
+**Build:**
+
+```bash
+west build -p -b tl3238x -d build_tl3238x_concurrent -- \
+-DCONF_FILE="prj.conf boards/tl3238x_concurrent.conf" > build_tl3238x_concurrent.log
+# Kconfig: explicitly specified (-DCONF_FILE="prj.conf boards/tl3238x_concurrent.conf")
+# DTS Overlay: default (src/platform/telink/tl3238x_2m_flash.overlay)
+```
+
+**Output:**
+
+```bash
+build_tl3238x_concurrent/zephyr/zephyr.bin          -> flash this
+```
+
+**Note**: TL3238X does NOT support Channel Sounding. Use TL7218X for concurrent
+mode + Channel Sounding (see boards/tl7218x_concurrent_cs.conf).
