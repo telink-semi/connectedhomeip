@@ -42,8 +42,8 @@ ThreadStackManagerImpl ThreadStackManagerImpl::sInstance;
 CHIP_ERROR ThreadStackManagerImpl::_InitThreadStack()
 {
 #ifndef CONFIG_CHIP_CONCURRENT_MODE
-    mRadioBlocked               = false;
-    mReadyToAttach              = false;
+    mRadioBlocked  = false;
+    mReadyToAttach = false;
 #endif
     otInstance * const instance = openthread_get_default_instance();
 
@@ -118,8 +118,7 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
 
 #ifdef CONFIG_CHIP_CONCURRENT_MODE
     // Concurrent mode: Thread is always available, attach directly.
-    result =
-        Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::_AttachToThreadNetwork(dataset, callback);
+    result = Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::_AttachToThreadNetwork(dataset, callback);
 #else
     if (mRadioBlocked || mReadyToAttach)
     {

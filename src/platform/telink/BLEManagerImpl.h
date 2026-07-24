@@ -94,7 +94,7 @@ private:
         kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
         kChipoBleGattServiceRegister = 0x0020, /**< The system has currently CHIPoBLE GATT service registered. */
-        kRasGattServiceRegistered     = 0x0080, /**< The system has currently RAS GATT service registered. */
+        kRasGattServiceRegistered    = 0x0080, /**< The system has currently RAS GATT service registered. */
         kExtendedAdvertisingEnabled  = 0x0040, /**< The application has enabled extended advertising. */
     };
 

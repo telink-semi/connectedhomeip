@@ -179,11 +179,11 @@ BLEManagerImpl BLEManagerImpl::sInstance;
 
 CHIP_ERROR BLEManagerImpl::_Init(void)
 {
-    mBLERadioInitialized  = false;
+    mBLERadioInitialized = false;
 #ifndef CONFIG_CHIP_CONCURRENT_MODE
-    mReadyToAttachThread  = false;
+    mReadyToAttachThread = false;
 #endif
-    mconId                = NULL;
+    mconId = NULL;
 #ifndef CONFIG_CHIP_CONCURRENT_MODE
     mInternalScanCallback = new InternalScanCallback(this);
 #endif
@@ -215,8 +215,8 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
         static const struct bt_data minimal_ad[] = {
             BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR),
         };
-        const struct bt_le_adv_param params = BT_LE_ADV_PARAM_INIT(
-            BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_1, BT_GAP_ADV_FAST_INT_MAX_1, NULL);
+        const struct bt_le_adv_param params =
+            BT_LE_ADV_PARAM_INIT(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_1, BT_GAP_ADV_FAST_INT_MAX_1, NULL);
         err = bt_le_adv_start(&params, minimal_ad, ARRAY_SIZE(minimal_ad), NULL, 0);
         if (err != 0)
         {
@@ -493,9 +493,9 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
                         mAdvertisingRequest.scanResponseData.data(), mAdvertisingRequest.scanResponseData.size())));
     ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
 
-// #ifdef CONFIG_CHIP_CONCURRENT_MODE
-//     tlx_bt_802154_dual_mode_start();
-// #endif
+    // #ifdef CONFIG_CHIP_CONCURRENT_MODE
+    //     tlx_bt_802154_dual_mode_start();
+    // #endif
 
     // Transition to the Advertising state...
     if (!mFlags.Has(Flags::kAdvertising))

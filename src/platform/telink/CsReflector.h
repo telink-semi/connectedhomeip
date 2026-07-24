@@ -8,11 +8,11 @@
 
 #pragma once
 
-#include <zephyr/kernel.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/cs.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/kernel.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -37,8 +37,7 @@ public:
     static void OnDisconnected(struct bt_conn * conn);
 
     /* ── Callbacks exposed for C callback structs ───────────────── */
-    static ssize_t RasGattRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len,
-                               uint16_t offset);
+    static ssize_t RasGattRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len, uint16_t offset);
     static void RasGattCccCfgChanged(const struct bt_gatt_attr * attr, uint16_t value);
     static ssize_t RasGattCpWrite(struct bt_conn * conn, const struct bt_gatt_attr * attr, const void * buf, uint16_t len,
                                   uint16_t offset, uint8_t flags);

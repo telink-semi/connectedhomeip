@@ -10,13 +10,13 @@
 
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#include <zephyr/sys/byteorder.h>
 #include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/cs.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
-#include <zephyr/bluetooth/conn.h>
 #include <zephyr/settings/settings.h>
+#include <zephyr/sys/byteorder.h>
 
 #include <cstring>
 
@@ -27,21 +27,21 @@ namespace Internal {
 using namespace chip::Logging;
 
 /* ── RAS Service UUIDs ─────────────────────────────────────────────── */
-#define BT_UUID_RAS_SERVICE_VAL         0x185B
-#define BT_UUID_RAS_FEATURE_VAL         0x2C14
-#define BT_UUID_RAS_REAL_TIME_DATA_VAL  0x2C15
-#define BT_UUID_RAS_ON_DEMAND_DATA_VAL  0x2C16
-#define BT_UUID_RAS_CONTROL_POINT_VAL   0x2C17
-#define BT_UUID_RAS_DATA_READY_VAL      0x2C18
+#define BT_UUID_RAS_SERVICE_VAL 0x185B
+#define BT_UUID_RAS_FEATURE_VAL 0x2C14
+#define BT_UUID_RAS_REAL_TIME_DATA_VAL 0x2C15
+#define BT_UUID_RAS_ON_DEMAND_DATA_VAL 0x2C16
+#define BT_UUID_RAS_CONTROL_POINT_VAL 0x2C17
+#define BT_UUID_RAS_DATA_READY_VAL 0x2C18
 #define BT_UUID_RAS_DATA_OVERWRITTEN_VAL 0x2C19
 
-#define BT_UUID_RAS_SERVICE             BT_UUID_DECLARE_16(BT_UUID_RAS_SERVICE_VAL)
-#define BT_UUID_RAS_FEATURE             BT_UUID_DECLARE_16(BT_UUID_RAS_FEATURE_VAL)
-#define BT_UUID_RAS_REAL_TIME_DATA      BT_UUID_DECLARE_16(BT_UUID_RAS_REAL_TIME_DATA_VAL)
-#define BT_UUID_RAS_ON_DEMAND_DATA      BT_UUID_DECLARE_16(BT_UUID_RAS_ON_DEMAND_DATA_VAL)
-#define BT_UUID_RAS_CONTROL_POINT       BT_UUID_DECLARE_16(BT_UUID_RAS_CONTROL_POINT_VAL)
-#define BT_UUID_RAS_DATA_READY          BT_UUID_DECLARE_16(BT_UUID_RAS_DATA_READY_VAL)
-#define BT_UUID_RAS_DATA_OVERWRITTEN    BT_UUID_DECLARE_16(BT_UUID_RAS_DATA_OVERWRITTEN_VAL)
+#define BT_UUID_RAS_SERVICE BT_UUID_DECLARE_16(BT_UUID_RAS_SERVICE_VAL)
+#define BT_UUID_RAS_FEATURE BT_UUID_DECLARE_16(BT_UUID_RAS_FEATURE_VAL)
+#define BT_UUID_RAS_REAL_TIME_DATA BT_UUID_DECLARE_16(BT_UUID_RAS_REAL_TIME_DATA_VAL)
+#define BT_UUID_RAS_ON_DEMAND_DATA BT_UUID_DECLARE_16(BT_UUID_RAS_ON_DEMAND_DATA_VAL)
+#define BT_UUID_RAS_CONTROL_POINT BT_UUID_DECLARE_16(BT_UUID_RAS_CONTROL_POINT_VAL)
+#define BT_UUID_RAS_DATA_READY BT_UUID_DECLARE_16(BT_UUID_RAS_DATA_READY_VAL)
+#define BT_UUID_RAS_DATA_OVERWRITTEN BT_UUID_DECLARE_16(BT_UUID_RAS_DATA_OVERWRITTEN_VAL)
 
 /* ── RAS GATT attribute indices ────────────────────────────────────── */
 enum : uint8_t
@@ -68,18 +68,18 @@ enum : uint8_t
 };
 
 /* ── Constants ─────────────────────────────────────────────────────── */
-#define CS_CONFIG_ID       0
-#define NUM_MODE_0_STEPS   1
+#define CS_CONFIG_ID 0
+#define NUM_MODE_0_STEPS 1
 
-#define RAS_RANGING_HEADER_LEN   4
-#define RAS_SUBEVENT_HEADER_LEN  8
-#define RAS_SEG_HEADER_LEN       1
+#define RAS_RANGING_HEADER_LEN 4
+#define RAS_SUBEVENT_HEADER_LEN 8
+#define RAS_SEG_HEADER_LEN 1
 
-#define RAS_PROCEDURE_MAX_SIZE   1000
-#define RAS_PROCEDURE_SLOTS      1
+#define RAS_PROCEDURE_MAX_SIZE 1000
+#define RAS_PROCEDURE_SLOTS 1
 
-#define MAX_RAS_DATA_SIZE        1000
-#define RAS_CHUNK_BUF_SIZE       248
+#define MAX_RAS_DATA_SIZE 1000
+#define RAS_CHUNK_BUF_SIZE 248
 
 /* ── RAS feature bitmask (Core Spec v6.0 Vol 3B 7.3) ───────────────── */
 static uint8_t sRasFeature = (1 << 0) | (1 << 1) | (1 << 2);
@@ -100,11 +100,11 @@ static struct bt_conn * sConnection;
 /* ── RAS Procedure Slot ────────────────────────────────────────────── */
 struct RasProcedureSlot
 {
-    uint8_t  data[RAS_PROCEDURE_MAX_SIZE];
+    uint8_t data[RAS_PROCEDURE_MAX_SIZE];
     uint16_t len;
     uint16_t procedureCounter;
-    uint8_t  configId;
-    bool     inUse;
+    uint8_t configId;
+    bool inUse;
 };
 
 static RasProcedureSlot sRasProcSlots[RAS_PROCEDURE_SLOTS];
@@ -134,45 +134,26 @@ static K_WORK_DEFINE(sCsSetDefaultSettingsWork, CsReflector::CsSetDefaultSetting
 static struct bt_gatt_attr sRasAttrs[] = {
     BT_GATT_PRIMARY_SERVICE(BT_UUID_RAS_SERVICE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_FEATURE,
-                           BT_GATT_CHRC_READ,
-                           BT_GATT_PERM_READ,
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_FEATURE, BT_GATT_CHRC_READ, BT_GATT_PERM_READ, CsReflector::RasGattRead, NULL, NULL),
+
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_REAL_TIME_DATA, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ,
                            CsReflector::RasGattRead, NULL, NULL),
+    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_REAL_TIME_DATA,
-                           BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-                           BT_GATT_PERM_READ,
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_ON_DEMAND_DATA, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ,
                            CsReflector::RasGattRead, NULL, NULL),
-    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_ON_DEMAND_DATA,
-                           BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-                           BT_GATT_PERM_READ,
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_CONTROL_POINT, BT_GATT_CHRC_WRITE | BT_GATT_CHRC_INDICATE, BT_GATT_PERM_WRITE, NULL,
+                           CsReflector::RasGattCpWrite, NULL),
+    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_DATA_READY, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ,
                            CsReflector::RasGattRead, NULL, NULL),
-    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_CONTROL_POINT,
-                           BT_GATT_CHRC_WRITE | BT_GATT_CHRC_INDICATE,
-                           BT_GATT_PERM_WRITE,
-                           NULL, CsReflector::RasGattCpWrite, NULL),
-    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
-
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_DATA_READY,
-                           BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-                           BT_GATT_PERM_READ,
-                           CsReflector::RasGattRead, NULL, NULL),
-    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
-
-    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_DATA_OVERWRITTEN,
-                           BT_GATT_CHRC_NOTIFY,
-                           BT_GATT_PERM_NONE,
-                           NULL, NULL, NULL),
-    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged,
-                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAS_DATA_OVERWRITTEN, BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_NONE, NULL, NULL, NULL),
+    BT_GATT_CCC(CsReflector::RasGattCccCfgChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 };
 
 static struct bt_gatt_service sRasService = BT_GATT_SERVICE(sRasAttrs);
@@ -191,13 +172,13 @@ static struct bt_conn_auth_info_cb sConnAuthInfoCallbacks = {
 /* ── CS connection callbacks ───────────────────────────────────────── */
 BT_CONN_CB_DEFINE(sConnCsCallbacks) = {
 #if defined(CONFIG_BT_SMP)
-    .security_changed                     = CsReflector::SecurityChangedCb,
+    .security_changed = CsReflector::SecurityChangedCb,
 #endif
-    .le_cs_remote_capabilities_available  = CsReflector::RemoteCapabilitiesCb,
-    .le_cs_config_created                 = CsReflector::ConfigCreatedCb,
-    .le_cs_subevent_data_available        = CsReflector::SubeventResultCb,
-    .le_cs_security_enabled               = CsReflector::SecurityEnabledCb,
-    .le_cs_procedure_enabled              = CsReflector::ProcedureEnabledCb,
+    .le_cs_remote_capabilities_available = CsReflector::RemoteCapabilitiesCb,
+    .le_cs_config_created                = CsReflector::ConfigCreatedCb,
+    .le_cs_subevent_data_available       = CsReflector::SubeventResultCb,
+    .le_cs_security_enabled              = CsReflector::SecurityEnabledCb,
+    .le_cs_procedure_enabled             = CsReflector::ProcedureEnabledCb,
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -240,11 +221,9 @@ void CsReflector::RasBuildSubeventHeader(uint8_t * buf, struct bt_conn_le_cs_sub
     buf[2] = (result->header.frequency_compensation >> 0) & 0xFF;
     buf[3] = (result->header.frequency_compensation >> 8) & 0xFF;
 
-    buf[4] = ((result->header.procedure_done_status & 0x0F) << 0) |
-             ((result->header.subevent_done_status & 0x0F) << 4);
+    buf[4] = ((result->header.procedure_done_status & 0x0F) << 0) | ((result->header.subevent_done_status & 0x0F) << 4);
 
-    buf[5] = ((result->header.procedure_abort_reason & 0x0F) << 0) |
-             ((result->header.subevent_abort_reason & 0x0F) << 4);
+    buf[5] = ((result->header.procedure_abort_reason & 0x0F) << 0) | ((result->header.subevent_abort_reason & 0x0F) << 4);
 
     buf[6] = static_cast<uint8_t>(result->header.reference_power_level);
 
@@ -273,8 +252,8 @@ uint16_t CsReflector::RasConvertStepData(uint8_t * buf, struct bt_conn_le_cs_sub
             break;
         }
 
-        uint8_t stepMode     = sbuf->data[offset];
-        uint8_t stepDataLen  = sbuf->data[offset + 2];
+        uint8_t stepMode    = sbuf->data[offset];
+        uint8_t stepDataLen = sbuf->data[offset + 2];
 
         *wptr++ = (stepMode & 0x03) | (stepAborted ? 0x80 : 0x00);
 
@@ -320,8 +299,8 @@ uint16_t CsReflector::RasBuildSubeventData(uint8_t * buf, struct bt_conn_le_cs_s
     return static_cast<uint16_t>(wptr - buf);
 }
 
-void CsReflector::RasNotifyWithFrag(struct bt_conn * conn, const struct bt_gatt_attr * attr, const void * data,
-                                    uint16_t len, bool isProcFirst, bool isProcLast)
+void CsReflector::RasNotifyWithFrag(struct bt_conn * conn, const struct bt_gatt_attr * attr, const void * data, uint16_t len,
+                                    bool isProcFirst, bool isProcLast)
 {
     if (sRasSending)
     {
@@ -355,10 +334,10 @@ void CsReflector::RasNotifyWithFrag(struct bt_conn * conn, const struct bt_gatt_
 
 void CsReflector::RasSendWorkHandler(struct k_work * /*work*/)
 {
-    uint16_t mtu         = bt_gatt_get_mtu(sRasWorkConn);
-    uint16_t maxPayload  = (mtu > 3) ? (mtu - 3) : 20;
-    uint16_t offset      = 0;
-    uint8_t segIdx       = sRasWorkSegStart;
+    uint16_t mtu        = bt_gatt_get_mtu(sRasWorkConn);
+    uint16_t maxPayload = (mtu > 3) ? (mtu - 3) : 20;
+    uint16_t offset     = 0;
+    uint8_t segIdx      = sRasWorkSegStart;
 
     maxPayload -= RAS_SEG_HEADER_LEN;
 
@@ -380,8 +359,8 @@ void CsReflector::RasSendWorkHandler(struct k_work * /*work*/)
             break;
         }
 
-        ChipLogDetail(DeviceLayer, "CS: RAS chunk ok seg=%u first=%d last=%d off=%u len=%u", segIdx, firstSeg, lastSeg,
-                      offset, chunkLen);
+        ChipLogDetail(DeviceLayer, "CS: RAS chunk ok seg=%u first=%d last=%d off=%u len=%u", segIdx, firstSeg, lastSeg, offset,
+                      chunkLen);
 
         offset += chunkLen;
         segIdx = (segIdx + 1) & 0x3F;
@@ -398,10 +377,10 @@ void CsReflector::RasSendWorkHandler(struct k_work * /*work*/)
 void CsReflector::CsSetDefaultSettingsWorkHandler(struct k_work * /*work*/)
 {
     const struct bt_le_cs_set_default_settings_param defaultSettings = {
-        .enable_initiator_role      = false,
-        .enable_reflector_role      = true,
-        .cs_sync_antenna_selection  = BT_LE_CS_ANTENNA_SELECTION_OPT_REPETITIVE,
-        .max_tx_power               = BT_HCI_OP_LE_CS_MAX_MAX_TX_POWER,
+        .enable_initiator_role     = false,
+        .enable_reflector_role     = true,
+        .cs_sync_antenna_selection = BT_LE_CS_ANTENNA_SELECTION_OPT_REPETITIVE,
+        .max_tx_power              = BT_HCI_OP_LE_CS_MAX_MAX_TX_POWER,
     };
 
     if (!sConnection)
@@ -431,9 +410,8 @@ void CsReflector::SubeventResultCb(struct bt_conn * conn, struct bt_conn_le_cs_s
 {
     uint16_t procCounter = result->header.procedure_counter;
 
-    ChipLogDetail(DeviceLayer, "CS: subevent proc=%u cfg=%u steps=%u AP=%u done=%u", procCounter,
-                  result->header.config_id, result->header.num_steps_reported, result->header.num_antenna_paths,
-                  result->header.procedure_done_status);
+    ChipLogDetail(DeviceLayer, "CS: subevent proc=%u cfg=%u steps=%u AP=%u done=%u", procCounter, result->header.config_id,
+                  result->header.num_steps_reported, result->header.num_antenna_paths, result->header.procedure_done_status);
 
     if (!sRasFirstSubevent || procCounter != sRasCurrentProcedureCounter)
     {
@@ -456,15 +434,15 @@ void CsReflector::SubeventResultCb(struct bt_conn * conn, struct bt_conn_le_cs_s
             ChipLogDetail(DeviceLayer, "CS: RAS overwriting oldest slot");
         }
 
-        sRasProcSlots[sRasCurrentSlot].inUse             = true;
-        sRasProcSlots[sRasCurrentSlot].len               = 0;
-        sRasProcSlots[sRasCurrentSlot].procedureCounter  = procCounter;
-        sRasProcSlots[sRasCurrentSlot].configId          = result->header.config_id;
+        sRasProcSlots[sRasCurrentSlot].inUse            = true;
+        sRasProcSlots[sRasCurrentSlot].len              = 0;
+        sRasProcSlots[sRasCurrentSlot].procedureCounter = procCounter;
+        sRasProcSlots[sRasCurrentSlot].configId         = result->header.config_id;
 
         ChipLogDetail(DeviceLayer, "CS: RAS new procedure %u, slot %d", procCounter, sRasCurrentSlot);
     }
 
-    bool isFirst = sRasFirstSubevent;
+    bool isFirst      = sRasFirstSubevent;
     sRasFirstSubevent = false;
 
     uint16_t subeventLen = RasBuildSubeventData(sRasSubeventBuf, result, isFirst);
@@ -513,8 +491,7 @@ void CsReflector::SubeventResultCb(struct bt_conn * conn, struct bt_conn_le_cs_s
  *  RAS GATT Callbacks
  * ════════════════════════════════════════════════════════════════════ */
 
-ssize_t CsReflector::RasGattRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len,
-                                 uint16_t offset)
+ssize_t CsReflector::RasGattRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len, uint16_t offset)
 {
     if (attr == &sRasAttrs[kRasIdxFeatureVal])
     {
@@ -540,8 +517,8 @@ void CsReflector::RasGattCccCfgChanged(const struct bt_gatt_attr * attr, uint16_
         sRasDataoverwrittenCcc = value;
 }
 
-ssize_t CsReflector::RasGattCpWrite(struct bt_conn * conn, const struct bt_gatt_attr * attr, const void * buf,
-                                    uint16_t len, uint16_t offset, uint8_t flags)
+ssize_t CsReflector::RasGattCpWrite(struct bt_conn * conn, const struct bt_gatt_attr * attr, const void * buf, uint16_t len,
+                                    uint16_t offset, uint8_t flags)
 {
     const uint8_t * data = static_cast<const uint8_t *>(buf);
     uint8_t opcode       = data[0];
@@ -621,8 +598,8 @@ void CsReflector::SecurityEnabledCb(struct bt_conn * conn)
 
 void CsReflector::ProcedureEnabledCb(struct bt_conn * conn, struct bt_conn_le_cs_procedure_enable_complete * params)
 {
-    ChipLogProgress(DeviceLayer, "CS: procedures %s, selected_tx_power=%d dBm",
-                    params->state ? "enabled" : "disabled", params->selected_tx_power);
+    ChipLogProgress(DeviceLayer, "CS: procedures %s, selected_tx_power=%d dBm", params->state ? "enabled" : "disabled",
+                    params->selected_tx_power);
 
     if (params->selected_tx_power != 0x7F)
         sRasSelectedTxPower = params->selected_tx_power;
@@ -699,11 +676,11 @@ void CsReflector::OnConnected(struct bt_conn * conn, uint8_t err)
         ChipLogProgress(DeviceLayer, "CS: MTU exchange failed (err %d)", mtuErr);
     }
 
-/*     int secErr = bt_conn_set_security(sConnection, BT_SECURITY_L2);
-    if (secErr)
-    {
-        ChipLogProgress(DeviceLayer, "CS: failed to request security (err %d)", secErr);
-    } */
+    /*     int secErr = bt_conn_set_security(sConnection, BT_SECURITY_L2);
+        if (secErr)
+        {
+            ChipLogProgress(DeviceLayer, "CS: failed to request security (err %d)", secErr);
+        } */
 }
 
 void CsReflector::OnDisconnected(struct bt_conn * conn)
