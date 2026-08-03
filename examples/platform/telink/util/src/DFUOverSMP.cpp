@@ -36,6 +36,17 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+#ifdef __cplusplus
+extern "C" {
+#endif
+struct k_timer sDnssTimer;
+static volatile bool canlTimerFlag = false;
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+#endif /* CONFIG_AUTO_SWITCH_DUAL_MODE */
+
 static void reboot_work_handler(struct k_work * work)
 {
     LOG_INF("[DFU] Start reboot!");
@@ -55,6 +66,13 @@ int UploadProgressHandler(uint32_t event, int32_t rc, bool * abort_more, void * 
 #endif
 
 {
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+    if (!canlTimerFlag) {
+        k_timer_stop(&sDnssTimer);
+        canlTimerFlag = true;
+        LOG_INF("[Telink] DnssTimer stopped; DFU-OTA Handler.\n");
+    }
+#endif /* CONFIG_AUTO_SWITCH_DUAL_MODE */
     const img_mgmt_upload_check & imgData = *static_cast<img_mgmt_upload_check *>(data);
 
     LOG_INF("[DFU] DFU over SMP progress: %u/%u B of image %u", static_cast<unsigned>(imgData.req->off),

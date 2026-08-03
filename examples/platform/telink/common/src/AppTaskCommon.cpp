@@ -97,6 +97,7 @@ bool sIsNetworkEnabled     = false;
 bool sIsNetworkAttached    = false;
 bool sHaveBLEConnections   = false;
 
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
 #include <ext_driver/ext_pm.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
@@ -120,6 +121,9 @@ bool sHaveBLEConnections   = false;
 // after zb paired , it will go to zb, only if trigger action.
 #define MODE_VAL_ZB_PAIR 0xaa
 #define ACTION_SWITCH_MATTER 0x55
+#endif
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
 void dual_mode_switch(int32_t op)
 {
     uint8_t boot_flag[2]                 = { 0xff, 0xff };
@@ -150,6 +154,93 @@ void dual_mode_switch(int32_t op)
         sys_reboot(SYS_REBOOT_WARM);
     }
 }
+
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+//#include <app-common/zap-generated/attributes/Accessors.h>
+
+#define USER_MATTER_BACK_ZB 0xa0 // only commisiion fail will back to zb
+#define USER_ZB_SW_VAL 0xaa
+
+typedef struct{
+    uint8_t val;
+    uint8_t on_net;
+} user_para_t;
+
+uint8_t sBoot_zb = 0;
+user_para_t user_para;
+
+#define ZB_NVS_PARTITION zigbee_nvs_partition
+#define ZB_NVS_SEC_SIZE FIXED_PARTITION_SIZE(ZB_NVS_PARTITION)
+
+#define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
+#define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
+
+/*MATTER NVS*/
+#define MATTER_NVS_PARTITION storage_partition
+#define MATTER_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_SIZE FIXED_PARTITION_SIZE(MATTER_NVS_PARTITION)
+
+const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
+const struct device * matter_nvs_dev    = MATTER_NVS_PARTITION_DEVICE;
+
+constexpr int kDnssTimeout           = 60000;
+#if !CONFIG_MCUMGR_TRANSPORT_BT
+static k_timer sDnssTimer; // create when dfu disable
+#endif /* !CONFIG_MCUMGR_TRANSPORT_BT */
+
+void FactoryResetExtHandler(void)
+{
+    // Erase the user parameters partition to reset mode settings
+    flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, DUAL_MODE_PARTITION_SIZE);
+    // Erase ZigBee NVS data during factory reset
+    flash_erase(zb_para_dev, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
+}
+
+uint8_t dual_mode_switch_from_zb()
+{
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &user_para, sizeof(user_para));
+    if (user_para.val == USER_ZB_SW_VAL){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+void dual_mode_auto_switch(int32_t op)
+{
+    uint8_t boot_flag = 0xff;
+    const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, 1);
+
+    if (op == OPCODE_FACTORY_RESET)
+    {
+        FactoryResetExtHandler();
+    }
+    else if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        /*if commission fail should keep the state of others , directly write from 0xAA to 0xA0*/
+        boot_flag = USER_MATTER_BACK_ZB;
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
+    }
+    else if (op == OPCODE_MATTER_PAIRED)
+    {
+        boot_flag = MODE_VAL_MATTER_PAIR;
+        flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
+    }
+    
+    // need to reboot ,switch to bootloader
+    if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        // clear matter nvs for unclean info in matter nvs 
+        flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
+        sys_reboot(SYS_REBOOT_WARM);
+    }
+}
+#endif
 
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
@@ -241,6 +332,25 @@ void AppTaskCommon::PowerOnFactoryReset(void)
 }
 #endif /* CONFIG_CHIP_ENABLE_POWER_ON_FACTORY_RESET */
 
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
+{
+    if (!timer)
+    {
+        return;
+    }
+    /*
+     * If Dnss initialization takes longer than 60 seconds,
+     * the device will reboot and revert to Zigbee mode.
+     */
+    if (sBoot_zb)
+    {
+        printk("Matter: DnssTimer expired. Rebooting...\n");
+        dual_mode_auto_switch(OPCODE_SWITCH_ZIGBEE);
+    }
+}
+#endif
+
 CHIP_ERROR AppTaskCommon::StartApp(void)
 {
     CHIP_ERROR err = GetAppTask().Init();
@@ -250,6 +360,15 @@ CHIP_ERROR AppTaskCommon::StartApp(void)
         LOG_ERR("AppTask Init fail");
         return err;
     }
+
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+    if(dual_mode_switch_from_zb()){
+        sBoot_zb = 1;
+        k_timer_init(&sDnssTimer, &DnssTimerTimeoutCallback, nullptr);
+        k_timer_start(&sDnssTimer, K_MSEC(kDnssTimeout), K_NO_WAIT);
+        printk("Matter: Started DNS protection timer.");
+    }
+#endif
 
     AppEvent event = {};
 
@@ -599,7 +718,6 @@ void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
 {
     LOG_INF("StartBleAdvHandler");
 
-    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
     {
@@ -645,7 +763,9 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         sFactoryResetCntr = 0;
 
         chip::Server::GetInstance().ScheduleFactoryReset();
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_FACTORY_RESET);
+        #endif
     }
 }
 
@@ -854,7 +974,29 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         }
         break;
     case DeviceEventType::kCommissioningComplete:
+        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_MATTER_PAIRED);
+        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        /* clear boot from zigbee after commission*/
+        sBoot_zb = 0;
+        dual_mode_auto_switch(OPCODE_MATTER_PAIRED);
+        #endif
+        printk("Commissioning complete; Matter commissioned flag set.\n");
+        break;
+
+    case DeviceEventType::kFailSafeTimerExpired:
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        /* Reset to Zigbee mode if commissioning fails */
+        if (sBoot_zb)
+        {
+            dual_mode_auto_switch(OPCODE_SWITCH_ZIGBEE);
+            printk("FailSafeTimer expired; Matter commissioning failed. Rebooting to Zigbee mode...\n");
+        }
+        else
+#endif
+        {
+            printk("FailSafeTimer expired; Matter commissioning failed.\n");
+        }
         break;
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
@@ -867,6 +1009,13 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
             OtaConfirmNewImage();
 #endif /* CONFIG_BOOTLOADER_MCUBOOT */
 #if CONFIG_CHIP_OTA_REQUESTOR
+        }
+#endif
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        if (sBoot_zb)
+        {
+            k_timer_stop(&sDnssTimer);
+            printk("DnssTimer stopped; DNS-SD has been initialized.\n");
         }
 #endif
         break;
