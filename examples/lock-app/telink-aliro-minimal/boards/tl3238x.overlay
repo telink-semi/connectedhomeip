@@ -1,0 +1,57 @@
+/ {
+	aliases {
+		gspi-0 = &gspi;
+		fmirq = &aliro_nfc_irq;
+		fmreset = &aliro_nfc_reset;
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		aliro_nfc_irq: aliro_nfc_irq {
+			label = "ALIRO_NFC_IRQ";
+			gpios = <&gpioa 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		aliro_nfc_reset: aliro_nfc_reset {
+			label = "ALIRO_NFC_RESET";
+			gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&gpioa {
+	interrupts = <39 1>;
+	status = "okay";
+};
+
+&gspi {
+	clock-frequency = <1000000>;
+	label = "SPI_0";
+	status = "okay";
+};
+
+/ {
+	soc {
+		/delete-node/ memory@68000;
+		/delete-node/ memory@80000;
+
+		ram_ilm: memory@68000 {
+			compatible = "mmio-sram";
+			reg = <0x00068000 0x00020000>;
+		};
+
+		ram_ilm_non_retention: memory@88000 {
+			compatible = "mmio-sram";
+			reg = <0x00088000 0x00008000>;
+		};
+	};
+
+	chosen {
+		zephyr,sram = &ram_ilm;
+	};
+};
