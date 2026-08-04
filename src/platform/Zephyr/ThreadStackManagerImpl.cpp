@@ -106,7 +106,7 @@ void ThreadStackManagerImpl::_UnlockThreadStack()
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 void ThreadStackManagerImpl::_WaitOnSrpClearAllComplete()
 {
-    k_sem_take(&mSrpClearAllSemaphore, K_MSEC(500));
+    k_sem_take(&mSrpClearAllSemaphore, K_SECONDS(2));
 }
 
 void ThreadStackManagerImpl::_NotifySrpClearAllComplete()

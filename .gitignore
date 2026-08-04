@@ -103,3 +103,9 @@ imgui.ini
 
 # Joint Fabric test harness output file
 admin_storage.json
+
+# ignore build output directories
+build-*
+build_*
+factory_data*
+*.patch

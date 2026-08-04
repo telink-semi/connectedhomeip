@@ -24,6 +24,8 @@
 #include "OTAUtil.h"
 #include "Reboot.h"
 
+#include <vector>
+
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/DeviceInstanceInfoProvider.h>
 

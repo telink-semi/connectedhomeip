@@ -36,10 +36,11 @@
 #include <DeviceInfoProviderImpl.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
 #include <app/persistence/AttributePersistenceProviderInstance.h>
 #include <app/persistence/DefaultAttributePersistenceProvider.h>
 #include <app/persistence/DeferredAttributePersistenceProvider.h>
-#include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#endif
 #include <app/server/Server.h>
 #include <app/util/endpoint-config-api.h>
 #include <setup_payload/OnboardingCodesUtil.h>
@@ -66,6 +67,9 @@ bool AppTaskCommon::sIsCommissioningFailed = false;
 
 #include "Reboot.h"
 #include <zephyr_pm_observer.h>
+#include <zephyr/fs/nvs.h>
+#include <zephyr/settings/settings.h>
+#include <zephyr/sys/reboot.h>
 
 #if defined(CONFIG_PM) && !defined(CONFIG_CHIP_ENABLE_PM_DURING_BLE)
 #include <zephyr/pm/policy.h>
@@ -102,6 +106,7 @@ bool sIsNetworkEnabled     = false;
 bool sIsNetworkAttached    = false;
 bool sHaveBLEConnections   = false;
 
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
 /**
  * @brief Set deferred attributes storage
  *
@@ -132,6 +137,8 @@ DefaultAttributePersistenceProvider gSimpleAttributePersistence;
 DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
                                                                  Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
                                                                  System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
+
+#endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 #include <ext_driver/ext_pm.h>
@@ -220,11 +227,10 @@ user_para_t user_para;
 #define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
 #define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
 
-
 const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
 const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
-
 constexpr int kDnssTimeout           = 60000;
+
 #if !CONFIG_MCUMGR_TRANSPORT_BT
 static k_timer sDnssTimer; // create when dfu disable
 #endif /* !CONFIG_MCUMGR_TRANSPORT_BT */
@@ -240,16 +246,19 @@ void FactoryResetExtHandler(void)
 uint8_t dual_mode_switch_from_zb()
 {
     flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &user_para, sizeof(user_para));
-    if (user_para.val == USER_ZB_SW_VAL){
+    if (user_para.val == USER_ZB_SW_VAL)
+    {
         return 1;
-    }else{
+    }
+    else
+    {
         return 0;
     }
 }
 
 void dual_mode_auto_switch(int32_t op)
 {
-    uint8_t boot_flag = 0xff;
+    uint8_t boot_flag                    = 0xff;
     const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
 
     flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, 1);
@@ -270,16 +279,16 @@ void dual_mode_auto_switch(int32_t op)
         flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
         flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
     }
-    
+
     // need to reboot ,switch to bootloader
     if (op == OPCODE_SWITCH_ZIGBEE)
     {
-        // clear matter nvs for unclean info in matter nvs 
+        // clear matter nvs for unclean info in matter nvs
         flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
         sys_reboot(SYS_REBOOT_WARM);
     }
 }
-#endif
+#endif /* CONFIG_DUAL_MODE */
 
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
@@ -391,6 +400,14 @@ void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
 #endif
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+static void DoDelayedFactoryReset(struct k_work * work)
+{
+    chip::Server::GetInstance().ScheduleFactoryReset();
+};
+
+static k_work_delayable sDelayedFactoryResetWork = \
+    Z_WORK_DELAYABLE_INITIALIZER(DoDelayedFactoryReset);
+
 static void PowerOnNetworkCheck(void)
 {
     Thread::OperationalDataset curDataset;
@@ -544,7 +561,9 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);
 #endif
     LogErrorOnFailure(initParams.InitializeStaticResourcesBeforeServerInit());
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
     VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
+#endif
 #if APP_SET_DEVICE_INFO_PROVIDER
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
@@ -561,8 +580,10 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     initParams.dataModelProvider = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
     ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
 
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
     /* Add deferred storage attribute for provider */
     app::SetAttributePersistenceProvider(&gDeferredAttributePersister);
+#endif
 
     ConfigurationMgr().LogDeviceConfig();
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
@@ -856,11 +877,11 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         k_timer_stop(&sFactoryResetTimer);
         sFactoryResetCntr = 0;
 
-        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_FACTORY_RESET);
-        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
         dual_mode_auto_switch(OPCODE_FACTORY_RESET);
-        #endif
+#endif
         /* clear matter nvs for unclean info in matter nvs */
         LOG_INF("Factory Reset TC: Erase matter nvs directly and reboot");
         flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
@@ -1103,13 +1124,13 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         }
         break;
     case DeviceEventType::kCommissioningComplete:
-        #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
         dual_mode_switch(OPCODE_MATTER_PAIRED);
-        #elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
         /* clear boot from zigbee after commission*/
         sBoot_zb = 0;
         dual_mode_auto_switch(OPCODE_MATTER_PAIRED);
-        #endif
+#endif
         printk("Commissioning complete; Matter commissioned flag set.\n");
         break;
 
