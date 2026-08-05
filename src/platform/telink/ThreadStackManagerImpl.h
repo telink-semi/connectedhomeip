@@ -59,7 +59,9 @@ class ThreadStackManagerImpl final : public ThreadStackManager,
 public:
     // ===== Methods that implement the ThreadStackManager abstract interface.
     CHIP_ERROR _InitThreadStack();
-#ifndef CONFIG_CHIP_CONCURRENT_MODE
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: radio stays unblocked; these setters are not needed.
+#else
     void SetRadioBlocked(bool state) { mRadioBlocked = state; }
     void SetReadyToAttach(bool state) { mReadyToAttach = state; }
     bool IsReadyToAttach(void) const { return mReadyToAttach; }
@@ -96,7 +98,9 @@ private:
 
     static ThreadStackManagerImpl sInstance;
 
-#ifndef CONFIG_CHIP_CONCURRENT_MODE
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: radio blocking state is not tracked.
+#else
     // ===== Private members for use by this class only.
     bool mRadioBlocked;
     bool mReadyToAttach;
