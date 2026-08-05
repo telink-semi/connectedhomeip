@@ -186,9 +186,7 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
     mReadyToAttachThread  = false;
 #endif
     mconId = NULL;
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: InternalScanCallback is not used.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     mInternalScanCallback = new InternalScanCallback(this);
 #endif
 
@@ -207,9 +205,7 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
     VerifyOrReturnError(err == 0, MapErrorZephyr(err));
     mBLERadioInitialized = true;
 
-#if defined(CONFIG_BT_CHANNEL_SOUNDING)
     settings_load();
-#endif
 
     // Start a minimal BLE advertisement so that tlx_bt_802154_dual_mode_start()
     // can successfully insert the BLE task before Thread auto-starts.
@@ -436,15 +432,13 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
 
     if (!mBLERadioInitialized)
     {
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-        // Concurrent mode: keep Thread running and share the radio with BLE.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
         // Non-concurrent mode: disable Thread and block radio before enabling BLE.
         TEMPORARY_RETURN_IGNORED ThreadStackMgrImpl().SetThreadEnabled(false);
         ThreadStackMgrImpl().SetRadioBlocked(true);
 #endif
-#endif // CONFIG_CHIP_CONCURRENT_MODE
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
         if (!BleLayer::IsInitialized())
         {
@@ -500,6 +494,10 @@ CHIP_ERROR BLEManagerImpl::StartAdvertisingProcess(void)
         bt_le_adv_start(&params, mAdvertisingRequest.advertisingData.data(), mAdvertisingRequest.advertisingData.size(),
                         mAdvertisingRequest.scanResponseData.data(), mAdvertisingRequest.scanResponseData.size())));
     ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
+
+    // #ifdef CONFIG_CHIP_CONCURRENT_MODE
+    //     tlx_bt_802154_dual_mode_start();
+    // #endif
 
     // Transition to the Advertising state...
     if (!mFlags.Has(Flags::kAdvertising))
@@ -874,7 +872,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
         err = HandleOperationalNetworkEnabled(event);
         break;
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
-#endif // CONFIG_CHIP_CONCURRENT_MODE
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
     default:
         break;
@@ -1112,12 +1110,7 @@ ssize_t BLEManagerImpl::HandleC3Read(struct bt_conn * conId, const struct bt_gat
 
 CHIP_ERROR BLEManagerImpl::HandleBleConnectionClosed(const ChipDeviceEvent * event)
 {
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: BLE and Thread share the radio hardware.
-    // Do NOT call bt_disable() here, as it would tear down the shared radio
-    // controller and corrupt Thread's OpenThread state.
-    // The BLE stack remains initialized; only the connection is closed.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     // Deinit BLE
     bt_disable();
     mBLERadioInitialized = false;
@@ -1132,6 +1125,11 @@ CHIP_ERROR BLEManagerImpl::HandleBleConnectionClosed(const ChipDeviceEvent * eve
         SwitchToIeee802154();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#else  // CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: BLE and Thread share the radio hardware.
+    // Do NOT call bt_disable() here, as it would tear down the shared radio
+    // controller and corrupt Thread's OpenThread state.
+    // The BLE stack remains initialized; only the connection is closed.
 #endif // CONFIG_CHIP_CONCURRENT_MODE
 
     return CHIP_NO_ERROR;

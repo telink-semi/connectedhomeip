@@ -39,9 +39,7 @@ namespace Internal {
 
 using namespace chip::Ble;
 
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-// Concurrent mode: InternalScanCallback is not used.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 class InternalScanCallback;
 #endif
 
@@ -114,9 +112,7 @@ private:
     PacketBufferHandle c3CharDataBufferHandle;
 #endif
     bool mBLERadioInitialized;
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: mReadyToAttachThread is not used.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     bool mReadyToAttachThread;
 #endif
     bool mNeedToResetFailSafeTimer;
@@ -132,10 +128,7 @@ private:
     CHIP_ERROR HandleTXCharComplete(const ChipDeviceEvent * event);
     CHIP_ERROR HandleBleConnectionClosed(const ChipDeviceEvent * event);
 
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: Thread stays active alongside BLE, so the
-    // non-concurrent workaround handlers below are not needed.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     /*
         WORKAROUND: Due to abscense of non-cuncurrent mode in Matter
         we are emulating connection to Thread with this events and manually
@@ -149,7 +142,7 @@ private:
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     InternalScanCallback * mInternalScanCallback;
-#endif // CONFIG_CHIP_CONCURRENT_MODE
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
     CHIP_ERROR PrepareC3CharData(void);
@@ -196,21 +189,17 @@ public:
                                     uint16_t offset);
 #endif
 
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: radio is shared, no explicit BLE->Thread switch needed.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Switch context from BLE to Thread
     void SwitchToIeee802154(void);
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
-#endif // CONFIG_CHIP_CONCURRENT_MODE
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
     CHIP_ERROR StartAdvertisingProcess(void);
 };
 
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-// Concurrent mode: InternalScanCallback is not needed.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
 class InternalScanCallback : public DeviceLayer::NetworkCommissioning::ThreadDriver::ScanCallback
 {
 public:
@@ -224,7 +213,7 @@ public:
 private:
     BLEManagerImpl * mBLEManagerImpl;
 };
-#endif // CONFIG_CHIP_CONCURRENT_MODE
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 
 /**
  * Returns a reference to the public interface of the BLEManager singleton object.

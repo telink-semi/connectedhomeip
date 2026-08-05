@@ -41,9 +41,7 @@ ThreadStackManagerImpl ThreadStackManagerImpl::sInstance;
 
 CHIP_ERROR ThreadStackManagerImpl::_InitThreadStack()
 {
-#ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: mRadioBlocked / mReadyToAttach are not used.
-#else
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
     mRadioBlocked  = false;
     mReadyToAttach = false;
 #endif
