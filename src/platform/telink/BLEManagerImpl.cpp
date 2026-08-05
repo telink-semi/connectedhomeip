@@ -183,7 +183,7 @@ CHIP_ERROR BLEManagerImpl::_Init(void)
 #ifdef CONFIG_CHIP_CONCURRENT_MODE
     // Concurrent mode: mReadyToAttachThread is not used.
 #else
-    mReadyToAttachThread = false;
+    mReadyToAttachThread  = false;
 #endif
     mconId = NULL;
 #ifdef CONFIG_CHIP_CONCURRENT_MODE
@@ -863,7 +863,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #endif
 
 #ifdef CONFIG_CHIP_CONCURRENT_MODE
-    // Concurrent mode: no Thread state change events are forwarded to BLE.
+        // Concurrent mode: no Thread state change events are forwarded to BLE.
 #else
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kThreadStateChange:
