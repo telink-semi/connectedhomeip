@@ -15,4 +15,7 @@
 declare_args() {
   # Enable factory data support
   chip_enable_factory_data = false
+
+  # Enable Channel Sounding (RAS Reflector)
+  chip_enable_cs = false
 }

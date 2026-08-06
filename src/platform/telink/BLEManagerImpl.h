@@ -39,7 +39,11 @@ namespace Internal {
 
 using namespace chip::Ble;
 
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+// Concurrent mode: InternalScanCallback is not used.
+#else
 class InternalScanCallback;
+#endif
 
 /**
  * Concrete implementation of the BLEManager singleton object for the Zephyr platforms.
@@ -92,6 +96,7 @@ private:
         kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
         kChipoBleGattServiceRegister = 0x0020, /**< The system has currently CHIPoBLE GATT service registered. */
+        kRasGattServiceRegistered    = 0x0080, /**< The system has currently RAS GATT service registered. */
         kExtendedAdvertisingEnabled  = 0x0040, /**< The application has enabled extended advertising. */
     };
 
@@ -109,7 +114,11 @@ private:
     PacketBufferHandle c3CharDataBufferHandle;
 #endif
     bool mBLERadioInitialized;
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: mReadyToAttachThread is not used.
+#else
     bool mReadyToAttachThread;
+#endif
     bool mNeedToResetFailSafeTimer;
 
     void DriveBLEState(void);
@@ -123,6 +132,10 @@ private:
     CHIP_ERROR HandleTXCharComplete(const ChipDeviceEvent * event);
     CHIP_ERROR HandleBleConnectionClosed(const ChipDeviceEvent * event);
 
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: Thread stays active alongside BLE, so the
+    // non-concurrent workaround handlers below are not needed.
+#else
     /*
         WORKAROUND: Due to abscense of non-cuncurrent mode in Matter
         we are emulating connection to Thread with this events and manually
@@ -136,6 +149,7 @@ private:
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     InternalScanCallback * mInternalScanCallback;
+#endif // CONFIG_CHIP_CONCURRENT_MODE
 
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
     CHIP_ERROR PrepareC3CharData(void);
@@ -146,6 +160,9 @@ private:
     uint32_t GetAdvertisingInterval();
 
     static void DriveBLEState(intptr_t arg);
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && !defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
+    static void HandleConcurrentModeReAdv(intptr_t arg);
+#endif
 
     // Below callbacks run from the system workqueue context and have a limited stack capacity.
     static void HandleTXIndicated(bt_conn * conn, bt_gatt_indicate_params * attr, uint8_t err);
@@ -179,14 +196,21 @@ public:
                                     uint16_t offset);
 #endif
 
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: radio is shared, no explicit BLE->Thread switch needed.
+#else
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Switch context from BLE to Thread
     void SwitchToIeee802154(void);
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#endif // CONFIG_CHIP_CONCURRENT_MODE
 
     CHIP_ERROR StartAdvertisingProcess(void);
 };
 
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+// Concurrent mode: InternalScanCallback is not needed.
+#else
 class InternalScanCallback : public DeviceLayer::NetworkCommissioning::ThreadDriver::ScanCallback
 {
 public:
@@ -200,6 +224,7 @@ public:
 private:
     BLEManagerImpl * mBLEManagerImpl;
 };
+#endif // CONFIG_CHIP_CONCURRENT_MODE
 
 /**
  * Returns a reference to the public interface of the BLEManager singleton object.
