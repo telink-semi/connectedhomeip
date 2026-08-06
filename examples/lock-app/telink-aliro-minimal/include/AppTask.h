@@ -46,6 +46,7 @@ private:
     static void AliroLockActionEventHandler(AppEvent * event);
     static int GetAliroLockState(enum telink_aliro_lock_state * state, void * context);
     static int RequestAliroLockState(enum telink_aliro_lock_state state, void * context);
+    static int AuthorizeAliroEndpoint(const uint8_t * publicKey, size_t publicKeySize, void * context);
     static void LockStateChanged(LockManager::State_t state);
     static AppTask sAppTask;
 };

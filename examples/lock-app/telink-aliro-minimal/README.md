@@ -13,20 +13,21 @@ the CLRC663 NFC frontend.
 - Root endpoint clusters needed for commissioning, access control, diagnostics,
   and Thread operation.
 - Door endpoint with Identify, Descriptor, and Door Lock.
-- Door Lock base, User, and Aliro Provisioning features.
-- Two users, two Aliro issuer keys, and six Aliro endpoint keys.
+- Door Lock base, PIN/COTA, User, and Aliro Provisioning features.
+- Six users, two PIN credentials, three Aliro issuer keys, and six Aliro
+  endpoint keys. Apple Home was observed provisioning three issuer-key users.
 - Aliro credential presentation over NFC using CLRC663.
 - Simulated lock actuator, lock button, status LEDs, and factory reset.
 
 Aliro BLE/UWB, Matter OTA Requestor, Diagnostic Logs, Software Diagnostics,
-User Label, ICD Management, PIN/RFID credentials, schedules, door-position
+User Label, ICD Management, RFID credentials, schedules, door-position
 sensing, and unbolting are excluded. Matter BLE commissioning is unchanged;
 the Aliro BLE implementation is not linked in this release.
 
 ## Local Build
 
-The current SDK checkout can be used directly while the public release archive
-is being prepared:
+The Aliro source checkout can be used directly during development. The same
+consumer target also supports the packaged SDK layout:
 
 ```bash
 export CHIP_ROOT=/path/to/connectedhomeip
@@ -35,7 +36,7 @@ source "$CHIP_ROOT/scripts/activate.sh" -p all,telink
 cd "$ZEPHYR_WORKSPACE"
 west build -b tl3238x \
   "$CHIP_ROOT/examples/lock-app/telink-aliro-minimal" -- \
-  -DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/path/to/telink_aliro
+  -DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/path/to/aliro
 ```
 
 `FETCHCONTENT_SOURCE_DIR_TELINK_ALIRO` is a standard CMake FetchContent override.
@@ -62,18 +63,29 @@ transport. The archive layout should match the repository root, so
 
 ## Prototype Limits
 
-- The NFC runtime is wired to the Matter lock action path, but still needs
-  validation on `tl3238x` hardware with CLRC663.
-- Matter accepts Aliro provisioning commands through its Door Lock delegate,
-  but those keys are currently RAM-only and are not yet transferred into the
-  Aliro SDK reader/key store. This is the main functional integration gap.
-- The Aliro SDK currently starts with its built-in reader defaults. The public
-  SDK interface still needs explicit reader configuration and credential-store
-  callbacks before ecosystem-provisioned keys can drive NFC access.
+- The NFC runtime has been validated on `tl3238x` with CLRC663: Apple Home
+  provisioned a Wallet key, Aliro completed a standard NFC transaction, and
+  the authenticated endpoint unlocked the Matter lock.
+- Matter-provisioned Aliro reader keys and identifiers are applied to the live
+  Aliro SDK reader configuration. NFC transactions are rejected until that
+  configuration has been received.
+- Aliro issuer and endpoint credentials are RAM-only in the Matter delegate.
+  Evictable and non-evictable endpoint keys share one six-entry pool, matching
+  the combined Matter limit without keeping duplicate key arrays.
+- After AUTH1 signature verification, the Aliro protocol core passes the
+  authenticated endpoint key to the parent-app authorization callback. Matter
+  checks it against both the endpoint-key pool and an occupied Matter user
+  before the actuator request can be accepted.
+- Aliro transaction-control persistence is intentionally disabled for the
+  standard-transaction bring-up. The SDK's standalone NVS backend is not used
+  because it targets the same flash partition as Matter settings. Persistent
+  and expedited transactions require a Matter-owned storage adapter.
 - Power management is disabled while the combined runtime is validated.
 - The Aliro NFC task uses a provisional 4 KiB stack and the application reserves
-  a provisional 16 KiB libc arena. Hardware stack and heap high-water
+  a provisional 20,716-byte libc arena. Hardware stack and heap high-water
   measurements are required.
+- Aliro protocol debug logging is disabled by default because it exposes
+  ephemeral and derived transaction keys. It must remain a lab-only option.
 - Factory data is disabled and test commissioning credentials are enabled, so
   this profile is for development only.
 
@@ -81,5 +93,9 @@ The `tl3238x` overlay uses the full 160 KiB SRAM as 128 KiB retained RAM and
 32 KiB non-retained instruction RAM. These are separate linker regions and
 cannot be treated as one interchangeable pool.
 
-Current NFC-first link usage on `tl3238x` is 906,658 B of 1 MiB ROM, 119,648 B
-of 128 KiB retained RAM, and 29,134 B of 32 KiB non-retained instruction RAM.
+Current NFC-first source-build usage on `tl3238x` is 874,340 B of 1 MiB ROM,
+130,016 B of 128 KiB retained RAM, and 29,020 B of 32 KiB non-retained
+instruction RAM.
+
+The same application built from the packaged Aliro SDK uses 875,072 B of ROM
+with identical retained and non-retained RAM usage.

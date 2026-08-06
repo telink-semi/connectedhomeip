@@ -29,14 +29,14 @@ class LockManager
 {
 public:
     using CredentialRuleEnum = chip::app::Clusters::DoorLock::CredentialRuleEnum;
-    using CredentialStruct = chip::app::Clusters::DoorLock::Structs::CredentialStruct::Type;
+    using CredentialStruct   = chip::app::Clusters::DoorLock::Structs::CredentialStruct::Type;
     using CredentialTypeEnum = chip::app::Clusters::DoorLock::CredentialTypeEnum;
     using DlCredentialStatus = ::DlCredentialStatus;
-    using DlLockState = chip::app::Clusters::DoorLock::DlLockState;
+    using DlLockState        = chip::app::Clusters::DoorLock::DlLockState;
     using OperationErrorEnum = chip::app::Clusters::DoorLock::OperationErrorEnum;
-    using OperationSource = chip::app::Clusters::DoorLock::OperationSourceEnum;
-    using UserStatusEnum = chip::app::Clusters::DoorLock::UserStatusEnum;
-    using UserTypeEnum = chip::app::Clusters::DoorLock::UserTypeEnum;
+    using OperationSource    = chip::app::Clusters::DoorLock::OperationSourceEnum;
+    using UserStatusEnum     = chip::app::Clusters::DoorLock::UserStatusEnum;
+    using UserTypeEnum       = chip::app::Clusters::DoorLock::UserTypeEnum;
 
     enum Action_t
     {
@@ -62,8 +62,8 @@ public:
     bool LockAction(int32_t appSource, Action_t action, OperationSource source, chip::EndpointId endpointId,
                     OperationErrorEnum & err,
                     const chip::app::DataModel::Nullable<chip::FabricIndex> & fabricIdx = chip::app::DataModel::NullNullable,
-                    const chip::app::DataModel::Nullable<chip::NodeId> & nodeId = chip::app::DataModel::NullNullable,
-                    const chip::Optional<chip::ByteSpan> & pinCode = chip::NullOptional);
+                    const chip::app::DataModel::Nullable<chip::NodeId> & nodeId         = chip::app::DataModel::NullNullable,
+                    const chip::Optional<chip::ByteSpan> & pinCode                      = chip::NullOptional);
 
     bool IsLocked() const { return mState == kState_LockCompleted; }
     State_t getLockState() const { return mState; }
@@ -75,22 +75,32 @@ public:
 
     bool GetCredential(chip::EndpointId endpointId, uint16_t credentialIndex, CredentialTypeEnum credentialType,
                        EmberAfPluginDoorLockCredentialInfo & credential);
-    bool SetCredential(chip::EndpointId endpointId, uint16_t credentialIndex, chip::FabricIndex creator,
-                       chip::FabricIndex modifier, DlCredentialStatus credentialStatus, CredentialTypeEnum credentialType,
+    bool SetCredential(chip::EndpointId endpointId, uint16_t credentialIndex, chip::FabricIndex creator, chip::FabricIndex modifier,
+                       DlCredentialStatus credentialStatus, CredentialTypeEnum credentialType,
                        const chip::ByteSpan & credentialData);
+    bool ValidateAliroEndpointKey(const chip::ByteSpan & key) const;
 
 private:
     struct UserSlot
     {
-        char name[DOOR_LOCK_USER_NAME_BUFFER_SIZE] = {};
-        CredentialStruct credentials[APP_MAX_CREDENTIALS_PER_USER]               = {};
-        size_t credentialCount                                                   = 0;
-        uint32_t uniqueId                                                        = 0;
-        UserStatusEnum status                                                    = UserStatusEnum::kAvailable;
-        UserTypeEnum type                                                        = UserTypeEnum::kUnrestrictedUser;
-        CredentialRuleEnum credentialRule                                       = CredentialRuleEnum::kSingle;
-        chip::FabricIndex createdBy                                              = 0;
-        chip::FabricIndex lastModifiedBy                                         = 0;
+        char name[DOOR_LOCK_USER_NAME_BUFFER_SIZE]                 = {};
+        CredentialStruct credentials[APP_MAX_CREDENTIALS_PER_USER] = {};
+        size_t credentialCount                                     = 0;
+        uint32_t uniqueId                                          = 0;
+        UserStatusEnum status                                      = UserStatusEnum::kAvailable;
+        UserTypeEnum type                                          = UserTypeEnum::kUnrestrictedUser;
+        CredentialRuleEnum credentialRule                          = CredentialRuleEnum::kSingle;
+        chip::FabricIndex createdBy                                = 0;
+        chip::FabricIndex lastModifiedBy                           = 0;
+    };
+
+    struct PinCredentialSlot
+    {
+        DlCredentialStatus status        = DlCredentialStatus::kAvailable;
+        chip::FabricIndex createdBy      = 0;
+        chip::FabricIndex lastModifiedBy = 0;
+        size_t dataSize                  = 0;
+        uint8_t data[8]                  = {};
     };
 
     friend LockManager & LockMgr();
@@ -102,10 +112,11 @@ private:
     static void ActuatorAppEventHandler(const AppEvent & event);
 
     static LockManager sLock;
-    State_t mState                           = kState_NotFulyLocked;
-    StateChangeCallback mStateChangeCallback = nullptr;
-    k_timer mActuatorTimer                   = {};
-    UserSlot mUsers[APP_MAX_USERS]           = {};
+    State_t mState                                             = kState_NotFulyLocked;
+    StateChangeCallback mStateChangeCallback                   = nullptr;
+    k_timer mActuatorTimer                                     = {};
+    UserSlot mUsers[APP_MAX_USERS]                             = {};
+    PinCredentialSlot mPinCredentials[APP_MAX_PIN_CREDENTIALS] = {};
 };
 
 inline LockManager & LockMgr()

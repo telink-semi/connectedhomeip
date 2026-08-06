@@ -56,10 +56,12 @@ struct ChipDeviceEvent;
 #define CHIP_SYSTEM_CONFIG_USE_SOCKETS 1
 
 // Reduce packet buffer pool size (default 15) to reduce ram consumption
+#ifndef CHIP_SYSTEM_CONFIG_PACKETBUFFER_POOL_SIZE
 #if defined(CONFIG_PM) || defined(CONFIG_SOC_RISCV_TELINK_TL321X) || defined(CONFIG_SOC_RISCV_TELINK_W91)
 #define CHIP_SYSTEM_CONFIG_PACKETBUFFER_POOL_SIZE 0
 #else
 #define CHIP_SYSTEM_CONFIG_PACKETBUFFER_POOL_SIZE 8
+#endif
 #endif
 
 // ========== Platform-specific Configuration Overrides =========

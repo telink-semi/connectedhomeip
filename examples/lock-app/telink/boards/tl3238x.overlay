@@ -1,0 +1,20 @@
+/ {
+	soc {
+		/delete-node/ memory@68000;
+		/delete-node/ memory@80000;
+
+		ram_ilm: memory@68000 {
+			compatible = "mmio-sram";
+			reg = <0x00068000 0x00020000>;
+		};
+
+		ram_ilm_non_retention: memory@88000 {
+			compatible = "mmio-sram";
+			reg = <0x00088000 0x00008000>;
+		};
+	};
+
+	chosen {
+		zephyr,sram = &ram_ilm;
+	};
+};

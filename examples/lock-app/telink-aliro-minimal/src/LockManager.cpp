@@ -35,7 +35,7 @@ LockManager LockManager::sLock;
 CHIP_ERROR LockManager::Init(DataModel::Nullable<DlLockState> state, StateChangeCallback callback)
 {
     mStateChangeCallback = callback;
-    mState = !state.IsNull() && state.Value() == DlLockState::kLocked ? kState_LockCompleted : kState_UnlockCompleted;
+    mState               = !state.IsNull() && state.Value() == DlLockState::kLocked ? kState_LockCompleted : kState_UnlockCompleted;
 
     k_timer_init(&mActuatorTimer, &LockManager::ActuatorTimerEventHandler, nullptr);
     k_timer_user_data_set(&mActuatorTimer, this);
@@ -59,8 +59,7 @@ bool LockManager::LockAction(int32_t appSource, Action_t action, OperationSource
 }
 
 bool LockManager::StartAction(Action_t action, OperationSource source, EndpointId endpointId,
-                              const DataModel::Nullable<FabricIndex> & fabricIdx,
-                              const DataModel::Nullable<NodeId> & nodeId)
+                              const DataModel::Nullable<FabricIndex> & fabricIdx, const DataModel::Nullable<NodeId> & nodeId)
 {
     DlLockState target;
 
@@ -86,8 +85,8 @@ bool LockManager::StartAction(Action_t action, OperationSource source, EndpointI
         return false;
     }
 
-    if (!DoorLockServer::Instance().SetLockState(endpointId, target, source, DataModel::NullNullable,
-                                                 DataModel::NullNullable, fabricIdx, nodeId))
+    if (!DoorLockServer::Instance().SetLockState(endpointId, target, source, DataModel::NullNullable, DataModel::NullNullable,
+                                                 fabricIdx, nodeId))
     {
         mState = kState_NotFulyLocked;
         if (mStateChangeCallback != nullptr)
@@ -206,8 +205,36 @@ bool LockManager::GetCredential(EndpointId endpointId, uint16_t credentialIndex,
                                 EmberAfPluginDoorLockCredentialInfo & credential)
 {
     (void) endpointId;
-    return AliroDelegate::IsAliroCredentialType(credentialType) &&
-        AliroDelegate::GetInstance().GetCredential(credentialIndex, credentialType, credential);
+    if (AliroDelegate::IsAliroCredentialType(credentialType))
+    {
+        return AliroDelegate::GetInstance().GetCredential(credentialIndex, credentialType, credential);
+    }
+
+    if (credentialType == CredentialTypeEnum::kProgrammingPIN && credentialIndex == 0)
+    {
+        credential.status = DlCredentialStatus::kAvailable;
+        return true;
+    }
+
+    if (credentialType != CredentialTypeEnum::kPin || credentialIndex == 0 || credentialIndex > APP_MAX_PIN_CREDENTIALS)
+    {
+        return false;
+    }
+
+    const PinCredentialSlot & slot = mPinCredentials[credentialIndex - 1];
+    credential.status              = slot.status;
+    if (slot.status == DlCredentialStatus::kAvailable)
+    {
+        return true;
+    }
+
+    credential.credentialType     = CredentialTypeEnum::kPin;
+    credential.credentialData     = ByteSpan(slot.data, slot.dataSize);
+    credential.creationSource     = DlAssetSource::kMatterIM;
+    credential.createdBy          = slot.createdBy;
+    credential.modificationSource = DlAssetSource::kMatterIM;
+    credential.lastModifiedBy     = slot.lastModifiedBy;
+    return true;
 }
 
 bool LockManager::SetCredential(EndpointId endpointId, uint16_t credentialIndex, FabricIndex creator, FabricIndex modifier,
@@ -215,7 +242,56 @@ bool LockManager::SetCredential(EndpointId endpointId, uint16_t credentialIndex,
                                 const ByteSpan & credentialData)
 {
     (void) endpointId;
-    return AliroDelegate::IsAliroCredentialType(credentialType) &&
-        AliroDelegate::GetInstance().SetCredential(credentialIndex, creator, modifier, credentialStatus, credentialType,
-                                                   credentialData);
+    if (AliroDelegate::IsAliroCredentialType(credentialType))
+    {
+        return AliroDelegate::GetInstance().SetCredential(credentialIndex, creator, modifier, credentialStatus, credentialType,
+                                                          credentialData);
+    }
+
+    if (credentialType != CredentialTypeEnum::kPin || credentialIndex == 0 || credentialIndex > APP_MAX_PIN_CREDENTIALS ||
+        credentialData.size() > sizeof(mPinCredentials[0].data))
+    {
+        return false;
+    }
+
+    PinCredentialSlot & slot = mPinCredentials[credentialIndex - 1];
+    if (credentialStatus == DlCredentialStatus::kAvailable)
+    {
+        slot = PinCredentialSlot{};
+        return true;
+    }
+
+    slot.status         = credentialStatus;
+    slot.createdBy      = creator;
+    slot.lastModifiedBy = modifier;
+    slot.dataSize       = credentialData.size();
+    memcpy(slot.data, credentialData.data(), credentialData.size());
+    return true;
+}
+
+bool LockManager::ValidateAliroEndpointKey(const ByteSpan & key) const
+{
+    CredentialTypeEnum credentialType;
+    uint16_t credentialIndex;
+
+    VerifyOrReturnValue(AliroDelegate::GetInstance().FindEndpointKey(key, credentialType, credentialIndex), false);
+
+    for (const auto & user : mUsers)
+    {
+        if (user.status == UserStatusEnum::kAvailable)
+        {
+            continue;
+        }
+
+        for (size_t i = 0; i < user.credentialCount; ++i)
+        {
+            if (user.credentials[i].credentialType == credentialType &&
+                user.credentials[i].credentialIndex == credentialIndex)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }

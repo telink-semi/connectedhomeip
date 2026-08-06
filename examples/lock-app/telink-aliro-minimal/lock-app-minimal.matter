@@ -2494,11 +2494,15 @@ endpoint 1 {
     persist  attribute lockState default = 1;
     ram      attribute lockType;
     ram      attribute actuatorEnabled;
-    ram      attribute numberOfTotalUsersSupported default = 2;
+    ram      attribute numberOfTotalUsersSupported default = 6;
+    ram      attribute numberOfPINUsersSupported default = 2;
+    ram      attribute maxPINCodeLength default = 8;
+    ram      attribute minPINCodeLength default = 6;
     ram      attribute credentialRulesSupport default = 1;
     ram      attribute numberOfCredentialsSupportedPerUser default = 6;
     ram      attribute operatingMode default = 0x00;
     ram      attribute supportedOperatingModes default = 0xFFF6;
+    ram      attribute requirePINforRemoteOperation default = 0;
     callback attribute aliroReaderVerificationKey;
     callback attribute aliroReaderGroupIdentifier;
     callback attribute aliroReaderGroupSubIdentifier;
@@ -2508,11 +2512,12 @@ endpoint 1 {
     callback attribute generatedCommandList;
     callback attribute acceptedCommandList;
     callback attribute attributeList;
-    ram      attribute featureMap default = 0x2100;
+    ram      attribute featureMap default = 0x2181;
     ram      attribute clusterRevision default = 10;
 
     handle command LockDoor;
     handle command UnlockDoor;
+    handle command UnlockWithTimeout;
     handle command SetUser;
     handle command GetUser;
     handle command ClearUser;
@@ -2523,5 +2528,3 @@ endpoint 1 {
     handle command ClearAliroReaderConfig;
   }
 }
-
-

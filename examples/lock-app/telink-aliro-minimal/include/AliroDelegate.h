@@ -51,9 +51,10 @@ public:
     bool GetCredential(uint16_t index, CredentialTypeEnum type, EmberAfPluginDoorLockCredentialInfo & out);
     bool SetCredential(uint16_t index, chip::FabricIndex creator, chip::FabricIndex modifier, DlCredentialStatus status,
                        CredentialTypeEnum type, const chip::ByteSpan & data);
+    bool FindEndpointKey(const chip::ByteSpan & key, CredentialTypeEnum & type, uint16_t & index) const;
 
 private:
-    AliroDelegate();
+    AliroDelegate() = default;
 
     CHIP_ERROR CopyProtocolVersionIntoSpan(uint16_t protocolVersionValue, chip::MutableByteSpan & protocolVersion);
 
@@ -70,18 +71,22 @@ private:
     struct CredentialSlot
     {
         DlCredentialStatus status             = DlCredentialStatus::kAvailable;
+        CredentialTypeEnum type               = CredentialTypeEnum::kUnknownEnumValue;
+        uint16_t index                        = 0;
         chip::FabricIndex createdBy           = 0;
         chip::FabricIndex lastModifiedBy      = 0;
         size_t dataSize                       = 0;
         uint8_t data[kAliroCredentialMaxSize] = { 0 };
     };
 
-    CredentialSlot * SlotArrayForType(CredentialTypeEnum type);
+    static bool IsEndpointCredentialType(CredentialTypeEnum type);
+    CredentialSlot * FindSlot(uint16_t index, CredentialTypeEnum type);
+    const CredentialSlot * FindSlot(uint16_t index, CredentialTypeEnum type) const;
+    CredentialSlot * FindAvailableEndpointSlot();
     size_t SlotCountForType(CredentialTypeEnum type) const;
 
     CredentialSlot mIssuerKeys[APP_MAX_ALIRO_ISSUER_KEYS];
-    CredentialSlot mEvictableEndpointKeys[APP_MAX_ALIRO_ENDPOINT_KEYS];
-    CredentialSlot mNonEvictableEndpointKeys[APP_MAX_ALIRO_ENDPOINT_KEYS];
+    CredentialSlot mEndpointKeys[APP_MAX_ALIRO_ENDPOINT_KEYS];
 
     static AliroDelegate sInstance;
 };

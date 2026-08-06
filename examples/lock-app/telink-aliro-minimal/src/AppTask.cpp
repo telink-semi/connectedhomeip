@@ -63,6 +63,7 @@ CHIP_ERROR AppTask::Init(void)
     telink_aliro_nfc_callbacks aliroCallbacks = {};
     aliroCallbacks.get_lock_state             = GetAliroLockState;
     aliroCallbacks.request_lock_state         = RequestAliroLockState;
+    aliroCallbacks.authorize_endpoint         = AuthorizeAliroEndpoint;
 
     if (telink_aliro_nfc_init(&aliroCallbacks) != 0)
     {
@@ -119,6 +120,23 @@ int AppTask::RequestAliroLockState(enum telink_aliro_lock_state state, void * co
     event.Handler            = AliroLockActionEventHandler;
     GetAppTask().PostEvent(&event);
     return 0;
+}
+
+int AppTask::AuthorizeAliroEndpoint(const uint8_t * publicKey, size_t publicKeySize, void * context)
+{
+    (void) context;
+
+    if (publicKey == nullptr)
+    {
+        return -EINVAL;
+    }
+
+    chip::DeviceLayer::PlatformMgr().LockChipStack();
+    const bool authorized = LockMgr().ValidateAliroEndpointKey(chip::ByteSpan(publicKey, publicKeySize));
+    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+
+    ChipLogProgress(Zcl, "[Aliro] Authenticated endpoint %s", authorized ? "accepted" : "rejected");
+    return authorized ? 0 : -EACCES;
 }
 
 void AppTask::AliroLockActionEventHandler(AppEvent * event)

@@ -32,6 +32,23 @@ config ALIRO_NFC_POLLER_THREAD_STACK_SIZE
     depends on ALIRO_TRANSPORT_NFC
     default 4096
 
+config ALIRO_LOG_LEVEL
+    int "Aliro protocol log level"
+    range 0 4
+    default 3
+    help
+      Keep protocol logging at informational level for normal builds. Level 4
+      exposes ephemeral and derived transaction keys and is for controlled
+      development only.
+
+config ALIRO_FAST_TRANSACTION
+    bool "Enable Aliro expedited transactions"
+    default n
+
+config ALIRO_KEYSLOT_CREDENTIALS
+    bool "Enable Aliro endpoint key-slot credentials"
+    default n
+
 config CLRC663_IC
     bool
     default y
