@@ -1,0 +1,43 @@
+diff --git a/src/core/mac/mac.cpp b/src/core/mac/mac.cpp
+index 225ad30f5..29b4d7414 100644
+--- a/src/core/mac/mac.cpp
++++ b/src/core/mac/mac.cpp
+@@ -40,6 +40,24 @@
+ #include "instance/instance.hpp"
+ #include "utils/static_counter.hpp"
+ 
++
++#define CONFIG_OPENTHREAD_CSMABACKOFF_OPTIMIZATION 1
++
++#if CONFIG_OPENTHREAD_CSMABACKOFF_OPTIMIZATION
++bool get_pm_standby_flag(void)
++{
++    bool pm_flag;
++    #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
++    extern bool b9x_deep_sleep_retention;
++    pm_flag = b9x_deep_sleep_retention;
++    #elif CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
++    extern bool tlx_deep_sleep_retention;
++    pm_flag = tlx_deep_sleep_retention;
++    #endif
++    return pm_flag;
++}
++#endif
++
+ namespace ot {
+ namespace Mac {
+ 
+@@ -629,6 +647,13 @@ void Mac::StartOperation(Operation aOperation)
+ 
+     if (mOperation == kOperationIdle)
+     {
++#if CONFIG_OPENTHREAD_CSMABACKOFF_OPTIMIZATION
++    bool ot_deep_sleep_flag = !get_pm_standby_flag();
++    if(ot_deep_sleep_flag){
++            ot_deep_sleep_flag = false;
++            PerformNextOperation();
++    }else
++#endif /* CONFIG_OPENTHREAD_CSMABACKOFF_OPTIMIZATION */
+         mOperationTask.Post();
+     }
+ }

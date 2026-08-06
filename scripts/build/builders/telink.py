@@ -136,6 +136,10 @@ class TelinkBoard(Enum):
     TL3218X = auto()
     TL3218X_ML3M = auto()
     TL3218X_RETENTION = auto()
+    TL3238X = auto()
+    TL3238X_RETENTION = auto()
+    TL5218X = auto()
+    TL5218X_RETENTION = auto()
     TL7218X = auto()
     TL7218X_ML7G = auto()
     TL7218X_ML7M = auto()
@@ -156,6 +160,14 @@ class TelinkBoard(Enum):
             return 'tl3218x_ml3m'
         if self == TelinkBoard.TL3218X_RETENTION:
             return 'tl3218x_retention'
+        if self == TelinkBoard.TL3238X:
+            return 'tl3238x'
+        if self == TelinkBoard.TL3238X_RETENTION:
+            return 'tl3238x_retention'
+        if self == TelinkBoard.TL5218X:
+            return 'tl5218x'
+        if self == TelinkBoard.TL5218X_RETENTION:
+            return 'tl5218x_retention'
         if self == TelinkBoard.TL7218X:
             return 'tl7218x'
         if self == TelinkBoard.TL7218X_ML7G:
@@ -190,6 +202,7 @@ class TelinkBuilder(Builder):
                  chip_enable_nfc_onboarding_payload: bool = False,
                  log_level: TelinkLogLevel = TelinkLogLevel.DEFAULT,
                  all_devices_enabled_devices=None,
+                 dual_mode_config: int = 0,
                  ):
         super().__init__(root, runner, output_dir_lock)
         self.app = app
@@ -208,6 +221,7 @@ class TelinkBuilder(Builder):
         self.tflm_config = tflm_config
         self.chip_enable_nfc_onboarding_payload = chip_enable_nfc_onboarding_payload
         self.log_level = log_level
+        self.dual_mode_config = dual_mode_config
         self.all_devices_enabled_devices = all_devices_enabled_devices or []
 
     def get_cmd_prefixes(self):
@@ -267,6 +281,9 @@ class TelinkBuilder(Builder):
 
         if self.tflm_config:
             flags.append("-DCONFIG_TFLM_FEATURE=y")
+
+        if self.dual_mode_config:
+            flags.append("-DCONFIG_DUAL_MODE=0")
 
         if self.options.pregen_dir:
             flags.append(f"-DCHIP_CODEGEN_PREGEN_DIR={shlex.quote(self.options.pregen_dir)}")

@@ -296,9 +296,14 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         uint16_t manufacturingYear;
         uint8_t manufacturingMonth;
         uint8_t manufacturingDayOfMonth;
+
+#if defined(CHIP_DEVICE_SECURE_PROGRAMMING) && CHIP_DEVICE_SECURE_PROGRAMMING
+        CHIP_ERROR status = mPolicy.GetManufacturingDateString(manufacturingDateString, sizeof(manufacturingDateString));
+#else
         size_t totalManufacturingDateLen = 0;
         MutableCharSpan vendorSuffixSpan(manufacturingDateString + kMaxDateLength, kMaxSuffixLength);
         CHIP_ERROR status = mPolicy.GetManufacturingDate(manufacturingYear, manufacturingMonth, manufacturingDayOfMonth);
+#endif /* defined(CHIP_DEVICE_SECURE_PROGRAMMING) && CHIP_DEVICE_SECURE_PROGRAMMING */
 
         if (status == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND || status == CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE)
         {
@@ -310,6 +315,9 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         }
         ReturnErrorOnFailure(status);
 
+#if defined(CHIP_DEVICE_SECURE_PROGRAMMING) && CHIP_DEVICE_SECURE_PROGRAMMING
+    return aEncoder.Encode(CharSpan(manufacturingDateString, strnlen(manufacturingDateString, kMaxLen)));
+#else
         snprintf(manufacturingDateString, sizeof(manufacturingDateString), "%04u%02u%02u", manufacturingYear, manufacturingMonth,
                  manufacturingDayOfMonth);
 
@@ -321,6 +329,7 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         }
 
         return encoder.Encode(CharSpan(manufacturingDateString, totalManufacturingDateLen));
+#endif /* defined(CHIP_DEVICE_SECURE_PROGRAMMING) && CHIP_DEVICE_SECURE_PROGRAMMING */
     }
     case PartNumber::Id:
         return ReadConfigurationString([this](char * buf, size_t size) { return mPolicy.GetPartNumber(buf, size); }, encoder);

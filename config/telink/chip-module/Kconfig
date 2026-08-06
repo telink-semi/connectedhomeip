@@ -84,6 +84,9 @@ config CHIP_DFU_OVER_BT_SMP
 	select MCUMGR_MGMT_NOTIFICATION_HOOKS
 	select MCUMGR_GRP_IMG_UPLOAD_CHECK_HOOK
 	select MCUMGR_GRP_IMG_STATUS_HOOKS
+	default y if BOARD_TL3238X || BOARD_TL3238X_RETENTION
+	default y if BOARD_TLSR9528A || BOARD_TLSR9528A_RETENTION
+	default n
 	help
 	  Enables Device Firmware Upgrade over Bluetooth LE with SMP and configures
 	  the set of options related to that feature.
@@ -233,8 +236,9 @@ config CHIP_USE_MARS_SENSOR
 	default n
 
 config CHIP_PERSISTENT_SUBSCRIPTIONS
-	default n if BOARD_TL3218X_RETENTION
-	default y
+	default y if BOARD_TL3238X || BOARD_TL3238X_RETENTION
+	default y if BOARD_TLSR9528A || BOARD_TLSR9528A_RETENTION
+	default n
 	# selecting experimental for this feature since there is an issue with multiple controllers.
 	select EXPERIMENTAL
 
@@ -282,7 +286,7 @@ config TFLM_FEATURE
 
 choice CHIP_LAST_FABRIC_REMOVED_ACTION
 	prompt "An action to perform after removing the last fabric"
-	default CHIP_LAST_FABRIC_REMOVED_ERASE_ONLY
+	default CHIP_LAST_FABRIC_REMOVED_ERASE_AND_REBOOT
 
 	config CHIP_LAST_FABRIC_REMOVED_ERASE_AND_REBOOT
 	bool "After removing the last fabric erase NVS and reboot"
@@ -326,3 +330,16 @@ config CHIP_LAST_FABRIC_REMOVED_ACTION_DELAY
 	  After removing the last fabric the device will wait for the defined time and then perform
 	  an action chosen by the CHIP_LAST_FABRIC_REMOVED_ACTION option. This schedule will allow for
 	  avoiding race conditions before the device removes non-volatile data.
+
+config SECURE_PROGRAMMING
+	bool "Enable reading DAC and keys from the DAC partition"
+    depends on CHIP_FACTORY_DATA
+    default n
+
+config EXPOSE_CHIP_ID_VIA_BLE
+	bool "Enable CHIP-ID via ble"
+    default n
+
+config DEFERRED_ATTR_STORAGE
+	bool "Defer the storage time of attributes"
+	default n

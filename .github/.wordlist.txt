@@ -1789,3 +1789,12 @@ zigbeealliance
 zigbeethread
 zsdk
 ZXing
+bdk
+Changelog
+changelog
+devicetree
+DLM
+downloaders
+ILM
+tlk
+udev

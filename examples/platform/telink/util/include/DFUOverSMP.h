@@ -27,6 +27,16 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern struct k_timer sDnssTimer;
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+#endif /* CONFIG_AUTO_SWITCH_DUAL_MODE */
+
 enum VerificationFailReason : unsigned char
 {
     NO_FAIL          = 0,

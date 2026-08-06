@@ -57,6 +57,26 @@ private:
                 server.GetCommissioningWindowManager().CloseCommissioningWindow();
             }
 
+            #define DUAL_MODE_PARTITION dual_mode_partition
+            #define DUAL_MODE_PARTITION_DEVICE FIXED_PARTITION_DEVICE(DUAL_MODE_PARTITION)
+            #define DUAL_MODE_PARTITION_OFFSET FIXED_PARTITION_OFFSET(DUAL_MODE_PARTITION)
+            #define DUAL_MODE_PARTITION_SIZE FIXED_PARTITION_SIZE(DUAL_MODE_PARTITION)
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+            uint8_t boot_flag[2] = { 0xff, 0xff };
+            flash_erase(DUAL_MODE_PARTITION_DEVICE, DUAL_MODE_PARTITION_OFFSET, 4096);
+            flash_write(DUAL_MODE_PARTITION_DEVICE, DUAL_MODE_PARTITION_OFFSET, boot_flag, sizeof(boot_flag));
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+            #define ZB_NVS_PARTITION zigbee_nvs_partition
+            #define ZB_NVS_SEC_SIZE FIXED_PARTITION_SIZE(ZB_NVS_PARTITION)
+            #define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
+            #define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
+
+            // Erase the user parameters partition to reset mode settings
+            flash_erase(DUAL_MODE_PARTITION_DEVICE, DUAL_MODE_PARTITION_OFFSET, DUAL_MODE_PARTITION_SIZE);
+            // Erase ZigBee NVS data during factory reset
+            flash_erase(ZB_NVS_PARTITION_DEVICE, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
+#endif
             k_timer_start(&sFabricRemovedTimer, K_MSEC(CONFIG_CHIP_LAST_FABRIC_REMOVED_ACTION_DELAY), K_NO_WAIT);
         }
 #endif // CONFIG_CHIP_LAST_FABRIC_REMOVED_NONE
