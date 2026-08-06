@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ARG OT_BR_POSIX_CHECKOUT=main
+ARG OPENTHREAD_CHECKOUT=main
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PLATFORM=ubuntu
@@ -46,9 +47,12 @@ RUN apt-get update \
       && cd ot-br-posix \
       && git init \
       && git remote add origin https://github.com/openthread/ot-br-posix \
-      && git fetch origin $OT_BR_POSIX_CHECKOUT --depth=1 \
+      && git fetch origin $OT_BR_POSIX_CHECKOUT \
       && git reset --hard FETCH_HEAD \
-      && git submodule update --init --depth=1 \
+      && git submodule update --init \
+      && (cd third_party/openthread/repo \
+          && git fetch origin $OPENTHREAD_CHECKOUT \
+          && git checkout FETCH_HEAD) \
       && ./script/bootstrap \
       && ./script/setup)\
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \

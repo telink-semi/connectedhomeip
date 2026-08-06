@@ -84,6 +84,15 @@ if [[ ${*/--no-cache//} != "${*}" ]]; then
     BUILD_ARGS+=(--no-cache)
 fi
 
+# Collect --build-arg key=value pairs from the command line for forwarding to docker build
+prev_arg=""
+for arg in "$@"; do
+    if [[ "$prev_arg" == "--build-arg" ]]; then
+        BUILD_ARGS+=("--build-arg" "$arg")
+    fi
+    prev_arg="$arg"
+done
+
 [[ ${*/--skip-build//} != "${*}" ]] || {
     docker build "${BUILD_ARGS[@]}" --build-arg TARGETPLATFORM="$TARGET_PLATFORM_TYPE" --build-arg VERSION="$VERSION" -t "$GHCR_ORG/$ORG/$IMAGE:$VERSION" .
     docker image prune --force
