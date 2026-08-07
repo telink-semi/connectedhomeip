@@ -33,7 +33,6 @@ Usage (run from the connectedhomeip repo root):
     python3 docs/platforms/telink/releases/generate_and_update_matter_notes.py --skip-firmware  # skip firmware packaging
 """
 
-import os
 import re
 import subprocess
 import shutil
@@ -398,7 +397,7 @@ class TelinkMatterBuildManager:
         for board_name, family_name in self.board_order:
             # Find matching family in data
             family_key = None
-            for fk in data.keys():
+            for fk in data:
                 if fk.startswith(family_name.split("/")[0]) or family_name.startswith(fk):
                     family_key = fk
                     break
