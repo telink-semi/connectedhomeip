@@ -117,19 +117,14 @@ the high-level steps are:
    [Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/)
    for the exact `west` commands.
 
-4. **Fetch the Telink BLE SDK binary** — `west update` does **not** fetch
-   `tl_ble_sdk` automatically (Zephyr CI disallows binary modules). Run
-   `./hal_v2/fetch_sdk.sh` inside `modules/hal/telink/` of the Zephyr SDK to
-   download the pre-built BLE stack.
-
-5. **Get the Telink Matter SDK (this repo)** — clone the `dev-tlk_v1.5` branch
+4. **Get the Telink Matter SDK (this repo)** — clone the `dev-tlk_v1.5` branch
    of this repository next to the Zephyr SDK.
 
-6. **Point the Matter SDK at the Zephyr SDK** — export `TELINK_ZEPHYR_BASE` so
+5. **Point the Matter SDK at the Zephyr SDK** — export `TELINK_ZEPHYR_BASE` so
    the Matter build system can find Zephyr, the Telink HAL and the toolchain.
    This variable must be set in every shell used for Matter builds.
 
-7. **Bootstrap & activate the Matter build environment** — run the Matter
+6. **Bootstrap & activate the Matter build environment** — run the Matter
    `scripts/activate.sh` bootstrap once to install `gn`, `ninja`, `pigweed` and
    the Python dependencies, then source it in every new shell before building.
 
