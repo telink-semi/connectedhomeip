@@ -148,10 +148,12 @@ MB flash, Software Version 2 for DFU/OTA images, etc.).
 
 Refer to the board README for the app + board combination you want to build:
 
-#### Lighting App (TL3238X / TL7218X)
+#### Lighting App (TL3238X / TL521X / TL7218X)
 
 -   TL3238X:
     [`examples/lighting-app/telink/boards/tl3238x_README.md`](examples/lighting-app/telink/boards/tl3238x_README.md)
+-   TL5218X:
+    [`examples/lighting-app/telink/boards/tl5218x_README.md`](examples/lighting-app/telink/boards/tl5218x_README.md)
 -   TL7218X:
     [`examples/lighting-app/telink/boards/tl7218x_README.md`](examples/lighting-app/telink/boards/tl7218x_README.md)
 
@@ -162,11 +164,20 @@ Refer to the board README for the app + board combination you want to build:
 -   TL7218X Retention:
     [`examples/light-switch-app/telink/boards/tl7218x_retention_README.md`](examples/light-switch-app/telink/boards/tl7218x_retention_README.md)
 
+#### Concurrent Mode (TL3238X / TL7218X)
+
+-   TL3238X BLE + Thread Concurrent:
+    [`examples/lighting-app/telink/boards/tl3238x_concurrent_README.md`](examples/lighting-app/telink/boards/tl3238x_concurrent_README.md)
+-   TL7218X BLE + Thread Concurrent:
+    [`examples/lighting-app/telink/boards/tl7218x_concurrent_README.md`](examples/lighting-app/telink/boards/tl7218x_concurrent_README.md)
+-   TL7218X BLE + Thread Concurrent + Channel Sounding:
+    [`examples/lighting-app/telink/boards/tl7218x_concurrent_cs_README.md`](examples/lighting-app/telink/boards/tl7218x_concurrent_cs_README.md)
+
 > **Note:** LZMA compression is **required** for 2 MB flash with OTA. Build
 > Software Version 2 (via the flag documented in each `*_README.md`) to generate
 > the DFU/OTA upgrade images (`merged_dfu.lzma.bin`, `matter.ota`). The same
-> `*_README.md` files also cover dual-mode (Matter + Zigbee) and 4 MB flash
-> configurations.
+> `*_README.md` files also cover dual-mode (Matter + Zigbee), BLE + Thread
+> concurrent mode, Channel Sounding (CS), and 4 MB flash configurations.
 
 ### Flashing Firmware
 
@@ -180,11 +191,8 @@ our
 
 | Board          | Chip Family | Series | Status               |
 | -------------- | ----------- | ------ | -------------------- |
-| tlsr9518adk80d | TLSR951X    | B91    | Telink Zephyr HAL_V1 |
-| tlsr9528a      | TLSR952X    | B92    | Telink Zephyr HAL_V1 |
-| tlsr9118bdk40d | TLSR911X    | W91    | -                    |
-| tl3218x        | TL321X      | -      | Telink Zephyr HAL_V1 |
 | tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
+| tl5218x        | TL521X      | -      | Telink Zephyr HAL_V2 |
 | tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 |
 
 ---
