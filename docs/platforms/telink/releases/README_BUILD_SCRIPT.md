@@ -103,12 +103,12 @@ Each board's zip archive contains:
 
 ## Supported sample applications
 
-| Application      | Description                                                            |
-| ---------------- | ---------------------------------------------------------------------- |
+| Application      | Description                                                               |
+| ---------------- | ------------------------------------------------------------------------- |
 | lighting-app     | Lighting application (supports OTA, Factory Data, LZMA, Shell, Dual-Mode) |
-| light-switch-app | Light switch application (supports OTA, LZMA, Factory Data, Retention) |
-| bridge-app       | Bridge application                                                     |
-| window-app       | Window covering application                                            |
+| light-switch-app | Light switch application (supports OTA, LZMA, Factory Data, Retention)    |
+| bridge-app       | Bridge application                                                        |
+| window-app       | Window covering application                                               |
 
 ## Script features
 
@@ -157,14 +157,14 @@ The build target format is `telink-<board>-<app>[-<options>]`, for example:
 
 -   `telink-tl3238x-light-ota-factory-data-4mb` - TL3238X lighting application
     with OTA, Factory Data, 4MB Flash
--   `telink-tl3238x-light-ota-compress-lzma-factory-data-dual-mode` -
-    TL3238X lighting application with OTA, LZMA, Factory Data, BLE + Thread
-    concurrent mode
+-   `telink-tl3238x-light-ota-compress-lzma-factory-data-dual-mode` - TL3238X
+    lighting application with OTA, LZMA, Factory Data, BLE + Thread concurrent
+    mode
 -   `telink-tl7218x_retention-light-switch-ota-compress-lzma-factory-data` -
     TL7218X Retention light switch application
--   `telink-tl7218x-light-ota-compress-lzma-factory-data-dual-mode` -
-    TL7218X lighting application with OTA, LZMA, Factory Data, BLE + Thread
-    concurrent mode
+-   `telink-tl7218x-light-ota-compress-lzma-factory-data-dual-mode` - TL7218X
+    lighting application with OTA, LZMA, Factory Data, BLE + Thread concurrent
+    mode
 -   `telink-tl5218x-light-ota-factory-data-4mb` - TL521X lighting application
     with OTA, Factory Data, 4MB Flash
 -   `telink-tl5218x-light-ota-factory-data-4mb` - TL521X lighting application

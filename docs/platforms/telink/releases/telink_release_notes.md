@@ -27,15 +27,15 @@ Telink chips including TL323X, TL521X, and TL721X.
 
 ## ✨ Highlights
 
-| Category                    | Details                                                |
-| --------------------------- | ------------------------------------------------------ |
-| **Matter Support**          | Matter 1.5.1 protocol stack                            |
-| **Supported Chips**         | TL323X, TL521X, TL721X |
-| **Sample Apps**             | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
-| **OTA**                     | OTA requestor and compress-LZMA support                |
-| **Factory Data**            | Factory data provisioning support                      |
-| **BLE/Thread Concurrent**   | BLE + Thread concurrent mode on TL323X and TL721X      |
-| **Channel Sounding**        | CS RAS reflector support on TL721X                     |
+| Category                  | Details                                                |
+| ------------------------- | ------------------------------------------------------ |
+| **Matter Support**        | Matter 1.5.1 protocol stack                            |
+| **Supported Chips**       | TL323X, TL521X, TL721X                                 |
+| **Sample Apps**           | Lighting, Light Switch, Lock, Bridge, Thermostat, etc. |
+| **OTA**                   | OTA requestor and compress-LZMA support                |
+| **Factory Data**          | Factory data provisioning support                      |
+| **BLE/Thread Concurrent** | BLE + Thread concurrent mode on TL323X and TL721X      |
+| **Channel Sounding**      | CS RAS reflector support on TL721X                     |
 
 ---
 
@@ -68,7 +68,7 @@ Thread network on selected Telink SoCs.
 | SoC Family | BLE-Only | Thread-Only | BLE + Thread Concurrent | Channel Sounding |
 | :--------: | :------: | :---------: | :---------------------: | :--------------: |
 |   TL323X   |    ✅    |     ✅      |           ✅            |        —         |
-|   TL521X   |    ✅    |     ✅      |           —             |        —         |
+|   TL521X   |    ✅    |     ✅      |            —            |        —         |
 |   TL721X   |    ✅    |     ✅      |           ✅            |        ✅        |
 
 > **Note:** BLE + Thread concurrent mode requires the `*_concurrent` board
@@ -79,9 +79,9 @@ Thread network on selected Telink SoCs.
 
 ## 🐛 Bug Fixes
 
-| Issue             | Description                                                                   |
-| ----------------- | ----------------------------------------------------------------------------- |
-| **Amazon Commissioning**  | Fix commissioning on Amazon when Channel Sounding is enabled          |
+| Issue                    | Description                                                  |
+| ------------------------ | ------------------------------------------------------------ |
+| **Amazon Commissioning** | Fix commissioning on Amazon when Channel Sounding is enabled |
 
 ---
 
@@ -143,12 +143,12 @@ support.
 
 ### Telink Matter SDK
 
-| Property          | Version                                                                                                               |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Branch**        | [pre_release-v1.2-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/pre_release-v1.2-v1.5-branch)      |
-| **Target Commit** | [50cae34](https://github.com/telink-semi/connectedhomeip/commit/50cae34e79ecbd5af5644eb60f6aa564f6c48ab4)                                                    |
-| **Tag Name**      | [tl_v1.2.0-alpha-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.2.0-alpha-v1.5)          |
-| **Release Type**  | Pre-Release (Alpha)                                                                                                   |
+| Property          | Version                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Branch**        | [pre_release-v1.2-v1.5-branch](https://github.com/telink-semi/connectedhomeip/tree/pre_release-v1.2-v1.5-branch) |
+| **Target Commit** | [50cae34](https://github.com/telink-semi/connectedhomeip/commit/50cae34e79ecbd5af5644eb60f6aa564f6c48ab4)        |
+| **Tag Name**      | [tl_v1.2.0-alpha-v1.5](https://github.com/telink-semi/connectedhomeip/releases/tag/tl_v1.2.0-alpha-v1.5)         |
+| **Release Type**  | Pre-Release (Alpha)                                                                                              |
 
 ### Chip &amp; Hardware Versions
 
@@ -195,9 +195,9 @@ example and the Telink chip platforms that support it (see
 -   **Supported but untested (🟡):** TL721X bridge-app and window-app are
     compiled successfully but have not been functionally validated.
 -   **Untested (·):** Combinations not listed are not built or validated.
--   TL323X / TL521X / TL721X are the latest Telink RISC-V SoC families.
-    Lighting and light-switch apps are supported across TL323X and TL721X;
-    TL521X supports lighting-app only.
+-   TL323X / TL521X / TL721X are the latest Telink RISC-V SoC families. Lighting
+    and light-switch apps are supported across TL323X and TL721X; TL521X
+    supports lighting-app only.
 -   The light-switch-app uses the `*_retention` board target (power management
     with retention RAM).
 -   For build commands per board/app, refer to the per-board `*_README.md` files
@@ -212,11 +212,11 @@ platforms, built with the Matter SDK and Zephyr RTOS.
 
 ### Supported Boards
 
-| Board    | Chip Family |
-| -------- | ----------- |
-| tl3238x  | TL323X      |
-| tl5218x  | TL521X      |
-| tl7218x  | TL721X      |
+| Board   | Chip Family |
+| ------- | ----------- |
+| tl3238x | TL323X      |
+| tl5218x | TL521X      |
+| tl7218x | TL721X      |
 
 ### TL323X/TL721X Matter (OTA + LZMA) Code Size
 
@@ -234,30 +234,30 @@ output (`Memory region` summary) of the build logs.
 
 📈 **Resource Usage Details**
 
-| App                  | Build Target                              | RAM_ILM_N                 | ROM                          | RAM                       |
-| -------------------- | ----------------------------------------- | ------------------------- | ---------------------------- | ------------------------- |
-| **lighting-app**     | `build_tl3238x_2m_flash_lzma`             | 54006 B (82.41% of 64 KB) | 960074 B (81.39% of 1152 KB) | 90464 B (92.02% of 96 KB) |
-| **light-switch-app** | `build_tl3238x_retention_lzma`            | 63734 B (97.25% of 64 KB) | 904554 B (76.68% of 1152 KB) | 84496 B (85.95% of 96 KB) |
-| **lighting-app**     | `build_tl3238x_concurrent_ota_lzma`       | 60168 B (91.81% of 64 KB) | 960080 B (81.39% of 1152 KB) | 90448 B (92.01% of 96 KB) |
+| App                  | Build Target                        | RAM_ILM_N                 | ROM                          | RAM                       |
+| -------------------- | ----------------------------------- | ------------------------- | ---------------------------- | ------------------------- |
+| **lighting-app**     | `build_tl3238x_2m_flash_lzma`       | 54006 B (82.41% of 64 KB) | 960074 B (81.39% of 1152 KB) | 90464 B (92.02% of 96 KB) |
+| **light-switch-app** | `build_tl3238x_retention_lzma`      | 63734 B (97.25% of 64 KB) | 904554 B (76.68% of 1152 KB) | 84496 B (85.95% of 96 KB) |
+| **lighting-app**     | `build_tl3238x_concurrent_ota_lzma` | 60168 B (91.81% of 64 KB) | 960080 B (81.39% of 1152 KB) | 90448 B (92.01% of 96 KB) |
 
 #### TL721X (tl7218x)
 
 📈 **Resource Usage Details**
 
-| App                  | Build Target                                  | RAMILM / RAM_ILM_N         | RAM_DLM                   | ROM                          | RAM                         |
-| -------------------- | --------------------------------------------- | -------------------------- | ------------------------- | ---------------------------- | --------------------------- |
-| **lighting-app**     | `build_tl7218x_lzma`                   | 93376 B (35.62% of 256 KB) | —                         | 938542 B (79.56% of 1152 KB) | 55200 B (21.06% of 256 KB)  |
-| **light-switch-app** | `build_tl7218x_retention_lzma`         | 47098 B (35.93% of 128 KB) | 8346 B (3.18% of 256 KB)  | 881487 B (74.72% of 1152 KB) | 102696 B (78.35% of 128 KB) |
-| **lighting-app**     | `build_tl7218x_concurrent_ota_lzma`    | 102072 B (38.94% of 256 KB) | —                        | 950564 B (80.58% of 1152 KB) | 55360 B (21.12% of 256 KB)  |
-| **lighting-app**     | `build_tl7218x_concurrent_cs_ota_lzma` | 146248 B (55.79% of 256 KB) | —                   | 1071138 B (90.80% of 1152 KB) | 124120 B (47.35% of 256 KB) |
+| App                  | Build Target                           | RAMILM / RAM_ILM_N          | RAM_DLM                  | ROM                           | RAM                         |
+| -------------------- | -------------------------------------- | --------------------------- | ------------------------ | ----------------------------- | --------------------------- |
+| **lighting-app**     | `build_tl7218x_lzma`                   | 93376 B (35.62% of 256 KB)  | —                        | 938542 B (79.56% of 1152 KB)  | 55200 B (21.06% of 256 KB)  |
+| **light-switch-app** | `build_tl7218x_retention_lzma`         | 47098 B (35.93% of 128 KB)  | 8346 B (3.18% of 256 KB) | 881487 B (74.72% of 1152 KB)  | 102696 B (78.35% of 128 KB) |
+| **lighting-app**     | `build_tl7218x_concurrent_ota_lzma`    | 102072 B (38.94% of 256 KB) | —                        | 950564 B (80.58% of 1152 KB)  | 55360 B (21.12% of 256 KB)  |
+| **lighting-app**     | `build_tl7218x_concurrent_cs_ota_lzma` | 146248 B (55.79% of 256 KB) | —                        | 1071138 B (90.80% of 1152 KB) | 124120 B (47.35% of 256 KB) |
 
 > 📌 **Notes:**
 >
 > -   **Firmware (merged.bin)** = MCUBoot (at offset 0) + gap padding + slot0
 >     application image (`zephyr.signed.bin`). This is the file flashed to the
 >     device.
-> -   All targets fit within the slot0 partition (1152 KB) with LZMA
->     compression enabled.
+> -   All targets fit within the slot0 partition (1152 KB) with LZMA compression
+>     enabled.
 > -   The LZMA-compressed DFU image (`merged_dfu.lzma.bin`) is smaller than the
 >     signed image (e.g. 942630 B → 547530 B for TL7218X lighting).
 > -   For a detailed RAM/ROM symbol breakdown, run `west build -t ram_report` /
@@ -269,9 +269,9 @@ output (`Memory region` summary) of the build logs.
 
 📈 **Resource Usage Details**
 
-| App              | Build Target                      | RAM_ILM_N                  | ROM                           | RAM                        |
-| ---------------- | --------------------------------- | -------------------------- | ----------------------------- | -------------------------- |
-| **lighting-app** | `build_tl5218x_4m_dual_mode` | 51146 B (39.02% of 128 KB) | 935554 B (47.09% of 1940 KB)  | 87872 B (67.04% of 128 KB) |
+| App              | Build Target                 | RAM_ILM_N                  | ROM                          | RAM                        |
+| ---------------- | ---------------------------- | -------------------------- | ---------------------------- | -------------------------- |
+| **lighting-app** | `build_tl5218x_4m_dual_mode` | 51146 B (39.02% of 128 KB) | 935554 B (47.09% of 1940 KB) | 87872 B (67.04% of 128 KB) |
 
 > 📌 **Note:** TL521X currently only supports lighting-app.
 

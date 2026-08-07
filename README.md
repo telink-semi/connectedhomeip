@@ -189,11 +189,11 @@ our
 
 ## 📱 Supported Boards
 
-| Board          | Chip Family | Series | Status               |
-| -------------- | ----------- | ------ | -------------------- |
-| tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
-| tl5218x        | TL521X      | -      | Telink Zephyr HAL_V2 |
-| tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 |
+| Board   | Chip Family | Series | Status               |
+| ------- | ----------- | ------ | -------------------- |
+| tl3238x | TL323X      | -      | Telink Zephyr HAL_V2 |
+| tl5218x | TL521X      | -      | Telink Zephyr HAL_V2 |
+| tl7218x | TL721X      | -      | Telink Zephyr HAL_V2 |
 
 ---
 
