@@ -34,10 +34,10 @@ Usage (run from the connectedhomeip repo root):
 """
 
 import re
-import subprocess
 import shutil
+import subprocess
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class TelinkMatterBuildManager:
