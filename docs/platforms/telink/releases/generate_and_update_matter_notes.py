@@ -174,8 +174,6 @@ class TelinkMatterBuildManager:
 
         for board, app_name, target_suffix in self.build_targets:
             full_target = f"telink-{target_suffix}"
-            # Output directory used by build_examples.py
-            output_dir_name = full_target.replace("telink-", "telink-")
             # build_examples.py outputs to out/<full_target>
             log_filename = f"build_{target_suffix}.log"
             log_file = self.build_logs_dir / log_filename
