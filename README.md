@@ -117,19 +117,14 @@ the high-level steps are:
    [Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/)
    for the exact `west` commands.
 
-4. **Fetch the Telink BLE SDK binary** — `west update` does **not** fetch
-   `tl_ble_sdk` automatically (Zephyr CI disallows binary modules). Run
-   `./hal_v2/fetch_sdk.sh` inside `modules/hal/telink/` of the Zephyr SDK to
-   download the pre-built BLE stack.
-
-5. **Get the Telink Matter SDK (this repo)** — clone the `dev-tlk_v1.5` branch
+4. **Get the Telink Matter SDK (this repo)** — clone the `dev-tlk_v1.5` branch
    of this repository next to the Zephyr SDK.
 
-6. **Point the Matter SDK at the Zephyr SDK** — export `TELINK_ZEPHYR_BASE` so
+5. **Point the Matter SDK at the Zephyr SDK** — export `TELINK_ZEPHYR_BASE` so
    the Matter build system can find Zephyr, the Telink HAL and the toolchain.
    This variable must be set in every shell used for Matter builds.
 
-7. **Bootstrap & activate the Matter build environment** — run the Matter
+6. **Bootstrap & activate the Matter build environment** — run the Matter
    `scripts/activate.sh` bootstrap once to install `gn`, `ninja`, `pigweed` and
    the Python dependencies, then source it in every new shell before building.
 
@@ -148,10 +143,12 @@ MB flash, Software Version 2 for DFU/OTA images, etc.).
 
 Refer to the board README for the app + board combination you want to build:
 
-#### Lighting App (TL3238X / TL7218X)
+#### Lighting App (TL3238X / TL521X / TL7218X)
 
 -   TL3238X:
     [`examples/lighting-app/telink/boards/tl3238x_README.md`](examples/lighting-app/telink/boards/tl3238x_README.md)
+-   TL5218X:
+    [`examples/lighting-app/telink/boards/tl5218x_README.md`](examples/lighting-app/telink/boards/tl5218x_README.md)
 -   TL7218X:
     [`examples/lighting-app/telink/boards/tl7218x_README.md`](examples/lighting-app/telink/boards/tl7218x_README.md)
 
@@ -162,11 +159,20 @@ Refer to the board README for the app + board combination you want to build:
 -   TL7218X Retention:
     [`examples/light-switch-app/telink/boards/tl7218x_retention_README.md`](examples/light-switch-app/telink/boards/tl7218x_retention_README.md)
 
+#### Concurrent Mode (TL3238X / TL7218X)
+
+-   TL3238X BLE + Thread Concurrent:
+    [`examples/lighting-app/telink/boards/tl3238x_concurrent_README.md`](examples/lighting-app/telink/boards/tl3238x_concurrent_README.md)
+-   TL7218X BLE + Thread Concurrent:
+    [`examples/lighting-app/telink/boards/tl7218x_concurrent_README.md`](examples/lighting-app/telink/boards/tl7218x_concurrent_README.md)
+-   TL7218X BLE + Thread Concurrent + Channel Sounding:
+    [`examples/lighting-app/telink/boards/tl7218x_concurrent_cs_README.md`](examples/lighting-app/telink/boards/tl7218x_concurrent_cs_README.md)
+
 > **Note:** LZMA compression is **required** for 2 MB flash with OTA. Build
 > Software Version 2 (via the flag documented in each `*_README.md`) to generate
 > the DFU/OTA upgrade images (`merged_dfu.lzma.bin`, `matter.ota`). The same
-> `*_README.md` files also cover dual-mode (Matter + Zigbee) and 4 MB flash
-> configurations.
+> `*_README.md` files also cover dual-mode (Matter + Zigbee), BLE + Thread
+> concurrent mode, Channel Sounding (CS), and 4 MB flash configurations.
 
 ### Flashing Firmware
 
@@ -178,14 +184,11 @@ our
 
 ## 📱 Supported Boards
 
-| Board          | Chip Family | Series | Status               |
-| -------------- | ----------- | ------ | -------------------- |
-| tlsr9518adk80d | TLSR951X    | B91    | Telink Zephyr HAL_V1 |
-| tlsr9528a      | TLSR952X    | B92    | Telink Zephyr HAL_V1 |
-| tlsr9118bdk40d | TLSR911X    | W91    | -                    |
-| tl3218x        | TL321X      | -      | Telink Zephyr HAL_V1 |
-| tl3238x        | TL323X      | -      | Telink Zephyr HAL_V2 |
-| tl7218x        | TL721X      | -      | Telink Zephyr HAL_V2 |
+| Board   | Chip Family | Series | Status               |
+| ------- | ----------- | ------ | -------------------- |
+| tl3238x | TL323X      | -      | Telink Zephyr HAL_V2 |
+| tl5218x | TL521X      | -      | Telink Zephyr HAL_V2 |
+| tl7218x | TL721X      | -      | Telink Zephyr HAL_V2 |
 
 ---
 
