@@ -316,7 +316,7 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         }
         ReturnErrorOnFailure(status);
 #if CONFIG_SECURE_PROGRAMMING
-    return aEncoder.Encode(CharSpan(manufacturingDateString, strnlen(manufacturingDateString, kMaxLen)));
+    return encoder.Encode(CharSpan(manufacturingDateString, strnlen(manufacturingDateString, kMaxTotalLength)));
 #else
         snprintf(manufacturingDateString, sizeof(manufacturingDateString), "%04u%02u%02u", manufacturingYear, manufacturingMonth,
                  manufacturingDayOfMonth);
