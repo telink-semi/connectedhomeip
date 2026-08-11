@@ -36,7 +36,6 @@
 
 // Functional two-fabric prototype profile. Certification will require at least
 // five fabrics and another resource pass.
-#define CHIP_SYSTEM_CONFIG_PACKETBUFFER_POOL_SIZE 8
 #define CHIP_CONFIG_MAX_EXCHANGE_CONTEXTS 8
 #define CHIP_CONFIG_MAX_UNSOLICITED_MESSAGE_HANDLERS 8
 #define CHIP_CONFIG_MAX_GROUP_DATA_PEERS 5
