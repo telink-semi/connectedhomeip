@@ -32,8 +32,9 @@ include(${CHIP_ROOT}/src/app/chip_data_model.cmake)
 
 project(chip-telink-lock-aliro-minimal-example)
 
-set(TELINK_ALIRO_SDK_URL "" CACHE STRING "URL of the Telink Aliro source SDK archive")
-set(TELINK_ALIRO_SDK_SHA256 "" CACHE STRING "SHA-256 of the Telink Aliro source SDK archive")
+set(TELINK_ALIRO_SDK_URL
+    "https://doc.telink-semi.cn/Zephyr/binaries/public/aliro/telink-aliro-sdk-test.tar.gz"
+    CACHE STRING "Telink Aliro SDK archive URL")
 
 if(CONFIG_ALIRO_TRANSPORT_NFC)
   if(FETCHCONTENT_SOURCE_DIR_TELINK_ALIRO)
@@ -48,13 +49,9 @@ if(CONFIG_ALIRO_TRANSPORT_NFC)
         "-DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/path/to/telink_aliro."
       )
     endif()
-    if(NOT TELINK_ALIRO_SDK_SHA256)
-      message(FATAL_ERROR "TELINK_ALIRO_SDK_SHA256 must be set for a downloaded SDK archive")
-    endif()
 
     FetchContent_Declare(telink_aliro
       URL "${TELINK_ALIRO_SDK_URL}"
-      URL_HASH "SHA256=${TELINK_ALIRO_SDK_SHA256}"
       TLS_VERIFY TRUE
       SOURCE_SUBDIR cmake/zephyr
     )

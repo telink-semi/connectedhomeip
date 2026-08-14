@@ -1,101 +1,174 @@
-# Telink Matter Lock + Aliro Minimal Integration
+# Matter Telink Lock with Aliro NFC Example Application
 
-This application is an NFC-first integration prototype for a functional Matter
-lock on `tl3238x`. Matter remains responsible for Zephyr startup, BLE
-commissioning, Thread operation, persistent Matter state, power management, and
-the lock application lifecycle. The Aliro SDK is included as a library and uses
-the CLRC663 NFC frontend.
+The Telink Aliro Minimal Lock Example demonstrates a Matter door lock with
+Aliro credential provisioning and NFC access on `tl3238x`. The application is
+commissioned over Matter BLE, operates on a Thread network, and uses a CLRC663
+NFC frontend for Aliro standard transactions.
 
-## Current Surface
+Matter owns the device lifecycle, BLE commissioning, Thread networking, and
+Matter persistence. The Aliro SDK is linked as a library and is used only for
+the NFC access flow in this version.
+
+## Supported devices
+
+| Board/SoC | Build target | NFC frontend | Zephyr Board Info |
+| :-------- | :----------- | :----------- | :---------------- |
+| TL3238X | `tl3238x` | CLRC663 | [TL3238X](https://github.com/telink-semi/zephyr/tree/telink_aliro_baza_zephyr_4.1.0/boards/telink/tl323x) |
+
+This application has been tested with Telink Zephyr revision
+`69f4e4ebf0f607c1808e6f5ff7e91c6f6c531a29`, Telink HAL revision
+`ce77c8f74d7e99a75d755dd4c3b43c859cb00b1b`, and Zephyr SDK 0.17.0.
+
+## Implemented functionality
 
 - Matter commissioning over BLE and normal operation over Thread.
-- Two Matter fabrics and four ACL entries per fabric.
-- Root endpoint clusters needed for commissioning, access control, diagnostics,
-  and Thread operation.
-- Door endpoint with Identify, Descriptor, and Door Lock.
-- Door Lock base, PIN/COTA, User, and Aliro Provisioning features.
-- Six users, two PIN credentials, three Aliro issuer keys, and six Aliro
-  endpoint keys. Apple Home was observed provisioning three issuer-key users.
-- Aliro credential presentation over NFC using CLRC663.
-- Simulated lock actuator, lock button, status LEDs, and factory reset.
+- Two Matter fabrics with four access-control entries per fabric.
+- A Door Lock endpoint with PIN, COTA, User, and Aliro Provisioning features.
+- Six users, two PIN credentials, three Aliro issuer keys, and six combined
+  evictable or non-evictable Aliro endpoint keys.
+- CLRC663 low-power card detection using a GPIO interrupt, followed by an Aliro
+  standard NFC transaction.
+- Authorization of the authenticated Aliro endpoint key against an occupied
+  Matter lock user before accepting the requested lock action.
+- A simulated two-second lock actuator controlled by Matter, NFC, or a button.
 
-Aliro BLE/UWB, Matter OTA Requestor, Diagnostic Logs, Software Diagnostics,
-User Label, ICD Management, RFID credentials, schedules, door-position
-sensing, and unbolting are excluded. Matter BLE commissioning is unchanged;
-the Aliro BLE implementation is not linked in this release.
+Apple Home has been used to commission the device, provision a Wallet key, and
+unlock the simulated Matter lock through the CLRC663 reader.
 
-## Local Build
+## Build and flash
 
-The Aliro source checkout can be used directly during development. The same
-consumer target also supports the packaged SDK layout:
+1. Prepare the connectedhomeip and Telink Zephyr build environment. The Zephyr
+   workspace must include the `tl3238x` board and the Telink HAL revisions noted
+   above.
+
+2. Activate the Matter build environment from the connectedhomeip root:
+
+    ```bash
+    source scripts/activate.sh -p all,telink
+    ```
+
+3. Build the application from `examples/lock-app/telink-aliro-minimal`:
+
+    ```bash
+    west build -p always -b tl3238x
+    ```
+
+   CMake downloads the Aliro SDK archive configured by
+   `TELINK_ALIRO_SDK_URL`, extracts it under `build/_deps`, and links the
+   `Telink::Aliro` target. The resulting image is `build/zephyr/zephyr.bin`.
+
+   To use another published SDK archive:
+
+    ```bash
+    west build -p always -b tl3238x -- \
+      -DTELINK_ALIRO_SDK_URL=https://server/path/telink-aliro-sdk.tar.gz
+    ```
+
+   To build against a local Aliro source or SDK checkout without downloading an
+   archive:
+
+    ```bash
+    west build -p always -b tl3238x -- \
+      -DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/absolute/path/to/aliro
+    ```
+
+   The archive or local checkout must contain `cmake/zephyr/CMakeLists.txt` at
+   its root.
+
+4. Flash the generated `zephyr.bin` using the TL3238X flashing procedure. The
+   current TL3238X Zephyr board documentation does not enable a `west flash`
+   runner.
+
+## Hardware connections
+
+The application devicetree overlay configures the CLRC663 as follows:
+
+| CLRC663 signal | TL3238X pin |
+| :------------- | :---------- |
+| SPI chip select | PE4 |
+| SPI clock | PE5 |
+| SPI MISO | PE6 |
+| SPI MOSI | PE7 |
+| IRQ | PA5 |
+| Reset | PA6 |
+
+Power and ground must match the CLRC663 board being used.
+
+## Usage
+
+### UART
+
+The Zephyr console uses UART0 at 115200 baud, 8 data bits, no parity, and one
+stop bit.
+
+| Signal | TL3238X pin |
+| :----- | :---------- |
+| TX | PB2 |
+| RX | PB0 |
+| GND | GND |
+
+### Buttons
+
+| Name | Function | Description |
+| :--- | :------- | :---------- |
+| User KEY1 | Factory reset | Press three times within three seconds to erase the commissioned Matter state. |
+| User KEY2 | Lock control | Toggle the simulated lock between locked and unlocked. |
+
+### LEDs
+
+| LED | Function | Description |
+| :-- | :------- | :---------- |
+| White | Matter network status | Short pulse while uncommissioned, fast blink while joining, and long pulse while attached to Thread. |
+| Green | Lock state | On when locked, off when unlocked, and fast blink while the actuator is moving. |
+
+### Commission with CHIP Tool
+
+Build the [CHIP Tool](../../chip-tool/README.md), then commission the device over
+BLE with a Thread operational dataset:
 
 ```bash
-export CHIP_ROOT=/path/to/connectedhomeip
-export ZEPHYR_WORKSPACE=/path/to/zephyrproject
-source "$CHIP_ROOT/scripts/activate.sh" -p all,telink
-cd "$ZEPHYR_WORKSPACE"
-west build -b tl3238x \
-  "$CHIP_ROOT/examples/lock-app/telink-aliro-minimal" -- \
-  -DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/path/to/aliro
+${CHIP_TOOL_DIR}/chip-tool pairing ble-thread \
+  ${NODE_ID} hex:${THREAD_DATASET} ${PIN_CODE} ${DISCRIMINATOR}
 ```
 
-`FETCHCONTENT_SOURCE_DIR_TELINK_ALIRO` is a standard CMake FetchContent override.
-It makes the build use that checkout and skips all network access.
-
-## Published SDK Build
-
-For public builds, publish an immutable source SDK archive containing
-`cmake/zephyr`, the public headers and glue sources, NFC sources, and the
-prebuilt proprietary libraries. Then build with its URL and SHA-256:
+Lock, unlock, or read the lock state on endpoint 1:
 
 ```bash
-west build -b tl3238x \
-  "$CHIP_ROOT/examples/lock-app/telink-aliro-minimal" -- \
-  -DTELINK_ALIRO_SDK_URL=ftp://downloads.example.com/aliro/telink-aliro-sdk-<version>.tar.gz \
-  -DTELINK_ALIRO_SDK_SHA256=<archive-sha256>
+${CHIP_TOOL_DIR}/chip-tool doorlock lock-door ${NODE_ID} 1
+${CHIP_TOOL_DIR}/chip-tool doorlock unlock-door ${NODE_ID} 1
+${CHIP_TOOL_DIR}/chip-tool doorlock read lock-state ${NODE_ID} 1
 ```
 
-CMake downloads and extracts the SDK under the build directory. Both FTP and
-HTTPS archive URLs are supported. The hash pins the exact contents; HTTPS is
-preferred when the server supports it because it also authenticates the
-transport. The archive layout should match the repository root, so
-`cmake/zephyr/CMakeLists.txt` exists after extraction.
+### Aliro NFC access
 
-## Prototype Limits
+An ecosystem must first commission the Matter device and provision the Aliro
+reader configuration, issuer key, endpoint key, and corresponding lock user.
+Until the reader configuration is received, NFC transactions are rejected.
 
-- The NFC runtime has been validated on `tl3238x` with CLRC663: Apple Home
-  provisioned a Wallet key, Aliro completed a standard NFC transaction, and
-  the authenticated endpoint unlocked the Matter lock.
-- Matter-provisioned Aliro reader keys and identifiers are applied to the live
-  Aliro SDK reader configuration. NFC transactions are rejected until that
-  configuration has been received.
-- Aliro issuer and endpoint credentials are RAM-only in the Matter delegate.
-  Evictable and non-evictable endpoint keys share one six-entry pool, matching
-  the combined Matter limit without keeping duplicate key arrays.
-- After AUTH1 signature verification, the Aliro protocol core passes the
-  authenticated endpoint key to the parent-app authorization callback. Matter
-  checks it against both the endpoint-key pool and an occupied Matter user
-  before the actuator request can be accepted.
-- Aliro transaction-control persistence is intentionally disabled for the
-  standard-transaction bring-up. The SDK's standalone NVS backend is not used
-  because it targets the same flash partition as Matter settings. Persistent
-  and expedited transactions require a Matter-owned storage adapter.
-- Power management is disabled while the combined runtime is validated.
-- The Aliro NFC task uses a provisional 4 KiB stack and the application reserves
-  a provisional 20,716-byte libc arena. Hardware stack and heap high-water
-  measurements are required.
-- Aliro protocol debug logging is disabled by default because it exposes
-  ephemeral and derived transaction keys. It must remain a lab-only option.
-- Factory data is disabled and test commissioning credentials are enabled, so
-  this profile is for development only.
+After provisioning, present the matching NFC credential to the CLRC663 reader.
+The application accepts the requested lock action only when the transaction is
+authenticated and its endpoint key belongs to an occupied Matter user.
 
-The `tl3238x` overlay uses the full 160 KiB SRAM as 128 KiB retained RAM and
-32 KiB non-retained instruction RAM. These are separate linker regions and
-cannot be treated as one interchangeable pool.
+## Current limitations
 
-Current NFC-first source-build usage on `tl3238x` is 874,340 B of 1 MiB ROM,
-130,016 B of 128 KiB retained RAM, and 29,020 B of 32 KiB non-retained
-instruction RAM.
+- Only Aliro NFC standard transactions are enabled. Aliro BLE/UWB, expedited
+  transactions, and keyslot credentials are not included.
+- Aliro issuer keys, endpoint keys, and reader configuration are stored in RAM
+  only and are lost on reboot. Matter settings remain persistent.
+- Aliro transaction-control persistence is disabled because the standalone SDK
+  NVS backend targets the same flash storage used by Matter. A Matter-owned
+  storage adapter is still required.
+- Power management and Matter OTA Requestor support are disabled.
+- The lock actuator is simulated; no physical bolt or door-position sensor is
+  controlled by this application.
+- Factory data is disabled and development commissioning credentials are used.
+  This is not a certification or production configuration.
 
-The same application built from the packaged Aliro SDK uses 875,072 B of ROM
-with identical retained and non-retained RAM usage.
+The TL3238X application overlay exposes 128 KiB of retained RAM and 32 KiB of
+non-retained instruction RAM as separate linker regions. The Aliro NFC thread
+currently uses a provisional 4 KiB stack; runtime stack and heap high-water
+measurements are still required.
+
+The default SDK URL currently identifies a test archive and is not accompanied
+by a content hash. A public release should use an immutable, versioned archive
+name and pin its contents before this build is treated as reproducible.
