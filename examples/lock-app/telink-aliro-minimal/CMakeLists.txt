@@ -33,7 +33,7 @@ include(${CHIP_ROOT}/src/app/chip_data_model.cmake)
 project(chip-telink-lock-aliro-minimal-example)
 
 set(TELINK_ALIRO_SDK_URL
-    "https://doc.telink-semi.cn/Zephyr/binaries/public/aliro/telink-aliro-sdk-test.tar.gz"
+    "https://doc.telink-semi.cn/Zephyr/binaries/public/aliro/telink-aliro-sdk-latest.tar.gz"
     CACHE STRING "Telink Aliro SDK archive URL")
 
 if(CONFIG_ALIRO_TRANSPORT_NFC)
