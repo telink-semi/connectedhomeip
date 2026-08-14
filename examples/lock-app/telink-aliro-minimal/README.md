@@ -32,10 +32,60 @@ This application has been tested with Telink Zephyr revision
   Matter lock user before accepting the requested lock action.
 - A simulated two-second lock actuator controlled by Matter, NFC, or a button.
 
-Apple Home has been used to commission the device, provision a Wallet key, and
+Apple Home has been used to commission the device, provision a Home Key in Apple Wallet, and
 unlock the simulated Matter lock through the CLRC663 reader.
 
+## Apple Home commissioning and NFC unlock flow
+
+The following sequence is intended to document the tested Apple Home flow from
+initial Matter commissioning through an Aliro NFC unlock.
+
+### 1. Add the Matter accessory
+
+Open the Apple Home accessory setup flow and scan the Matter QR code, or enter
+the manual setup code. At this stage the lock is discovered through Matter BLE
+commissioning.
+
+|  |  |
+| :---: | :---: |
+| ![Left](./images/photo_1.jpg) | ![Right](./images/photo_2.jpg) |
+
+### 2. Commission the lock, finish accessory and Home Key setup
+
+Apple Home establishes the commissioning session, provisions the Thread
+operational credentials, and adds the lock to the selected home.
+
+|  |  |  |
+| :---: | :---: | :---: |
+| ![Left](./images/photo_3.jpg) | ![Center](./images/photo_4.jpg) | ![Right](./images/photo_5.jpg) |
+
+Complete the accessory name and room selection. Apple Home then provisions the
+Aliro reader configuration, issuer credentials, endpoint credentials, and lock
+users required for Home Key operation.
+|  |  |
+| :---: | :---: |
+| ![Left](./images/photo_6.jpg) | ![Right](./images/photo_7.jpg) |
+
+### 3. Confirm the commissioned lock
+
+Confirm that the lock appears in Apple Home and is reachable on the network.
+|  |  |
+| :---: | :---: |
+| ![Left](./images/photo_8.jpg) | ![Right](./images/photo_9.jpg) |
+
+### 4. Unlock with the Home Key in Apple Wallet over NFC
+
+Present the iPhone containing the Home Key to the CLRC663 NFC reader. This is an Aliro NFC transaction; Matter BLE is not used. The application authenticates the endpoint key, verifies that it belongs to an occupied Matter lock user, performs the requested unlock action, and reports the updated Door Lock state over Thread. Apple Wallet confirms the transaction, and Apple Home displays the lock as unlocked.
+
+|  |  |
+| :---: | :---: |
+| ![Left](./images/photo_10.jpg) | ![Right](./images/photo_11.jpg) |
+
 ## Build and flash
+
+Build flow of this application doesn't change much from any other Telink example apps.
+Initial Matter/Zephyr environment setup is mostly the same as in [Telink Developer's Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
+You just need to checkout specific branch of Zephyr using current Matter revision.
 
 1. Prepare the connectedhomeip and Telink Zephyr build environment. The Zephyr
    workspace must include the `tl3238x` board and the Telink HAL revisions noted
@@ -55,9 +105,9 @@ unlock the simulated Matter lock through the CLRC663 reader.
 
    CMake downloads the Aliro SDK archive configured by
    `TELINK_ALIRO_SDK_URL`, extracts it under `build/_deps`, and links the
-   `Telink::Aliro` target. The resulting image is `build/zephyr/zephyr.bin`.
+   `Telink::Aliro` target. The resulting image is `build/zephyr/merged.bin`.
 
-   To use another published SDK archive:
+   In case you want to use another published SDK archive:
 
     ```bash
     west build -p always -b tl3238x -- \
@@ -72,10 +122,7 @@ unlock the simulated Matter lock through the CLRC663 reader.
       -DFETCHCONTENT_SOURCE_DIR_TELINK_ALIRO=/absolute/path/to/aliro
     ```
 
-   The archive or local checkout must contain `cmake/zephyr/CMakeLists.txt` at
-   its root.
-
-4. Flash the generated `zephyr.bin` using the TL3238X flashing procedure. The
+4. Flash the generated `merged.bin` using the TL3238X flashing procedure. The
    current TL3238X Zephyr board documentation does not enable a `west flash`
    runner.
 
