@@ -198,8 +198,8 @@ set(SOC "B92")
 set(ZB_FW_OFFSET "1280")
 endif()
 set(BLOCK_SIZE "1024")
-set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/Secure_Demo.bin")
-set(ZB_FILE_PATH "${ZEPHYR_BASE}/ZB_FW/${SOC}/concurrent_sampleLight.bin")
+set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/SBOOT/Secure_Demo.bin")
+set(ZB_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/ZB/concurrent_sampleLight.bin")
 math(EXPR SKIP_BYTES_DECIMAL "${CONFIG_MCUBOOT_START_OFFSET} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
 
 add_custom_target(
@@ -268,7 +268,7 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
         )
         add_custom_target(west_sign ALL
             COMMAND
-            west sign -t imgtool -p ${ZEPHYR_BASE}/../bootloader/mcuboot/scripts/imgtool.py -d ${PROJECT_BINARY_DIR}/.. -- --key ${ZEPHYR_BASE}/../bootloader/mcuboot/root-rsa-2048.pem
+            west sign -t imgtool -p ${ZEPHYR_BASE}/../bootloader/mcuboot/scripts/imgtool.py -d ${PROJECT_BINARY_DIR}/.. -- --key ${ZEPHYR_BASE}/../${CONFIG_MCUBOOT_SIGNATURE_KEY_FILE}
         )
         add_dependencies(merge_zigbee ${ZEPHYR_FINAL_EXECUTABLE})
         add_dependencies(west_sign merge_zigbee)

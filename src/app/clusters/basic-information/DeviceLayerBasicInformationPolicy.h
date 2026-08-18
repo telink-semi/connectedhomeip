@@ -82,6 +82,13 @@ public:
         return mDeviceInstanceInfoProvider.GetManufacturingDate(year, month, day);
     }
 
+#if CHIP_DEVICE_SECURE_PROGRAMMING
+    CHIP_ERROR GetManufacturingDateString(char * buf, size_t bufSize)
+    {
+        return mDeviceInstanceInfoProvider.GetManufacturingDateString(buf, bufSize);
+    }
+#endif /* CHIP_DEVICE_SECURE_PROGRAMMING */
+
     CHIP_ERROR GetManufacturingDateSuffix(MutableCharSpan & suffixBuffer)
     {
         return mDeviceInstanceInfoProvider.GetManufacturingDateSuffix(suffixBuffer);
