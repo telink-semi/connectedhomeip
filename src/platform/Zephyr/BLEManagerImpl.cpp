@@ -693,15 +693,6 @@ exit:
     // Unref bt_conn before scheduling DriveBLEState.
     bt_conn_unref(connEvent->BtConn);
 
-#if defined(CONFIG_BT_TLX) && CHIP_DEVICE_CONFIG_SUPPORTS_CONCURRENT_CONNECTION &&                                                 \
-    !CHIP_DEVICE_CONFIG_ENABLE_POST_COMMISSIONING_BLE_ADVERTISING
-    // Telink TLX: keep BLE idle after disconnect (bt_conn_unref() may resume advertising).
-    if (!mFlags.Has(Flags::kAdvertisingEnabled))
-    {
-        bt_le_adv_stop();
-    }
-#endif
-
     ChipDeviceEvent disconnectEvent;
     disconnectEvent.Type = DeviceEventType::kCHIPoBLEConnectionClosed;
     ReturnErrorOnFailure(PlatformMgr().PostEvent(&disconnectEvent));
