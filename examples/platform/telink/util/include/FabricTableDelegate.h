@@ -39,6 +39,22 @@ public:
 #endif // CONFIG_CHIP_LAST_FABRIC_REMOVED_NONE
     }
 
+    static void StateCleanup(void)
+    {
+        ChipLogProgress(DeviceLayer, "Performing erasing of settings partition");
+        /* Erase the user parameters partition to reset mode settings */
+        flash_erase(USER_PARTITION_DEVICE, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
+        /* Need to erase zb nvs part */
+        flash_erase(ZB_NVS_PARTITION_DEVICE, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+        // Need to erase cluster para part.
+        flash_erase(USER_CLUSTER_PARTITION_DEVICE, USER_CLUSTER_PARTITION_OFFSET, USER_CLUSTER_PARTITION_SIZE);
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
+        printk("Erasing user parameters and resetting to Zigbee mode");
+    }
+
 private:
     void OnFabricRemoved(const chip::FabricTable & fabricTable, chip::FabricIndex fabricIndex)
     {
@@ -47,18 +63,9 @@ private:
 
         if (server.GetFabricTable().FabricCount() == 0)
         {
-            ChipLogProgress(DeviceLayer, "Performing erasing of settings partition");
-            /* Erase the user parameters partition to reset mode settings */
-            flash_erase(USER_PARTITION_DEVICE, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
-            /* Need to erase zb nvs part */
-            flash_erase(ZB_NVS_PARTITION_DEVICE, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
-#if APP_LIGHT_USER_MODE_EN
-#if CONFIG_STARTUP_OPTIMIZATE
-            // Need to erase cluster para part.
-            flash_erase(USER_CLUSTER_PARTITION_DEVICE, USER_CLUSTER_PARTITION_OFFSET, USER_CLUSTER_PARTITION_SIZE);
-#endif /* CONFIG_STARTUP_OPTIMIZATE */
-#endif /* APP_LIGHT_USER_MODE_EN */
-            printk("Erasing user parameters and resetting to Zigbee mode");
+            // Clear dual mode state settings
+            AppFabricTableDelegate::StateCleanup();
+
             // ScheduleFactoryReset in case of failed commissioning
             if (AppTaskCommon::IsCommissioningFailed())
             {
@@ -81,6 +88,9 @@ private:
 #ifndef CONFIG_CHIP_LAST_FABRIC_REMOVED_NONE
         if (chip::Server::GetInstance().GetFabricTable().FabricCount() == 0)
         {
+            // Clear dual mode state settings
+            AppFabricTableDelegate::StateCleanup();
+
             LogErrorOnFailure(chip::DeviceLayer::PlatformMgr().ScheduleWork([](intptr_t) {
 #ifdef CONFIG_CHIP_LAST_FABRIC_REMOVED_ERASE_AND_REBOOT
                 chip::Server::GetInstance().ScheduleFactoryReset();
