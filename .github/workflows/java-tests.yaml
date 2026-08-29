@@ -37,8 +37,8 @@ jobs:
         name: Linux
 
         env:
-            PW_PROJECT_ROOT: ${GITHUB_WORKSPACE}
-            TSAN_OPTIONS: "halt_on_error=1 suppressions=${GITHUB_WORKSPACE}/scripts/tests/chiptest/tsan-linux-suppressions.txt"
+            PW_PROJECT_ROOT: ${GITHUB_WORKSPACE}/connectedhomeip
+            TSAN_OPTIONS: "halt_on_error=1 suppressions=${GITHUB_WORKSPACE}/connectedhomeip/scripts/tests/chiptest/tsan-linux-suppressions.txt"
 
         if: github.actor != 'restyled-io[bot]'
         runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
               with:
                 path: connectedhomeip
             - name: Checkout submodules & Bootstrap
-              uses: ./.github/actions/checkout-submodules-and-bootstrap
+              uses: ./connectedhomeip/.github/actions/checkout-submodules-and-bootstrap
               with:
                 platform: linux
                 bootstrap-log-name: bootstrap-logs-linux-${{ matrix.build_variant }}${{ matrix.chip_tool }}
