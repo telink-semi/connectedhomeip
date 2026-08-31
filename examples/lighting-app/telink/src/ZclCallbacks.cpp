@@ -52,15 +52,15 @@ static void LevelTimeoutCallback(struct k_timer * timer)
         return;
     }
 
-    cluster_startup_para cluster_para;
-    if (read_cluster_para(&cluster_para) != 0)
+    cluster_startup_para *p_para = &g_light_cluster_para;
+    if (p_para->currentLevel != latest_level)
     {
-    }
-    if (cluster_para.level != latest_level)
-    {
-        cluster_para.level = latest_level;
-        if (store_cluster_para(&cluster_para) != 0)
+        p_para->preCurrentLevel = p_para->currentLevel;
+        p_para->currentLevel    = latest_level;
+        printk("[LevelTimeoutCallback] currentLevel=%d\n", p_para->currentLevel);
+        if (store_cluster_para(p_para) != 0)
         {
+            printk("[LevelTimeoutCallback] Fail store startup cluster para\n");
         }
     }
 }
@@ -78,25 +78,251 @@ void MatterPostAttributeChangeCallback(const chip::app::ConcreteAttributePath & 
         init_timer = TRANSTION_TIMER_DEINIT_FLAG;
     }
 
-    if (clusterId == OnOff::Id && attributeId == OnOff::Attributes::OnOff::Id)
+    Protocols::InteractionModel::Status status;
+    Clusters::ColorControl::ColorModeEnum tmpColorMode;
+    Clusters::ColorControl::EnhancedColorModeEnum tmpEnhancedColorMode;
+    cluster_startup_para * p_para = &g_light_cluster_para;
+    if (clusterId == OnOff::Id)
     {
-        cluster_startup_para cluster_para;
-        if (read_cluster_para(&cluster_para) != 0)
+        if (attributeId == OnOff::Attributes::OnOff::Id)
         {
-        }
-        if (cluster_para.onoff != *value)
-        {
-            cluster_para.onoff = *value;
-            if (store_cluster_para(&cluster_para) != 0)
+            uint8_t tmp = *value;
+            if (p_para->onOff != tmp)
             {
+                p_para->onOff = tmp;
+                printk("[clusterId:OnOff] OnOff=%d\n", p_para->onOff);
+
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
+        else if (attributeId == OnOff::Attributes::StartUpOnOff::Id)
+        {
+            uint8_t tmp = *value;
+            DataModel::Nullable<chip::app::Clusters::OnOff::StartUpOnOffEnum> tmp1 =
+                (chip::app::Clusters::OnOff::StartUpOnOffEnum) tmp;
+            if (tmp1.IsNull())
+            {
+                tmp = 0xff;
+            }
+            if (p_para->startUpOnOff != tmp)
+            {
+                p_para->startUpOnOff = tmp;
+                printk("[clusterId:OnOff] StartUpOnOff=%d\n", p_para->startUpOnOff);
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
             }
         }
     }
-    else if (clusterId == LevelControl::Id && attributeId == LevelControl::Attributes::CurrentLevel::Id)
+    else if (clusterId == LevelControl::Id)
     {
-        latest_level = *value;
-        k_timer_stop(&LevelChangeTimer);
-        k_timer_start(&LevelChangeTimer, K_MSEC(timer_period), K_NO_WAIT);
+        if (attributeId == LevelControl::Attributes::CurrentLevel::Id)
+        {
+            latest_level = *value;
+            k_timer_stop(&LevelChangeTimer);
+            k_timer_start(&LevelChangeTimer, K_MSEC(timer_period), K_NO_WAIT);
+        }
+        else if (attributeId == LevelControl::Attributes::MinLevel::Id)
+        {
+            uint8_t tmp = *value;
+            if (p_para->minLevel != tmp)
+            {
+                p_para->minLevel = tmp;
+                printk("[clusterId:LevelControl] MinLevel=%d\n", p_para->minLevel);
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
+        else if (attributeId == LevelControl::Attributes::MaxLevel::Id)
+        {
+            uint8_t tmp = *value;
+            if (p_para->maxLevel != tmp)
+            {
+                p_para->maxLevel = tmp;
+                printk("[clusterId:LevelControl] MaxLevel=%d\n", p_para->maxLevel);
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
+        else if (attributeId == LevelControl::Attributes::StartUpCurrentLevel::Id)
+        {
+            uint8_t tmp             = *value;
+            p_para->preCurrentLevel = p_para->currentLevel;
+
+            DataModel::Nullable<uint8_t> tmp1 = tmp;
+            if (tmp1.IsNull())
+            {
+                tmp = 0xff;
+            }
+            p_para->startUpCurrentLevel = tmp;
+            printk("[clusterId:LevelControl] StartUpCurrentLevel=%d\n", p_para->startUpCurrentLevel);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+    }
+    else if (clusterId == ColorControl::Id)
+    {
+        if (attributeId == ColorControl::Attributes::CurrentHue::Id)
+        {
+            uint8_t tmp = *value;
+            status      = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status      = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->hsv.h = tmp;
+            printk("[clusterId:ColorControl] CurrentHue=%d\n", p_para->hsv.h);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::CurrentSaturation::Id)
+        {
+            uint8_t tmp = *value;
+            status      = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status      = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->hsv.s = tmp;
+            printk("[clusterId:ColorControl] CurrentSaturation=%d\n", p_para->hsv.s);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::CurrentX::Id)
+        {
+            uint16_t tmp = *reinterpret_cast<uint16_t *>(value);
+            status       = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status       = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->xy.x = tmp;
+            printk("[clusterId:ColorControl] CurrentX=%d\n", p_para->xy.x);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::CurrentY::Id)
+        {
+
+            uint16_t tmp = *reinterpret_cast<uint16_t *>(value);
+            status       = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status       = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->xy.y = tmp;
+            printk("[clusterId:ColorControl] CurrentX=%d\n", p_para->xy.x);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::ColorTemperatureMireds::Id)
+        {
+            uint16_t tmp = *reinterpret_cast<uint16_t *>(value);
+            status       = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status       = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->colorTemperatureMireds = tmp;
+            printk("[clusterId:ColorControl] ColorTemperatureMireds=%d\n", p_para->colorTemperatureMireds);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::ColorMode::Id)
+        {
+            uint8_t tmp = *value;
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            if (p_para->colorMode != tmp)
+            {
+                p_para->colorMode = tmp;
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::EnhancedCurrentHue::Id)
+        {
+            uint16_t tmp = *reinterpret_cast<uint16_t *>(value);
+            status       = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status       = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            p_para->enhancedCurrentHue = tmp;
+            printk("[clusterId:ColorControl] EnhancedCurrentHue=%d\n", p_para->enhancedCurrentHue);
+            printk("[clusterId:ColorControl] ColorMode=%d\n", p_para->colorMode);
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (store_cluster_para(p_para) != 0)
+            {
+                printk("[clusterId:OnOff] Fail store startup cluster para\n");
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::EnhancedColorMode::Id)
+        {
+            uint8_t tmp = *value;
+            printk("[clusterId:ColorControl] EnhancedColorMode=%d\n", p_para->enhancedColorMode);
+            if (p_para->enhancedColorMode != tmp)
+            {
+                p_para->enhancedColorMode = tmp;
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
+        else if (attributeId == ColorControl::Attributes::StartUpColorTemperatureMireds::Id)
+        {
+            uint16_t tmp                       = *reinterpret_cast<uint16_t *>(value);
+            DataModel::Nullable<uint16_t> tmp1 = tmp;
+            if (tmp1.IsNull())
+            {
+                tmp = 0xffff;
+            }
+            status = Clusters::ColorControl::Attributes::ColorMode::Get(1, &tmpColorMode);
+            p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+            status = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &tmpEnhancedColorMode);
+            p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+
+            if (p_para->startUpColorTemperatureMireds != tmp)
+            {
+                p_para->startUpColorTemperatureMireds = tmp;
+                if (store_cluster_para(p_para) != 0)
+                {
+                    printk("[clusterId:OnOff] Fail store startup cluster para\n");
+                }
+            }
+        }
     }
 }
 #else

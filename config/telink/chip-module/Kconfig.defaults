@@ -28,6 +28,19 @@ config ZEPHYR_VERSION_3_3
     bool "Using Zephyr version 3.3"
     default n
 
+# Device Type configuration
+config DeviceType_DimmableLight
+    bool "Enable dimmable light device type"
+    default y
+
+config DeviceType_ColorTemperatureLight
+    bool "Enable color temperature light device type"
+    default n
+
+config DeviceType_ExtendedColorLight
+    bool "Enable extended color light device type"
+    default n
+
 config LOG
     default y
 

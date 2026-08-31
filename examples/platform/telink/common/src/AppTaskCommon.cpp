@@ -200,6 +200,7 @@ AppCallbacks sCallbacks;
 
 #if APP_LIGHT_USER_MODE_EN
 #if CONFIG_STARTUP_OPTIMIZATE
+cluster_startup_para g_light_cluster_para;
 const struct device * cluster_para_dev = USER_CLUSTER_PARTITION_DEVICE;
 uint32_t cluster_para_addr             = USER_CLUSTER_PARTITION_OFFSET;
 #define CLUSTER_PARA_LEN (sizeof(cluster_startup_para))
@@ -1033,6 +1034,176 @@ int KOtaQueryImageTimer_proc(void)
     return 1;
 }
 
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+void AppTaskCommon::GetStartupClusterInfo(void)
+{
+    cluster_startup_para * p_para = &g_light_cluster_para;
+
+    // onoff cluster
+    Protocols::InteractionModel::Status status;
+    bool tmpOnOff;
+    status        = Clusters::OnOff::Attributes::OnOff::Get(1, &(tmpOnOff));
+    p_para->onOff = (uint8_t) tmpOnOff;
+    printk("[commissioning_cmp] onOff:%d \n", p_para->onOff);
+
+    DataModel::Nullable<chip::app::Clusters::OnOff::StartUpOnOffEnum> tmpStartUpOnOff;
+    status = Clusters::OnOff::Attributes::StartUpOnOff::Get(1, (tmpStartUpOnOff));
+    if (status == Protocols::InteractionModel::Status::Success && !tmpStartUpOnOff.IsNull())
+    {
+        p_para->startUpOnOff = (uint8_t) (tmpStartUpOnOff.Value());
+    }
+    else
+    {
+        p_para->startUpOnOff = 0xff;
+    }
+    printk("[commissioning_cmp] startUpOnOff:%d \n", p_para->startUpOnOff);
+
+    // level cluster
+    app::DataModel::Nullable<uint8_t> tmpCurrentLevel;
+    // Read brightness value
+    status = Clusters::LevelControl::Attributes::CurrentLevel::Get(1, (tmpCurrentLevel));
+    if (status == Protocols::InteractionModel::Status::Success && !tmpCurrentLevel.IsNull())
+    {
+        p_para->currentLevel = tmpCurrentLevel.Value();
+    }
+    else
+    {
+        p_para->currentLevel = 254;
+    }
+    printk("[commissioning_cmp] currentLevel:%d \n", p_para->currentLevel);
+
+    uint8_t tmpMinLevel;
+    status = Clusters::LevelControl::Attributes::MinLevel::Get(1, &(tmpMinLevel));
+    if (status != Protocols::InteractionModel::Status::Success)
+    {
+        p_para->minLevel = tmpMinLevel;
+    }
+    else
+    {
+        p_para->minLevel = 1;
+    }
+    printk("[commissioning_cmp] minLevel:%d \n", p_para->minLevel);
+
+    uint8_t tmpMaxLevel;
+    status = Clusters::LevelControl::Attributes::MaxLevel::Get(1, &(tmpMaxLevel));
+    if (status != Protocols::InteractionModel::Status::Success)
+    {
+        p_para->maxLevel = tmpMaxLevel;
+    }
+    else
+    {
+        p_para->maxLevel = 254;
+    }
+    printk("[commissioning_cmp] maxLevel:%d \n", p_para->maxLevel);
+
+    DataModel::Nullable<uint8_t> tmpStartUpCurrentLevel;
+    status = Clusters::LevelControl::Attributes::StartUpCurrentLevel::Get(1, (tmpStartUpCurrentLevel));
+    if (status == Protocols::InteractionModel::Status::Success && !tmpStartUpCurrentLevel.IsNull())
+    {
+        p_para->startUpCurrentLevel = tmpStartUpCurrentLevel.Value();
+    }
+    else
+    {
+        p_para->startUpCurrentLevel = 0xff;
+    }
+    printk("[commissioning_cmp] startUpCurrentLevel:%d \n", p_para->startUpCurrentLevel);
+
+    // color control cluster
+
+    // Read CurrentHue value
+    uint8_t tmpCurrentHue;
+    status = Clusters::ColorControl::Attributes::CurrentHue::Get(1, &(tmpCurrentHue));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->hsv.h = tmpCurrentHue;
+    }
+    printk("[commissioning_cmp] hsv.h:%d \n", p_para->hsv.h);
+
+    // Read CurrentSaturation value
+    uint8_t tmpCurrentSaturation;
+    status = Clusters::ColorControl::Attributes::CurrentSaturation::Get(1, &(tmpCurrentSaturation));
+     if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->hsv.s = tmpCurrentSaturation;
+    }
+    printk("[commissioning_cmp] hsv.s:%d \n", p_para->hsv.s);
+
+    // Read CurrentX value
+    uint16_t tmpCurrentX;
+    status = Clusters::ColorControl::Attributes::CurrentX::Get(1, &(tmpCurrentX));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->xy.x = tmpCurrentX;
+    }
+    printk("[commissioning_cmp] xy.x:%d \n", p_para->xy.x);
+
+    // Read CurrentY value
+    uint16_t tmpCurrentY;
+    status = Clusters::ColorControl::Attributes::CurrentY::Get(1, &(tmpCurrentY));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->xy.y = tmpCurrentY;
+    }
+    printk("[commissioning_cmp] xy.y:%d \n", p_para->xy.y);
+
+    // Read ColorTemperatureMireds value
+    uint16_t tmpColorTemperatureMireds;
+    status = Clusters::ColorControl::Attributes::ColorTemperatureMireds::Get(1, &(tmpColorTemperatureMireds));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->colorTemperatureMireds = tmpColorTemperatureMireds;
+    }
+    printk("[commissioning_cmp] colorTemperatureMireds:%d \n", p_para->colorTemperatureMireds);
+
+    //  Read ColorMode value
+    Clusters::ColorControl::ColorModeEnum tmpColorMode;
+    status = Clusters::ColorControl::Attributes::ColorMode::Get(1, &(tmpColorMode));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->colorMode = static_cast<uint8_t>(tmpColorMode);
+    }
+    printk("[commissioning_cmp] colorMode:%d \n", p_para->colorMode);
+
+    // Read EnhancedCurrentHue value
+    uint16_t tmpEnhancedCurrentHue;
+    status = Clusters::ColorControl::Attributes::EnhancedCurrentHue::Get(1, &(tmpEnhancedCurrentHue));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->enhancedCurrentHue = tmpEnhancedCurrentHue;
+    }
+    printk("[commissioning_cmp] enhancedCurrentHue:%d \n", p_para->enhancedCurrentHue);
+
+    //  Read EnhancedColorMode value
+    Clusters::ColorControl::EnhancedColorModeEnum tmpEnhancedColorMode;
+    status = Clusters::ColorControl::Attributes::EnhancedColorMode::Get(1, &(tmpEnhancedColorMode));
+    if(status == Protocols::InteractionModel::Status::Success)
+    {
+        p_para->enhancedColorMode = static_cast<uint8_t>(tmpEnhancedColorMode);
+    }
+    printk("[commissioning_cmp] enhancedColorMode:%d \n", p_para->enhancedColorMode);
+
+    //  Read StartUpColorTemperatureMireds value
+    DataModel::Nullable<uint16_t> tmpStartUpColorTemperatureMireds;
+    status = Clusters::ColorControl::Attributes::StartUpColorTemperatureMireds::Get(1, (tmpStartUpColorTemperatureMireds));
+    if (status == Protocols::InteractionModel::Status::Success && !tmpStartUpColorTemperatureMireds.IsNull())
+    {
+        p_para->startUpColorTemperatureMireds = tmpStartUpColorTemperatureMireds.Value();
+    }
+    else
+    {
+        p_para->startUpColorTemperatureMireds = 0xffff;
+    }
+    printk("[commissioning_cmp] startUpColorTemperatureMireds:%d \n", p_para->startUpColorTemperatureMireds);
+
+    if (store_cluster_para(p_para) != 0)
+    {
+        printk("[ChipEventHandler] Fail store startup cluster para\n");
+    }
+}
+#endif
+#endif
+
 void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* arg */)
 {
     switch (event->Type)
@@ -1125,6 +1296,11 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
         /*write commission suc flag*/
         flash_erase(flash_para_dev, USER_PARTITION_OFFSET, USER_PARTITION_SIZE);
         flash_write(flash_para_dev, USER_PARTITION_OFFSET, &val, 1);
+#if APP_LIGHT_USER_MODE_EN
+#if CONFIG_STARTUP_OPTIMIZATE
+        GetStartupClusterInfo();
+#endif /* CONFIG_STARTUP_OPTIMIZATE */
+#endif /* APP_LIGHT_USER_MODE_EN */
         printk("Commissioning complete, set Matter commissionined flag.\r\n");
     }
         break;
