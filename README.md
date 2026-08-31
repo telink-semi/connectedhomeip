@@ -60,7 +60,7 @@ complete Matter-over-Thread support for Telink chips.
 | **Get Started Guide** | SDK Quick Start Guide                      | [Telink Matter Getting Started](docs/platforms/telink/telink_getting_started.md)                                             |
 | **Developer Guide**   | Telink Matter Developer Guide (online)     | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples**          | Matter Sample Applications                 | See [examples](examples/) (filter by `telink`)                                                                               |
-| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/zephyr/blob/dev-tlk_v4.1/README.md)                                       |
+| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/tl_zephyr/blob/dev-tlk_v4.1/README.md)                                    |
 
 ---
 
