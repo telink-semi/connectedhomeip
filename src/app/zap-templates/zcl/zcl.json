@@ -72,6 +72,7 @@
         "group-key-mgmt-cluster.xml",
         "icd-management-cluster.xml",
         "identify-cluster.xml",
+        "tl-deltadelfin-animation-gradient-cluster.xml",
         "illuminance-measurement-cluster.xml",
         "joint-fabric-datastore-cluster.xml",
         "joint-fabric-administrator-cluster.xml",

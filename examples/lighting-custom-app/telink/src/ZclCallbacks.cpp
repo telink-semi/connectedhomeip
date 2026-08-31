@@ -111,6 +111,35 @@ void MatterPostAttributeChangeCallback(const chip::app::ConcreteAttributePath & 
             GetAppTask().SetInitiateAction(AppTask::COLOR_ACTION_CT, static_cast<int32_t>(AppEvent::kEventType_DeviceAction),
                                            value);
         }
+        else if (attributePath.mClusterId == DeltadelfinAnimationGradient::Id)
+        {
+            switch (attributePath.mAttributeId)
+            {
+        case DeltadelfinAnimationGradient::Attributes::CurrentAnimation::Id:
+            if (size == sizeof(uint8_t))
+            {
+                uint8_t animation = *value;
+                ChipLogProgress(Zcl, "*** App CurrentAnimation changed: %u", animation);
+            }
+            break;
+        case DeltadelfinAnimationGradient::Attributes::CurrentGradient::Id:
+            if (size == sizeof(uint8_t))
+            {
+                uint8_t gradient = *value;
+                ChipLogProgress(Zcl, "*** App CurrentGradient changed: %u", gradient);
+            }
+            break;
+        case DeltadelfinAnimationGradient::Attributes::DisplayMode::Id:
+            if (size == sizeof(uint8_t))
+            {
+                uint8_t mode = *value;
+                ChipLogProgress(Zcl, "*** App DisplayMode changed: %u", mode);
+            }
+            break;
+        default:
+            break;
+            }
+        }
         else
         {
             ChipLogDetail(Zcl, "Ignore ColorControl attribute (%u) that is not currently processed!", attributeId);

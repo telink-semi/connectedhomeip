@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2026 Project CHIP Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<configurator>
+  <domain name="CHIP"/>
+
+  <enum name="DisplayModeEnum" type="enum8">
+    <cluster code="0x117CFC00"/>
+    <item name="Gradient" value="0"/>
+    <item name="Animation" value="1"/>
+  </enum>
+
+  <enum name="AnimationIdEnum" type="enum8">
+    <cluster code="0x117CFC00"/>
+    <item name="SUNSET" value="0"/>
+    <item name="RADIAL" value="1"/>
+    <item name="LINEAR_GRADIENT" value="2"/>
+  </enum>
+
+  <bitmap name="Feature" type="bitmap32">
+    <cluster code="0x117CFC00"/>
+    <field name="Animation" mask="0x01"/>
+    <field name="Gradient" mask="0x02"/>
+  </bitmap>
+
+  <cluster>
+    <domain>General</domain>
+    <name>DeltadelfinAnimationGradient</name>
+    <code>0x117CFC00</code>
+    <define>DELTADELFIN_ANIMATION_GRADIENT_CLUSTER</define>
+    <description>
+      Deltadelfin Animation and Gradient manufacturer-specific cluster.
+    </description>
+    <globalAttribute code="0xFFFD" side="either" value="1"/>
+    <globalAttribute code="0xFFFC" side="either" value="3"/>
+
+    <attribute
+      side="server"
+      code="0x0000"
+      define="DISPLAY_MODE"
+      type="DisplayModeEnum"
+      writable="true"
+      default="0"
+      optional="false"
+      name="DisplayMode"/>
+
+    <attribute
+      side="server"
+      code="0x0001"
+      define="CURRENT_ANIMATION"
+      type="int8u"
+      writable="true"
+      default="0"
+      optional="false"
+      name="CurrentAnimation"/>
+
+    <attribute
+      side="server"
+      code="0x0002"
+      define="CURRENT_GRADIENT"
+      type="int8u"
+      writable="true"
+      default="0"
+      optional="false"
+      name="CurrentGradient"/>
+
+    <attribute
+      side="server"
+      code="0x0003"
+      define="ANIMATION_COUNT"
+      type="int8u"
+      writable="false"
+      default="3"
+      optional="false"
+      name="AnimationCount"/>
+
+    <attribute
+      side="server"
+      code="0x0004"
+      define="GRADIENT_COUNT"
+      type="int8u"
+      writable="false"
+      default="24"
+      optional="false"
+      name="GradientCount"/>
+
+    <attribute
+      side="server"
+      code="0x0005"
+      define="TRANSITION_TIME_MS"
+      type="int16u"
+      writable="true"
+      default="400"
+      optional="true"
+      name="TransitionTimeMs"/>
+
+    <command
+      source="client"
+      code="0x00"
+      name="SetAnimation"
+      optional="false">
+      <description>
+        Select the current animation.
+      </description>
+      <arg name="id" type="int8u"/>
+    </command>
+
+    <command
+      source="client"
+      code="0x01"
+      name="SetGradient"
+      optional="false">
+      <description>
+        Select the current gradient and specify the transition time.
+      </description>
+      <arg name="id" type="int8u"/>
+      <arg name="transitionTimeMs" type="int16u"/>
+    </command>
+
+    <command
+      source="client"
+      code="0x02"
+      name="SetDisplayMode"
+      optional="false">
+      <description>
+        Select the display mode.
+      </description>
+      <arg name="mode" type="DisplayModeEnum"/>
+    </command>
+
+  </cluster>
+</configurator>

@@ -2626,6 +2626,59 @@ cluster ColorControl = 768 {
   command StepColorTemperature(StepColorTemperatureRequest): DefaultSuccess = 76;
 }
 
+/** Deltadelfin Animation and Gradient manufacturer-specific cluster. */
+cluster DeltadelfinAnimationGradient = 293403648 {
+  revision 1;
+
+  enum AnimationIdEnum : enum8 {
+    kSUNSET = 0 [spec_name = "SUNSET"];
+    kRADIAL = 1 [spec_name = "RADIAL"];
+    kLINEARGRADIENT = 2 [spec_name = "LINEAR_GRADIENT"];
+  }
+
+  enum DisplayModeEnum : enum8 {
+    kGradient = 0;
+    kAnimation = 1;
+  }
+
+  bitmap Feature : bitmap32 {
+    kAnimation = 0x1;
+    kGradient = 0x2;
+  }
+
+  attribute DisplayModeEnum displayMode = 0;
+  attribute int8u currentAnimation = 1;
+  attribute int8u currentGradient = 2;
+  readonly attribute int8u animationCount = 3;
+  readonly attribute int8u gradientCount = 4;
+  attribute optional int16u transitionTimeMs = 5;
+  readonly attribute command_id generatedCommandList[] = 65528;
+  readonly attribute command_id acceptedCommandList[] = 65529;
+  readonly attribute attrib_id attributeList[] = 65531;
+  readonly attribute bitmap32 featureMap = 65532;
+  readonly attribute int16u clusterRevision = 65533;
+
+  request struct SetAnimationRequest {
+    int8u id = 0;
+  }
+
+  request struct SetGradientRequest {
+    int8u id = 0;
+    int16u transitionTimeMs = 1;
+  }
+
+  request struct SetDisplayModeRequest {
+    DisplayModeEnum mode = 0;
+  }
+
+  /** Select the current animation. */
+  command SetAnimation(SetAnimationRequest): DefaultSuccess = 0;
+  /** Select the current gradient and specify the transition time. */
+  command SetGradient(SetGradientRequest): DefaultSuccess = 1;
+  /** Select the display mode. */
+  command SetDisplayMode(SetDisplayModeRequest): DefaultSuccess = 2;
+}
+
 endpoint 0 {
   device type ma_rootdevice = 22, version 3;
   device type ma_otarequestor = 18, version 1;
@@ -3117,6 +3170,23 @@ endpoint 1 {
     handle command StopMoveStep;
     handle command MoveColorTemperature;
     handle command StepColorTemperature;
+  }
+
+  server cluster DeltadelfinAnimationGradient {
+    ram      attribute displayMode default = 0;
+    ram      attribute currentAnimation default = 0;
+    ram      attribute currentGradient default = 0;
+    ram      attribute animationCount default = 3;
+    ram      attribute gradientCount default = 24;
+    callback attribute generatedCommandList;
+    callback attribute acceptedCommandList;
+    callback attribute attributeList;
+    ram      attribute featureMap default = 3;
+    ram      attribute clusterRevision default = 1;
+
+    handle command SetAnimation;
+    handle command SetGradient;
+    handle command SetDisplayMode;
   }
 }
 
