@@ -25,7 +25,7 @@ RUN set -x \
     && python3 -m pip install --break-system-packages -U --no-cache-dir west \
     && git init zephyr \
     && cd zephyr \
-    && git remote add origin https://github.com/telink-semi/tl_zephyr \
+    && git remote add origin https://github.com/telink-semi/zephyr \
     && git fetch --depth=1 origin ${ZEPHYR_REVISION} \
     && git reset ${ZEPHYR_REVISION} --hard \
     && west init -l \
