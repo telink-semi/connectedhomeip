@@ -37,6 +37,13 @@ endif()
 string(REPLACE "_retention" "" BASE_BOARD ${BOARD})
 string(REGEX REPLACE "_v[0-9]+" "" BASE_BOARD ${BASE_BOARD})
 
+# TL321X support in Matter is deprecated and will be removed; the platform
+# remains supported in Zephyr and HAL.
+if("${BASE_BOARD}" MATCHES "tl3218x")
+  message(WARNING "TL321X support in Matter is deprecated and will be removed. "
+                  "The platform remains supported in Zephyr and HAL.")
+endif()
+
 if(NOT FLASH_SIZE)
   if(${BASE_BOARD} MATCHES "tlsr9118bdk40d")
     set(FLASH_SIZE "4m")
