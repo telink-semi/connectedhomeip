@@ -139,7 +139,7 @@ sudo apt-get install git gcc g++ pkg-config libssl-dev libdbus-1-dev \
 ### 2.2 Clone and set up the Matter repository
 
 ```bash
-git clone https://github.com/telink-semi/tl_matter.git
+git clone https://github.com/telink-semi/tl_matter.git connectedhomeip
 cd connectedhomeip
 git checkout <telink_matter_branch>     # e.g. release-v1.0-v1.5-branch
 ./scripts/checkout_submodules.py --platform telink,linux
