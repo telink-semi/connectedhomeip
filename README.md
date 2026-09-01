@@ -49,7 +49,7 @@ Connected Home over IP (CHIP) project**
 | **Get Started Guide** | SDK Quick Start Guide                      | [Telink Matter Getting Started](docs/platforms/telink/telink_getting_started.md)                                             |
 | **Developer Guide**   | Telink Matter Developer Guide (online)     | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples**          | Matter Sample Applications                 | See [examples](examples/) (filter by `telink`)                                                                               |
-| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/zephyr/blob/release-v1.0-v4.1-branch/README.md)                           |
+| **Dependency**        | Telink Zephyr SDK                          | [Telink Zephyr SDK](https://github.com/telink-semi/tl_zephyr/blob/release-v1.0-v4.1-branch/README.md)                        |
 
 -   For development environment setup, SDK acquisition, and quick-start
     instructions, refer to the
