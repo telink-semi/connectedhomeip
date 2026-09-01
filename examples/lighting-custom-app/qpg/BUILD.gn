@@ -1,0 +1,178 @@
+# Copyright(c) 2021 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build_overrides/build.gni")
+import("//build_overrides/chip.gni")
+import("//build_overrides/openthread.gni")
+import("//build_overrides/qpg_sdk.gni")
+
+import("${build_root}/config/defaults.gni")
+import("${chip_root}/src/platform/device.gni")
+import("${qpg_sdk_build_root}/qpg_executable.gni")
+import("${qpg_sdk_build_root}/qpg_sdk.gni")
+
+# declares chip_build_libshell = false
+import("${chip_root}/src/lib/lib.gni")
+
+# declares chip_enable_pw_rpc = false
+import("${chip_root}/examples/common/pigweed/pigweed_rpcs.gni")
+if (chip_enable_pw_rpc) {
+  import("//build_overrides/pigweed.gni")
+  import("$dir_pw_build/target_types.gni")
+}
+
+assert(current_os == "freertos")
+
+qpg_project_dir = "${chip_root}/examples/lighting-app/qpg"
+examples_plat_dir = "${chip_root}/examples/platform/qpg"
+
+qpg_sdk("sdk") {
+  include_dirs = [
+    "${chip_root}/src/platform/qpg",
+    "${examples_plat_dir}",
+    "${examples_plat_dir}/app",
+    "${examples_plat_dir}/diagnostic_logs",
+    "${qpg_project_dir}/include",
+  ]
+
+  defines = [ "PW_RPC_ENABLED=${chip_enable_pw_rpc}" ]
+}
+
+qpg_executable("lighting_app") {
+  output_name = "chip-${qpg_target_ic}-lighting-example.out"
+  app_name = "light"
+  project_dir = qpg_project_dir
+
+  sources = [
+    "${chip_root}/src/app/clusters/general-diagnostics-server/GenericFaultTestEventTriggerHandler.cpp",
+    "${examples_plat_dir}/app/BaseAppTask.cpp",
+    "${examples_plat_dir}/app/main.cpp",
+    "${examples_plat_dir}/diagnostic_logs/DiagnosticLogsProviderDelegateImpl.cpp",
+    "${examples_plat_dir}/ota/ota.cpp",
+    "${examples_plat_dir}/powercycle_counting.c",
+    "${qpg_sdk_root}/Applications/Matter/shared/src/application_header.c",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qButton/src/ButtonHandler.c",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qLed/src/ColorLedHandler.c",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qLed/src/DimmableLedHandler.c",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qLed/src/StatusLed.c",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qPinCfg/src/qPinCfg.c",
+    "include/LightingManager.h",
+    "src/AppTask.cpp",
+    "src/LightingManager.cpp",
+    "src/ZclCallbacks.cpp",
+  ]
+
+  deps = [
+    ":sdk",
+    "${chip_root}/examples/lighting-app/lighting-common:color-format",
+    "${chip_root}/examples/lighting-app/qpg/zap/",
+    "${chip_root}/examples/providers:device_info_provider_please_do_not_reuse_as_is",
+    "${chip_root}/src/app/clusters/network-commissioning:network-commissioning",
+    "${chip_root}/src/app/persistence:deferred",
+    "${chip_root}/src/app/persistence:singleton",
+    "${chip_root}/src/lib",
+    "${chip_root}/src/platform/logging:default",
+    "${chip_root}/src/setup_payload",
+    "${chip_root}/third_party/openthread/platforms:libopenthread-platform",
+    "${chip_root}/third_party/openthread/platforms:libopenthread-platform-utils",
+    "${chip_root}/third_party/qpg_sdk:qpg_light_factorydata",
+    "${chip_root}/third_party/qpg_sdk:qpg_light_firmwaredata_lib",
+  ]
+
+  if (chip_openthread_ftd) {
+    deps += [ "${chip_root}/third_party/openthread/repo:libopenthread-ftd" ]
+  } else {
+    deps += [ "${chip_root}/third_party/openthread/repo:libopenthread-mtd" ]
+  }
+
+  include_dirs = [
+    "include",
+    "${examples_plat_dir}/ota",
+    "${qpg_sdk_root}/Components/Qorvo/HAL_PLATFORM/halCortexM4/inc",
+    "${qpg_sdk_root}/Components/ThirdParty/secure_element/software/esec/libs/common",
+    "${qpg_sdk_root}/Components/ThirdParty/secure_element/software/esec/libs/base/include",  # esec_reatures.h
+    "${qpg_sdk_root}/Libraries/Qorvo/QorvoStack/gen/QorvoStack_qpg6200",  #esec_config.h
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qButton/inc",
+    "${qpg_sdk_root}/Components/Qorvo/BSP/qLed/inc",
+  ]
+
+  defines = [
+    "GP_APP_DIVERSITY_POWERCYCLECOUNTING",
+    "GP_DIVERSITY_GPHAL_XP4002",
+  ]
+
+  if (chip_enable_pw_rpc) {
+    defines += [
+      "PW_RPC_ATTRIBUTE_SERVICE=1",
+      "PW_RPC_BUTTON_SERVICE=1",
+      "PW_RPC_DEVICE_SERVICE=1",
+      "PW_RPC_LIGHTING_SERVICE=1",
+    ]
+
+    sources += [
+      "${chip_root}/examples/common/pigweed/RpcService.cpp",
+      "${chip_root}/examples/common/pigweed/qpg/PigweedLoggerMutex.cpp",
+      "${examples_plat_dir}/PigweedLogger.cpp",
+      "${examples_plat_dir}/Rpc.cpp",
+      "${examples_plat_dir}/uart.c",
+    ]
+
+    deps += [
+      "$dir_pw_hdlc:default_addresses",
+      "$dir_pw_hdlc:rpc_channel_output",
+      "$dir_pw_stream:sys_io_stream",
+      "${chip_root}/config/qpg/lib/pw_rpc:pw_rpc",
+      "${chip_root}/examples/common/pigweed:attributes_service.nanopb_rpc",
+      "${chip_root}/examples/common/pigweed:button_service.nanopb_rpc",
+      "${chip_root}/examples/common/pigweed:device_service.nanopb_rpc",
+      "${chip_root}/examples/common/pigweed:lighting_service.nanopb_rpc",
+      "${examples_plat_dir}/pw_sys_io:pw_sys_io_qpg",
+    ]
+
+    deps += pw_build_LINK_DEPS
+
+    include_dirs += [
+      "${chip_root}/examples/common",
+      "${chip_root}/examples/common/pigweed/qpg",
+    ]
+  }
+
+  if (chip_build_libshell) {
+    deps += [ "${examples_plat_dir}:qpg-matter-shell" ]
+  } else {
+    if (chip_openthread_ftd) {
+      deps +=
+          [ "${chip_root}/third_party/openthread/repo:libopenthread-cli-ftd" ]
+    } else {
+      deps +=
+          [ "${chip_root}/third_party/openthread/repo:libopenthread-cli-mtd" ]
+    }
+  }
+
+  ldscript = "${qpg_sdk_root}/Applications/Matter/base/gen/base_${qpg_target_ic}_development/base_${qpg_target_ic}_development.ld"
+
+  inputs = [ ldscript ]
+
+  ldflags = [ "-T" + rebase_path(ldscript, root_build_dir) ]
+
+  output_dir = root_out_dir
+}
+
+group("qpg") {
+  deps = [ ":lighting_app" ]
+}
+
+group("default") {
+  deps = [ ":qpg" ]
+}
