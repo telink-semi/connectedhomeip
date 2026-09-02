@@ -190,18 +190,6 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessBlock(ByteSpan & aBlock)
                     ChipLogError(SoftwareUpdate, "OTA skip err: %" CHIP_ERROR_FORMAT, err.Format());
                 }
                 downloadedBytesRestored = 0;
-<<<<<<< HEAD
-                SystemLayer().StartTimer(System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs), ResumeWatchdogHandler, this);
-            }
-            else
-            {
-                DeviceLayer::SystemLayer().CancelTimer(ResumeWatchdogHandler, this);
-                CHIP_ERROR err = mDownloader->FetchNextData();
-                if (err != CHIP_NO_ERROR)
-                {
-                    ChipLogError(SoftwareUpdate, "OTA fetch err: %" CHIP_ERROR_FORMAT, err.Format());
-                }
-=======
                 TEMPORARY_RETURN_IGNORED SystemLayer().StartTimer(
                     System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs), ResumeWatchdogHandler, this);
             }
@@ -209,7 +197,6 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessBlock(ByteSpan & aBlock)
             {
                 TEMPORARY_RETURN_IGNORED DeviceLayer::SystemLayer().CancelTimer(ResumeWatchdogHandler, this);
                 TEMPORARY_RETURN_IGNORED mDownloader->FetchNextData();
->>>>>>> 56b73281e1 (telink: tl3238x: ota resume optimization for non-supporting ecosystems)
             }
         }
         else

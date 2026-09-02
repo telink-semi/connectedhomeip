@@ -38,6 +38,7 @@ target_sources(app PRIVATE
                src/AppTask.cpp
                src/ContactSensorManager.cpp
                src/ZclCallbacks.cpp
+               ${CHIP_ROOT}/src/app/persistence/DeferredAttributePersistenceProvider.cpp
                ${TELINK_COMMON}/common/src/mainCommon.cpp
                ${TELINK_COMMON}/common/src/AppTaskCommon.cpp
                ${TELINK_COMMON}/util/src/LEDManager.cpp

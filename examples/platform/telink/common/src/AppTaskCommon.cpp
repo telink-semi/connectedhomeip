@@ -35,6 +35,9 @@
 #include <DeviceInfoProviderImpl.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#include <app/persistence/AttributePersistenceProviderInstance.h>
+#include <app/persistence/DefaultAttributePersistenceProvider.h>
+#include <app/persistence/DeferredAttributePersistenceProvider.h>
 #include <app/server/Server.h>
 #include <app/util/endpoint-config-api.h>
 #include <setup_payload/OnboardingCodesUtil.h>
@@ -56,7 +59,7 @@
 #if CONFIG_CHIP_OTA_REQUESTOR
 #include <app/clusters/ota-requestor/OTARequestorInterface.h>
 #endif
-
+#include <zephyr/sys/reboot.h>
 bool AppTaskCommon::sIsCommissioningFailed = false;
 
 extern "C" {
@@ -104,9 +107,7 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
-<<<<<<< HEAD
-#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE  || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
-=======
+
 /**
  * @brief Set deferred attributes storage
  *
@@ -118,6 +119,7 @@ bool sHaveBLEConnections    = false;
  * @param ATTRIBUTES_ARRAY_SIZE The lenght of the DeferredAttribute array
  * @param DEFERRED_STORAGE_TIME The deferred time(ms) to store attributes
  */
+
 #define ATTRIBUTES_ARRAY_SIZE (3U)
 #define DEFERRED_STORAGE_TIME (500U)
 
@@ -137,7 +139,8 @@ DefaultAttributePersistenceProvider gSimpleAttributePersistence;
 DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
                                                                  Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
                                                                  System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
->>>>>>> f7456986e6 (telink: 3238x: improve the speed of factory_reset.)
+
+                                                                 
 #include <ext_driver/ext_pm.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
@@ -334,8 +337,6 @@ public:
 AppCallbacks sCallbacks;
 } // namespace
 
-<<<<<<< HEAD
-=======
 static void DoDelayedFactoryReset(struct k_work * work)
 {
     ChipLogProgress(DeviceLayer, "Erasing settings partition");
@@ -381,7 +382,7 @@ static void DoDelayedFactoryReset(struct k_work * work)
 
 static k_work_delayable sDelayedFactoryResetWork = Z_WORK_DELAYABLE_INITIALIZER(DoDelayedFactoryReset);
 
->>>>>>> 6ff99bb9a6 (telink: 3238x: fix incorrect factory reset logic for commissioned device.)
+#if 0
 class AppFabricTableDelegate : public FabricTable::Delegate
 {
     void OnFabricRemoved(const FabricTable & fabricTable, FabricIndex fabricIndex)
@@ -430,6 +431,8 @@ class AppFabricTableDelegate : public FabricTable::Delegate
         }
     }
 };
+#endif
+
 
 class PlatformMgrDelegate : public DeviceLayer::PlatformManagerDelegate
 {
@@ -869,7 +872,7 @@ void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
         return;
     }
 
-#if defined(CONFIG_PM) &&                                                                                                          \
+#if defined(CONFIG_PM) && 0 &&                                                                                                          \
     (defined(CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION) || defined(CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION))
     if (pm_has_deep_sleep_retention_occurred())
     {
