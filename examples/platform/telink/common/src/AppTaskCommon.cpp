@@ -26,6 +26,7 @@
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #include "ThreadUtil.h"
+#include <lib/support/ThreadOperationalDataset.h>
 #elif CHIP_DEVICE_CONFIG_ENABLE_WIFI
 #include <platform/Zephyr/InetUtils.h>
 #include <platform/telink/wifi/TelinkWiFiDriver.h>
@@ -34,6 +35,11 @@
 #include <DeviceInfoProviderImpl.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
+#include <app/persistence/AttributePersistenceProviderInstance.h>
+#include <app/persistence/DefaultAttributePersistenceProvider.h>
+#include <app/persistence/DeferredAttributePersistenceProvider.h>
+#endif
 #include <app/server/Server.h>
 #include <app/util/attribute-storage.h>
 #include <app/util/endpoint-config-api.h>
@@ -88,6 +94,196 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
+/**
+ * @brief Set deferred attributes storage
+ *
+ * @see Define a custom attribute persister which makes actual write of the CurrentHue, CurrentSaturation, CurrentLevel attributes
+ * value to the non-volatile storage only when it has remained constant for 5 seconds. This is to reduce the flash wearout when the
+ * attribute changes frequently as a result of MoveToLevel command. DeferredAttribute object describes a deferred attribute, but
+ * also holds a buffer with a value to be written, so it must live so long as the DeferredAttributePersistenceProvider object.
+ *
+ * @param ATTRIBUTES_ARRAY_SIZE The lenght of the DeferredAttribute array
+ * @param DEFERRED_STORAGE_TIME The deferred time(ms) to store attributes
+ */
+#define ATTRIBUTES_ARRAY_SIZE (3U)
+#define DEFERRED_STORAGE_TIME (500U)
+
+DeferredAttribute gPersisters[] = {
+#if CONFIG_DEFERRED_ATTR_STORAGE
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id, Clusters::ColorControl::Attributes::CurrentHue::Id)),
+    DeferredAttribute(ConcreteAttributePath(kExampleEndpointId, Clusters::ColorControl::Id,
+                                            Clusters::ColorControl::Attributes::CurrentSaturation::Id)),
+    DeferredAttribute(
+        ConcreteAttributePath(kExampleEndpointId, Clusters::LevelControl::Id, Clusters::LevelControl::Attributes::CurrentLevel::Id))
+#endif // CONFIG_DEFERRED_ATTR_STORAGE
+};
+
+// Deferred persistence will be auto-initialized as soon as the default persistence is initialized
+DefaultAttributePersistenceProvider gSimpleAttributePersistence;
+DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
+                                                                 Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
+                                                                 System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
+
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#include <ext_driver/ext_pm.h>
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X */
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+/*MATTER NVS*/
+#define MATTER_NVS_PARTITION storage_partition
+#define MATTER_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(MATTER_NVS_PARTITION)
+#define MATTER_NVS_PARTITION_SIZE FIXED_PARTITION_SIZE(MATTER_NVS_PARTITION)
+const struct device * matter_nvs_dev = MATTER_NVS_PARTITION_DEVICE;
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+
+#define OPCODE_FACTORY_RESET 0
+#define OPCODE_SWITCH_ZIGBEE 1 // include init state and matter paired state.
+#define OPCODE_MATTER_PAIRED 2
+
+#define DUAL_MODE_PARTITION dual_mode_partition
+#define DUAL_MODE_PARTITION_DEVICE FIXED_PARTITION_DEVICE(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_OFFSET FIXED_PARTITION_OFFSET(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_SIZE FIXED_PARTITION_SIZE(DUAL_MODE_PARTITION)
+// init mode will jump to matter
+#define MODE_VAL_INIT 0xff
+
+// after matter paired , it will go to matter, only if trigger action.
+#define MODE_VAL_MATTER_PAIR 0x55
+#define ACTION_SWITCH_ZIGBEE 0xaa
+
+// after zb paired , it will go to zb, only if trigger action.
+#define MODE_VAL_ZB_PAIR 0xaa
+#define ACTION_SWITCH_MATTER 0x55
+
+#endif
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+
+void dual_mode_switch(int32_t op)
+{
+    uint8_t boot_flag[2]                 = { 0xff, 0xff };
+    const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, boot_flag, 2);
+
+    if (op == OPCODE_FACTORY_RESET)
+    {
+        boot_flag[0] = MODE_VAL_INIT;
+        boot_flag[1] = MODE_VAL_INIT;
+    }
+    else if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        boot_flag[1] = ACTION_SWITCH_ZIGBEE;
+    }
+    else if (op == OPCODE_MATTER_PAIRED)
+    {
+        boot_flag[0] = MODE_VAL_MATTER_PAIR;
+        boot_flag[1] = MODE_VAL_INIT;
+    }
+    flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
+    flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, boot_flag, sizeof(boot_flag));
+
+    // need to reboot ,switch to bootloader
+    if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        sys_reboot(SYS_REBOOT_WARM);
+    }
+}
+
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+
+// #include <app-common/zap-generated/attributes/Accessors.h>
+
+#define USER_MATTER_BACK_ZB 0xa0 // only commisiion fail will back to zb
+#define USER_ZB_SW_VAL 0xaa
+
+typedef struct
+{
+    uint8_t val;
+    uint8_t on_net;
+} user_para_t;
+
+uint8_t sBoot_zb = 0;
+user_para_t user_para;
+
+#define ZB_NVS_PARTITION zigbee_nvs_partition
+#define ZB_NVS_SEC_SIZE FIXED_PARTITION_SIZE(ZB_NVS_PARTITION)
+
+#define ZB_NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(ZB_NVS_PARTITION)
+#define ZB_NVS_START_ADR FIXED_PARTITION_OFFSET(ZB_NVS_PARTITION)
+
+const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+const struct device * zb_para_dev    = ZB_NVS_PARTITION_DEVICE;
+constexpr int kDnssTimeout           = 60000;
+
+#if !CONFIG_MCUMGR_TRANSPORT_BT
+static k_timer sDnssTimer; // create when dfu disable
+#endif /* !CONFIG_MCUMGR_TRANSPORT_BT */
+
+void FactoryResetExtHandler(void)
+{
+    // Erase the user parameters partition to reset mode settings
+    flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, DUAL_MODE_PARTITION_SIZE);
+    // Erase ZigBee NVS data during factory reset
+    flash_erase(zb_para_dev, ZB_NVS_START_ADR, ZB_NVS_SEC_SIZE);
+}
+
+uint8_t dual_mode_switch_from_zb()
+{
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &user_para, sizeof(user_para));
+    if (user_para.val == USER_ZB_SW_VAL)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void dual_mode_auto_switch(int32_t op)
+{
+    uint8_t boot_flag                    = 0xff;
+    const struct device * flash_para_dev = DUAL_MODE_PARTITION_DEVICE;
+
+    flash_read(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, 1);
+
+    if (op == OPCODE_FACTORY_RESET)
+    {
+        FactoryResetExtHandler();
+    }
+    else if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        /*if commission fail should keep the state of others , directly write from 0xAA to 0xA0*/
+        boot_flag = USER_MATTER_BACK_ZB;
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
+    }
+    else if (op == OPCODE_MATTER_PAIRED)
+    {
+        boot_flag = MODE_VAL_MATTER_PAIR;
+        flash_erase(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, 4096);
+        flash_write(flash_para_dev, DUAL_MODE_PARTITION_OFFSET, &boot_flag, sizeof(boot_flag));
+    }
+
+    // need to reboot ,switch to bootloader
+    if (op == OPCODE_SWITCH_ZIGBEE)
+    {
+        // clear matter nvs for unclean info in matter nvs
+        flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
+        sys_reboot(SYS_REBOOT_WARM);
+    }
+}
+
+#endif /* CONFIG_DUAL_MODE */
+
 #if APP_SET_DEVICE_INFO_PROVIDER
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
 #endif
@@ -119,7 +315,11 @@ public:
     void OnCommissioningSessionEstablishmentStarted() override { sIsCommissioningFailed = false; }
     void OnCommissioningSessionStarted() override { isComissioningStarted = true; }
     void OnCommissioningSessionStopped() override { isComissioningStarted = false; }
-    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override { sIsCommissioningFailed = true; }
+    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override
+    {
+        sIsCommissioningFailed = true;
+        isComissioningStarted  = false;
+    }
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     void OnCommissioningWindowClosed() override
     {
@@ -162,6 +362,16 @@ static void DoDelayedFactoryReset(struct k_work * work)
     {
         ChipLogProgress(DeviceLayer, "Rebooting board");
         sys_reboot(SYS_REBOOT_WARM);
+    }
+    else
+    {
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        dual_mode_switch(OPCODE_FACTORY_RESET);
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        dual_mode_auto_switch(OPCODE_FACTORY_RESET);
+#endif
+        ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
+        chip::Server::GetInstance().ScheduleFactoryReset();
     }
 }
 
@@ -220,6 +430,54 @@ void AppTaskCommon::PowerOnFactoryReset(void)
 }
 #endif /* CONFIG_CHIP_ENABLE_POWER_ON_FACTORY_RESET */
 
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+void AppTaskCommon::DnssTimerTimeoutCallback(k_timer * timer)
+{
+    if (!timer)
+    {
+        return;
+    }
+    /*
+     * If Dnss initialization takes longer than 60 seconds,
+     * the device will reboot and revert to Zigbee mode.
+     */
+    if (sBoot_zb)
+    {
+        printk("Matter: DnssTimer expired. Rebooting...\n");
+        dual_mode_auto_switch(OPCODE_SWITCH_ZIGBEE);
+    }
+}
+#endif
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+static void PowerOnNetworkCheck(void)
+{
+    Thread::OperationalDataset curDataset;
+    CHIP_ERROR err  = DeviceLayer::ThreadStackMgrImpl().GetThreadProvision(curDataset);
+    bool hasDataset = (err == CHIP_NO_ERROR); // Check if stored OpenThread dataset
+
+    uint8_t fabricNum = chip::Server::GetInstance().GetFabricTable().FabricCount();
+
+    if (!hasDataset && fabricNum == 0)
+    { // New device
+        return;
+    }
+    else if (hasDataset && fabricNum > 0)
+    { // Device successfully commissioned
+        return;
+    }
+    else if (hasDataset && fabricNum == 0)
+    {
+        ChipLogProgress(DeviceLayer, "Thread dataset exists, but matter uncommissioned\n");
+    }
+    else
+    {
+        return;
+    }
+    k_work_schedule(&sDelayedFactoryResetWork, K_SECONDS(2));
+}
+#endif
+
 CHIP_ERROR AppTaskCommon::StartApp(void)
 {
     CHIP_ERROR err = GetAppTask().Init();
@@ -229,6 +487,16 @@ CHIP_ERROR AppTaskCommon::StartApp(void)
         LOG_ERR("AppTask Init fail");
         return err;
     }
+
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+    if (dual_mode_switch_from_zb())
+    {
+        sBoot_zb = 1;
+        k_timer_init(&sDnssTimer, &DnssTimerTimeoutCallback, nullptr);
+        k_timer_start(&sDnssTimer, K_MSEC(kDnssTimeout), K_NO_WAIT);
+        printk("Matter: Started DNS protection timer.");
+    }
+#endif
 
     AppEvent event = {};
 
@@ -276,6 +544,15 @@ void AppTaskCommon::PrintFirmwareInfo(void)
     LOG_DBG("\t branch: %s %.8s%s %s", ZEPHYR_BRANCH, ZEPHYR_COMMIT_HASH, ZEPHYR_LOCAL_STATUS, ZEPHYR_COMMIT_DATE);
     LOG_DBG("\t remote: %s", ZEPHYR_REMOTE_URL);
     LOG_DBG("\t HAL commit: %.8s%s %s", TELINK_HAL_COMMIT_HASH, TELINK_HAL_LOCAL_STATUS, TELINK_HAL_COMMIT_DATE);
+
+    LOG_DBG("OpenThread revision: ");
+    LOG_DBG("\t path: %s", OPENTHREAD_PATH);
+    LOG_DBG("\t remote: %s", OT_REMOTE_URL);
+    if (strlen(OT_TAG) > 0)
+    {
+        LOG_DBG("\t tag: %s", OT_TAG);
+    }
+    LOG_DBG("\t branch: %s %.8s%s %s", OT_BRANCH, OT_COMMIT_HASH, OT_LOCAL_STATUS, OT_COMMIT_DATE);
 #endif
 }
 CHIP_ERROR AppTaskCommon::InitCommonParts(void)
@@ -326,6 +603,11 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);
 #endif
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
+
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
+    VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
+#endif
+
 #if APP_SET_DEVICE_INFO_PROVIDER
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
@@ -334,6 +616,11 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     initParams.appDelegate              = &sCallbacks;
     initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
     ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
+
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
+    /* Add deferred storage attribute for provider */
+    app::SetAttributePersistenceProvider(&gDeferredAttributePersister);
+#endif
 
     ConfigurationMgr().LogDeviceConfig();
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
@@ -369,6 +656,11 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
         LOG_ERR("AppFabricTableDelegate fail");
         return err;
     }
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    // TODO: Defer this validation until chip::Server is fully initialized to avoid crashes
+    PowerOnNetworkCheck();
+#endif
 
     return CHIP_NO_ERROR;
 }
@@ -423,7 +715,7 @@ void AppTaskCommon::ButtonEventHandler(ButtonId_t btnId, bool btnPressed)
         break;
 #endif
     case kButtonId_StartBleAdv:
-        StartBleAdvButtonEventHandler();
+        ToggleBleAdvButtonEventHandler();
         break;
     }
 }
@@ -496,7 +788,7 @@ void AppTaskCommon::LinkButtons(ButtonManager & buttonManager)
 #if CONFIG_TELINK_OTA_BUTTON_TEST
     buttonManager.addCallback(TestOTAButtonEventHandler, 2, true);
 #else
-    buttonManager.addCallback(StartBleAdvButtonEventHandler, 2, true);
+    buttonManager.addCallback(ToggleBleAdvButtonEventHandler, 2, true);
 #endif
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     buttonManager.addCallback(StartThreadButtonEventHandler, 3, true);
@@ -559,24 +851,45 @@ void AppTaskCommon::IdentifyEffectHandler(Clusters::Identify::EffectIdentifierEn
     }
 }
 
-void AppTaskCommon::StartBleAdvButtonEventHandler(void)
+void AppTaskCommon::ToggleBleAdvButtonEventHandler(void)
 {
     AppEvent event;
 
     event.Type               = AppEvent::kEventType_Button;
     event.ButtonEvent.Action = kButtonPushEvent;
-    event.Handler            = StartBleAdvHandler;
+    event.Handler            = ToggleBleAdvHandler;
     GetAppTask().PostEvent(&event);
 }
 
-void AppTaskCommon::StartBleAdvHandler(AppEvent * aEvent)
+void AppTaskCommon::ToggleBleAdvHandler(AppEvent * aEvent)
 {
-    LOG_INF("StartBleAdvHandler");
+    // This will change the function of the start BLE adv button
+    // to manually switch to Zigbee firmware and run another firmware,
+    // which overrides the original function.
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+    LOG_INF("switch to Zigbee Mode");
+    dual_mode_switch(OPCODE_SWITCH_ZIGBEE);
+#endif
 
+    LOG_INF("ToggleBleAdvHandler");
     // Disable manual Matter service BLE advertising after device provisioning.
     if (sIsNetworkProvisioned)
     {
         LOG_INF("Device already commissioned");
+#if defined(CONFIG_CHIP_CONCURRENT_MODE) && defined(CONFIG_CHIP_CONCURRENT_BLE_IDLE)
+        // Concurrent idle mode: toggle BLE advertising on demand so that
+        // BLE (e.g. Channel Sounding) becomes accessible on button press.
+        if (ConnectivityMgr().IsBLEAdvertisingEnabled())
+        {
+            LOG_INF("Disabling BLE adv");
+            ConnectivityMgr().SetBLEAdvertisingEnabled(false);
+        }
+        else
+        {
+            LOG_INF("Enabling BLE adv");
+            ConnectivityMgr().SetBLEAdvertisingEnabled(true);
+        }
+#endif
         return;
     }
 
@@ -617,7 +930,15 @@ void AppTaskCommon::FactoryResetHandler(AppEvent * aEvent)
         k_timer_stop(&sFactoryResetTimer);
         sFactoryResetCntr = 0;
 
-        chip::Server::GetInstance().ScheduleFactoryReset();
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        dual_mode_switch(OPCODE_FACTORY_RESET);
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        dual_mode_auto_switch(OPCODE_FACTORY_RESET);
+#endif
+        /* clear matter nvs for unclean info in matter nvs */
+        LOG_INF("Factory Reset TC: Erase matter nvs directly and reboot");
+        flash_erase(matter_nvs_dev, MATTER_NVS_PARTITION_OFFSET, MATTER_NVS_PARTITION_SIZE);
+        sys_reboot(SYS_REBOOT_WARM);
     }
 }
 
@@ -683,8 +1004,10 @@ void AppTaskCommon::StartThreadHandler(AppEvent * aEvent)
     {
         // Switch context from BLE to Thread
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#ifndef CONFIG_CHIP_CONCURRENT_MODE
         Internal::BLEManagerImpl sInstance;
         sInstance.SwitchToIeee802154();
+#endif // !CONFIG_CHIP_CONCURRENT_MODE
 #else
         ThreadStackMgrImpl().SetRadioBlocked(false);
         ThreadStackMgrImpl().SetThreadEnabled(true);
@@ -765,6 +1088,36 @@ void AppTaskCommon::TriggerMicroSpeechEventHandler(AppEvent * aEvent)
 }
 #endif
 
+void AppTaskCommon::OtaEventsHandler(const ChipDeviceEvent * event)
+{
+    switch (event->OtaStateChanged.newState)
+    {
+    case DeviceLayer::kOtaDownloadInProgress:
+        ChipLogProgress(DeviceLayer, "OTA image download in progress\n");
+        break;
+    case DeviceLayer::kOtaDownloadComplete:
+        ChipLogProgress(DeviceLayer, "OTA image download complete\n");
+        break;
+    case DeviceLayer::kOtaDownloadFailed:
+        ChipLogProgress(DeviceLayer, "OTA image download failed\n");
+        break;
+    case DeviceLayer::kOtaDownloadAborted:
+        ChipLogProgress(DeviceLayer, "OTA image download aborted\n");
+        break;
+    case DeviceLayer::kOtaApplyInProgress:
+        ChipLogProgress(DeviceLayer, "OTA image apply in progress\n");
+        break;
+    case DeviceLayer::kOtaApplyComplete:
+        ChipLogProgress(DeviceLayer, "OTA image apply complete\n");
+        break;
+    case DeviceLayer::kOtaApplyFailed:
+        ChipLogProgress(DeviceLayer, "OTA image apply failed\n");
+        break;
+    default:
+        break;
+    }
+}
+
 void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* arg */)
 {
     switch (event->Type)
@@ -798,6 +1151,32 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
             Server::GetInstance().GetFailSafeContext().ForceFailSafeTimerExpiry();
         }
         break;
+    case DeviceEventType::kCommissioningComplete:
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        dual_mode_switch(OPCODE_MATTER_PAIRED);
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        /* clear boot from zigbee after commission*/
+        sBoot_zb = 0;
+        dual_mode_auto_switch(OPCODE_MATTER_PAIRED);
+#endif
+        printk("Commissioning complete; Matter commissioned flag set.\n");
+        break;
+
+    case DeviceEventType::kFailSafeTimerExpired:
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        /* Reset to Zigbee mode if commissioning fails */
+        if (sBoot_zb)
+        {
+            dual_mode_auto_switch(OPCODE_SWITCH_ZIGBEE);
+            printk("FailSafeTimer expired; Matter commissioning failed. Rebooting to Zigbee mode...\n");
+        }
+        else
+#endif
+        {
+            printk("FailSafeTimer expired; Matter commissioning failed.\n");
+        }
+        break;
+
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     case DeviceEventType::kDnssdInitialized:
 #if CONFIG_CHIP_OTA_REQUESTOR
@@ -809,6 +1188,13 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
             OtaConfirmNewImage();
 #endif /* CONFIG_BOOTLOADER_MCUBOOT */
 #if CONFIG_CHIP_OTA_REQUESTOR
+        }
+#endif
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+        if (sBoot_zb)
+        {
+            k_timer_stop(&sDnssTimer);
+            printk("DnssTimer stopped; DNS-SD has been initialized.\n");
         }
 #endif
         break;
@@ -847,6 +1233,9 @@ void AppTaskCommon::ChipEventHandler(const ChipDeviceEvent * event, intptr_t /* 
 #if CONFIG_CHIP_ENABLE_APPLICATION_STATUS_LED
         UpdateStatusLED();
 #endif
+        break;
+    case DeviceEventType::kOtaStateChanged:
+        AppTaskCommon::OtaEventsHandler(event);
         break;
     default:
         break;

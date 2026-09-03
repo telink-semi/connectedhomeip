@@ -20,6 +20,14 @@ from enum import Enum, auto
 from .builder import Builder, BuilderOutput
 
 
+class TelinkLogLevel(Enum):
+    DEFAULT = auto()  # default everything
+    ALL = auto()  # enable all logging
+    PROGRESS = auto()  # progress and above
+    ERROR = auto()  # error and above
+    NONE = auto()  # no chip_logging at all
+
+
 class TelinkApp(Enum):
     AIR_QUALITY_SENSOR = auto()
     ALL_CLUSTERS = auto()
@@ -119,6 +127,10 @@ class TelinkBoard(Enum):
     TL3218X = auto()
     TL3218X_ML3M = auto()
     TL3218X_RETENTION = auto()
+    TL3238X = auto()
+    TL3238X_RETENTION = auto()
+    TL5218X = auto()
+    TL5218X_RETENTION = auto()
     TL7218X = auto()
     TL7218X_ML7G = auto()
     TL7218X_ML7M = auto()
@@ -139,6 +151,14 @@ class TelinkBoard(Enum):
             return 'tl3218x_ml3m'
         if self == TelinkBoard.TL3218X_RETENTION:
             return 'tl3218x_retention'
+        if self == TelinkBoard.TL3238X:
+            return 'tl3238x'
+        if self == TelinkBoard.TL3238X_RETENTION:
+            return 'tl3238x_retention'
+        if self == TelinkBoard.TL5218X:
+            return 'tl5218x'
+        if self == TelinkBoard.TL5218X_RETENTION:
+            return 'tl5218x_retention'
         if self == TelinkBoard.TL7218X:
             return 'tl7218x'
         if self == TelinkBoard.TL7218X_ML7G:
@@ -170,6 +190,8 @@ class TelinkBuilder(Builder):
                  precompiled_ot_config: bool = False,
                  tflm_config: bool = False,
                  chip_enable_nfc_onboarding_payload: bool = False,
+                 log_level: TelinkLogLevel = TelinkLogLevel.DEFAULT,
+                 dual_mode_config: int = 0,
                  ):
         super(TelinkBuilder, self).__init__(root, runner)
         self.app = app
@@ -187,6 +209,8 @@ class TelinkBuilder(Builder):
         self.precompiled_ot_config = precompiled_ot_config
         self.tflm_config = tflm_config
         self.chip_enable_nfc_onboarding_payload = chip_enable_nfc_onboarding_payload
+        self.log_level = log_level
+        self.dual_mode_config = dual_mode_config
 
     def get_cmd_prefixes(self):
         if not self._runner.dry_run:
@@ -203,8 +227,7 @@ class TelinkBuilder(Builder):
         return cmd
 
     def generate(self):
-        if os.path.exists(self.output_dir):
-            return
+        os.makedirs(self.output_dir, exist_ok=True)
 
         flags = []
         if self.enable_ota:
@@ -246,8 +269,24 @@ class TelinkBuilder(Builder):
         if self.tflm_config:
             flags.append("-DCONFIG_TFLM_FEATURE=y")
 
+        if self.dual_mode_config:
+            flags.append("-DCONFIG_DUAL_MODE=0")
+
         if self.options.pregen_dir:
             flags.append(f"-DCHIP_CODEGEN_PREGEN_DIR={shlex.quote(self.options.pregen_dir)}")
+
+        if self.log_level == TelinkLogLevel.DEFAULT:
+            pass
+        elif self.log_level == TelinkLogLevel.ALL:
+            flags.append("-DTLNK_LOG_LEVEL=all")
+        elif self.log_level == TelinkLogLevel.PROGRESS:
+            flags.append("-DTLNK_LOG_LEVEL=progress")
+        elif self.log_level == TelinkLogLevel.ERROR:
+            flags.append("-DTLNK_LOG_LEVEL=error")
+        elif self.log_level == TelinkLogLevel.NONE:
+            flags.append("-DTLNK_LOG_LEVEL=none")
+        else:
+            raise Exception("Unknown log level: %r" % self.log_level)
 
         build_flags = " -- " + " ".join(flags) if len(flags) > 0 else ""
 

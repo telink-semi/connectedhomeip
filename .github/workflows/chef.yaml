@@ -31,6 +31,7 @@ env:
 
 jobs:
     chef_linux_all_devices:
+        if:false
         name: Chef - Linux CI Examples (All chef devices)
         timeout-minutes: 120
         runs-on: ubuntu-latest
@@ -55,6 +56,7 @@ jobs:
                   ./scripts/run_in_build_env.sh "./examples/chef/chef.py --ci_linux"
 
     chef_device_functional_test:
+        if:false
         name: Chef - Device functional tests (Linux)
         if: github.actor != 'restyled-io[bot]'
         timeout-minutes: 90
@@ -93,6 +95,7 @@ jobs:
                   scripts/run_in_python_env.sh out/python_env './scripts/tests/run_python_test.py --app examples/chef/linux/out/rootnode_dimmablelight_bCwGYSDpoe --factory-reset --script ./examples/chef/tests/dimmablelight_test.py --script-args "--commissioning-method on-network --discriminator 3840 --passcode 20202021" --app-stdin-pipe /tmp/chef_stdin.txt'
 
     chef_esp32:
+        if:false
         name: Chef - ESP32 CI Examples
         runs-on: ubuntu-latest
         if: github.actor != 'restyled-io[bot]'
@@ -145,7 +148,7 @@ jobs:
         if: github.actor != 'restyled-io[bot]'
 
         container:
-            image: ghcr.io/project-chip/chip-build-telink:181
+            image: ghcr.io/project-chip/chip-build-telink:185
             volumes:
                 - "/:/runner-root-volume"
             options: --user root

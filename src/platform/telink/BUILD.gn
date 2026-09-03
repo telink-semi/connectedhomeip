@@ -124,6 +124,13 @@ static_library("telink") {
       "OTAImageProcessorImpl.h",
     ]
   }
+
+  if (chip_enable_cs) {
+    sources += [
+      "CsReflector.cpp",
+      "CsReflector.h",
+    ]
+  }
 }
 
 source_set("logging") {

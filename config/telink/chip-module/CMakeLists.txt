@@ -72,6 +72,9 @@ matter_add_flags(-DMBEDTLS_USER_CONFIG_FILE=<${CONFIG_MBEDTLS_CFG_FILE}>)
 if (CONFIG_OPENTHREAD_TELINK_LIBRARY)
     set(ZEPHYR_OPENTHREAD_MODULE_DIR ${ZEPHYR_BASE}/../modules/lib/openthread_telink_lib CACHE STRING INTERNAL)
     message(STATUS "OpenThread used as precompiled Telink library, path: ${ZEPHYR_OPENTHREAD_MODULE_DIR}")
+else()
+    set(ZEPHYR_OPENTHREAD_MODULE_DIR ${ZEPHYR_BASE}/../modules/lib/openthread CACHE STRING INTERNAL)
+    message(STATUS "OpenThread used from source, path: ${ZEPHYR_OPENTHREAD_MODULE_DIR}")
 endif()
 
 if (CONFIG_CHIP_OPENTHREAD_CONFIG)
@@ -132,6 +135,29 @@ if (CONFIG_CHIP_ROTATING_DEVICE_ID)
     matter_add_gn_arg_bool("chip_enable_additional_data_advertising" TRUE)
 endif()
 
+if(${TLNK_LOG_LEVEL} MATCHES all)
+  matter_add_gn_arg_bool("chip_logging"            TRUE)
+  matter_add_gn_arg_bool("chip_error_logging"      TRUE)
+  matter_add_gn_arg_bool("chip_progress_logging"   TRUE)
+  matter_add_gn_arg_bool("chip_detail_logging"     TRUE)
+  matter_add_gn_arg_bool("chip_automation_logging" TRUE)
+elseif(${TLNK_LOG_LEVEL} MATCHES progress)
+  matter_add_gn_arg_bool("chip_logging"            TRUE)
+  matter_add_gn_arg_bool("chip_error_logging"      TRUE)
+  matter_add_gn_arg_bool("chip_progress_logging"   TRUE)
+  matter_add_gn_arg_bool("chip_detail_logging"     FALSE)
+  matter_add_gn_arg_bool("chip_automation_logging" FALSE)
+elseif(${TLNK_LOG_LEVEL} MATCHES error)
+  matter_add_gn_arg_bool("chip_logging"            TRUE)
+  matter_add_gn_arg_bool("chip_error_logging"      TRUE)
+  matter_add_gn_arg_bool("chip_progress_logging"   FALSE)
+  matter_add_gn_arg_bool("chip_detail_logging"     FALSE)
+  matter_add_gn_arg_bool("chip_automation_logging" FALSE)
+elseif(${TLNK_LOG_LEVEL} MATCHES none)
+  matter_add_gn_arg_bool("chip_logging" FALSE)
+endif()
+
+
 if (CONFIG_WIFI_W91)
     matter_add_gn_arg_string("chip_mdns" "minimal")
 elseif (CONFIG_NET_L2_OPENTHREAD)
@@ -170,25 +196,140 @@ endif()
 # Define 'process_binaries' target for collecting final binary to flash
 # ==============================================================================
 
+set(BLOCK_SIZE "1024")
+set(CONFIG_DUAL_MODE_ARG 0)
+
+if(CONFIG_SOC_RISCV_TELINK_TL321X)
+    set(SOC "TL321X")
+elseif(CONFIG_SOC_RISCV_TELINK_TL322X)
+    set(SOC "TL322X")
+elseif(CONFIG_SOC_RISCV_TELINK_TL323X)
+    set(SOC "TL323X")
+    set(CONFIG_DUAL_MODE_ARG ${CONFIG_DUAL_MODE})
+elseif(CONFIG_SOC_RISCV_TELINK_TL521X)
+    set(SOC "TL521X")
+    set(CONFIG_DUAL_MODE_ARG ${CONFIG_DUAL_MODE})
+elseif(CONFIG_SOC_RISCV_TELINK_TL721X)
+    set(SOC "TL721X")
+elseif(CONFIG_SOC_RISCV_TELINK_B91)
+    set(SOC "TLSR9518")
+elseif(CONFIG_SOC_RISCV_TELINK_B92)
+    set(SOC "TLSR9528")
+elseif(CONFIG_SOC_RISCV_TELINK_W91)
+    set(SOC "TLSR9118")
+endif()
+
+set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/SBOOT/Secure_Bootloader.bin")
+math(EXPR SKIP_BYTES_DECIMAL "${CONFIG_MCUBOOT_START_OFFSET} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+message(STATUS "SKIP_BYTES_DECIMAL: ${SKIP_BYTES_DECIMAL}")
+if (EXISTS ${SBOOT_FILE_PATH})
+    message(STATUS "Will merge sboot and mcuboot with offset ${CONFIG_MCUBOOT_START_OFFSET} bytes.")
+    set(MCUBOOT_START_OFFSET_ARG "${CONFIG_MCUBOOT_START_OFFSET}")
+    else()
+    message(WARNING "File ${SBOOT_FILE_PATH} does not exist. Set SKIP_BYTES_DECIMAL to 0, MCUBOOT will be built without offset.")
+    set(SKIP_BYTES_DECIMAL 0)
+    set(MCUBOOT_START_OFFSET_ARG "0")
+endif()
+
+set(ZB_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/ZB/Zigbee-SampleDemo.bin")
+# Calculate the offset of zigbee partition relative to slot0 start
+dt_nodelabel(slot0_partition_path NODELABEL "slot0_partition")
+dt_reg_addr(slot0_start PATH ${slot0_partition_path})
+dt_reg_size(slot0_size PATH ${slot0_partition_path})
+message(STATUS "slot0_start: ${slot0_start}")
+message(STATUS "slot0_size: ${slot0_size}")
+if (CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH})
+    dt_nodelabel(zb_partition_path NODELABEL "slot0_zb_partition")
+    dt_reg_addr(zb_start PATH ${zb_partition_path})
+    message(STATUS "zb_start: ${zb_start}")
+    math(EXPR zb_offset_bytes "${zb_start} - ${slot0_start}" OUTPUT_FORMAT DECIMAL)
+    math(EXPR ZB_FW_OFFSET_DECIMAL "${zb_offset_bytes} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+    message(STATUS "ZB_FW_OFFSET_DECIMAL: ${ZB_FW_OFFSET_DECIMAL}")
+else()
+    if (NOT CONFIG_DUAL_MODE)
+        message(STATUS "CONFIG_DUAL_MODE is 0, skipping Zigbee merge setup")
+    else()
+        message(WARNING "File ${ZB_FILE_PATH} does not exist. ZB_FW_OFFSET_DECIMAL will be set to 0.")
+    endif()
+    set(ZB_FW_OFFSET_DECIMAL 0)
+endif()
+
 add_custom_target(
     process_binaries ALL
     COMMAND ${Python3_EXECUTABLE} ${CHIP_ROOT}/scripts/tools/telink/process_binaries.py
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
-add_dependencies(process_binaries ${ZEPHYR_FINAL_EXECUTABLE})
+if(CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH} AND CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_FAMILY_TELINK_TLX))
+    add_dependencies(process_binaries west_sign)
+else()
+    add_dependencies(process_binaries ${ZEPHYR_FINAL_EXECUTABLE})
+endif()
 
 # ==============================================================================
 # Define 'build_mcuboot' target for building the MCUBoot bootloader
 # ==============================================================================
 
-if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RISCV_TELINK_TLX))
+if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_FAMILY_TELINK_TLX))
     add_custom_target(build_mcuboot ALL
         COMMAND
         west build -b ${BASE_BOARD} -d build_mcuboot ${ZEPHYR_BASE}/../bootloader/mcuboot/boot/zephyr
-            -- -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
+            -- -DCONFIG_MCUBOOT_START_OFFSET=${MCUBOOT_START_OFFSET_ARG} -DCONFIG_DUAL_MODE=${CONFIG_DUAL_MODE_ARG} -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
         COMMAND
-        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        dd if=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin of=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin bs=${BLOCK_SIZE} skip=${SKIP_BYTES_DECIMAL} conv=notrunc
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/zephyr.mcuboot.bin
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/mcuboot_for_sign.bin
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
     )
+    message(STATUS "mcuboot_for_sign.bin is for external signing.")
+
+    if (EXISTS ${SBOOT_FILE_PATH})
+        add_custom_target(merge_sboot ALL
+            COMMAND
+            dd if=/dev/zero bs=${BLOCK_SIZE} count=${SKIP_BYTES_DECIMAL} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/bootloader_merged.bin
+            COMMAND
+            dd if=${SBOOT_FILE_PATH} of=${PROJECT_BINARY_DIR}/bootloader_merged.bin conv=notrunc
+            COMMAND
+            dd if=${PROJECT_BINARY_DIR}/zephyr.mcuboot.bin of=${PROJECT_BINARY_DIR}/bootloader_merged.bin bs=${BLOCK_SIZE} seek=${SKIP_BYTES_DECIMAL} conv=notrunc
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/bootloader_merged.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        )
+        add_dependencies(merge_sboot build_mcuboot)
+        message(WARNING "merged secure boot to mcuboot..")
+    else()
+        message(WARNING "File ${SBOOT_FILE_PATH} does not exist. merge_sboot target will not be created.")
+    endif()
+
+    if (CONFIG_DUAL_MODE AND EXISTS ${ZB_FILE_PATH})
+        add_custom_target(merge_zigbee ALL
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/zephyr.bin ${PROJECT_BINARY_DIR}/zephyr.matter.bin # store matter firmware
+            COMMAND
+            dd if=/dev/zero bs=${BLOCK_SIZE} count=${ZB_FW_OFFSET_DECIMAL} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/dm_merged.bin
+            COMMAND
+            dd if=${PROJECT_BINARY_DIR}/zephyr.matter.bin of=${PROJECT_BINARY_DIR}/dm_merged.bin conv=notrunc
+            COMMAND
+            dd if=${ZB_FILE_PATH} of=${PROJECT_BINARY_DIR}/dm_merged.bin bs=${BLOCK_SIZE} seek=${ZB_FW_OFFSET_DECIMAL} conv=notrunc
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/dm_merged.bin ${PROJECT_BINARY_DIR}/zephyr.bin
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/dm_merged.bin ${PROJECT_BINARY_DIR}/unsign_merged.bin  # store unsign merged firmware
+        )
+        add_custom_target(west_sign ALL
+            COMMAND
+            west sign -t imgtool -p ${ZEPHYR_BASE}/../bootloader/mcuboot/scripts/imgtool.py   -d ${PROJECT_BINARY_DIR}/.. --   --key ${ZEPHYR_BASE}/../${CONFIG_MCUBOOT_SIGNATURE_KEY_FILE} --slot-size ${slot0_size}
+        )
+        add_dependencies(merge_zigbee ${ZEPHYR_FINAL_EXECUTABLE})
+        add_dependencies(west_sign merge_zigbee)
+    else()
+        if (NOT CONFIG_DUAL_MODE)
+            message(STATUS "CONFIG_DUAL_MODE is 0, skipping merge_zigbee and west_sign targets")
+        else()
+            message(WARNING "File ${ZB_FILE_PATH} does not exist. merge_zigbee target will not be created.")
+        endif()
+    endif()
 endif()
 
 # ==============================================================================
@@ -213,8 +354,19 @@ if (CONFIG_CHIP_OTA_IMAGE_BUILD)
 endif()
 
 # ==============================================================================
-# Define 'dfu-smp-image' target for building DFU over BT SMP image
+# DFU over BT SMP support: compile the DFUOverSMP source, common for all
+# Telink applications, and define 'dfu-smp-image' target for building
+# the DFU over BT SMP image
 # ==============================================================================
+
+if (CONFIG_MCUMGR_TRANSPORT_BT)
+    zephyr_library()
+    zephyr_library_sources(${CHIP_ROOT}/examples/platform/telink/util/src/DFUOverSMP.cpp)
+    target_include_directories(${ZEPHYR_CURRENT_LIBRARY} PRIVATE
+        ${CHIP_ROOT}/examples/platform/telink/util/include
+    )
+    zephyr_library_link_libraries(MCUBOOT_BOOTUTIL chip)
+endif()
 
 if (CONFIG_CHIP_DFU_OVER_BT_SMP_BUILD)
     file(WRITE "${PROJECT_BINARY_DIR}/empty.txt" "")

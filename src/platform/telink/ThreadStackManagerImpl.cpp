@@ -41,8 +41,12 @@ ThreadStackManagerImpl ThreadStackManagerImpl::sInstance;
 
 CHIP_ERROR ThreadStackManagerImpl::_InitThreadStack()
 {
-    mRadioBlocked               = false;
-    mReadyToAttach              = false;
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: mRadioBlocked / mReadyToAttach are not used.
+#else
+    mRadioBlocked  = false;
+    mReadyToAttach = false;
+#endif
     otInstance * const instance = openthread_get_default_instance();
 
     ReturnErrorOnFailure(GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::DoInit(instance));
@@ -73,7 +77,7 @@ void ThreadStackManagerImpl::_UnlockThreadStack()
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
 void ThreadStackManagerImpl::_WaitOnSrpClearAllComplete()
 {
-    k_sem_take(&mSrpClearAllSemaphore, K_SECONDS(2));
+    k_sem_take(&mSrpClearAllSemaphore, K_MSEC(500));
 }
 
 void ThreadStackManagerImpl::_NotifySrpClearAllComplete()
@@ -103,6 +107,21 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
     if (dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && callback == nullptr)
         return CHIP_NO_ERROR;
 
+    if (dataset.IsCommissioned() && current_dataset.IsCommissioned() &&
+        !dataset.AsByteSpan().data_equal(current_dataset.AsByteSpan()) && IsThreadEnabled())
+    {
+        result = SetThreadProvision(dataset.AsByteSpan());
+        if (result == CHIP_NO_ERROR && callback != nullptr)
+        {
+            callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+        }
+        return result;
+    }
+
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: Thread is always available, attach directly.
+    result = Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::_AttachToThreadNetwork(dataset, callback);
+#else
     if (mRadioBlocked || mReadyToAttach)
     {
         /* On Telink platform it's not possible to rise Thread network when its used by BLE,
@@ -111,7 +130,10 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
         if (result == CHIP_NO_ERROR)
         {
             mReadyToAttach = true;
-            callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+            if (callback != nullptr)
+            {
+                callback->OnResult(NetworkCommissioning::Status::kSuccess, CharSpan(), 0);
+            }
         }
     }
     else
@@ -119,6 +141,7 @@ ThreadStackManagerImpl::_AttachToThreadNetwork(const Thread::OperationalDataset 
         result =
             Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::_AttachToThreadNetwork(dataset, callback);
     }
+#endif // CONFIG_CHIP_CONCURRENT_MODE
     return result;
 }
 
@@ -126,6 +149,10 @@ CHIP_ERROR ThreadStackManagerImpl::_StartThreadScan(NetworkCommissioning::Thread
 {
     mpScanCallback = callback;
 
+#ifdef CONFIG_CHIP_CONCURRENT_MODE
+    // Concurrent mode: Thread is always available, perform real OT scan directly.
+    return Internal::GenericThreadStackManagerImpl_OpenThread<ThreadStackManagerImpl>::_StartThreadScan(mpScanCallback);
+#else
     /* On Telink platform it's not possible to rise Thread network when its used by BLE,
        so Thread networks scanning performed before start BLE and also available after switch into Thread */
     if (mRadioBlocked)
@@ -144,6 +171,7 @@ CHIP_ERROR ThreadStackManagerImpl::_StartThreadScan(NetworkCommissioning::Thread
     }
 
     return CHIP_NO_ERROR;
+#endif // CONFIG_CHIP_CONCURRENT_MODE
 }
 
 void ThreadStackManagerImpl::Finalize(void)
