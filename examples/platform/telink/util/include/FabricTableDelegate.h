@@ -25,6 +25,9 @@
 #include "WiFiManager.h"
 #endif
 
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+
 class AppFabricTableDelegate : public chip::FabricTable::Delegate
 {
 public:
@@ -45,6 +48,10 @@ private:
 
         if (server.GetFabricTable().FabricCount() == 0)
         {
+            extern void DofactoryResetDualMode();
+            DofactoryResetDualMode();
+            ChipLogProgress(DeviceLayer, "Do factory_reset and reboot");
+
             // ScheduleFactoryReset in case of failed commissioning
             if (AppTaskCommon::IsCommissioningFailed())
             {
