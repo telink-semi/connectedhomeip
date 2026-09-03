@@ -71,7 +71,10 @@ matter_add_flags(-DMBEDTLS_USER_CONFIG_FILE=<${CONFIG_MBEDTLS_CFG_FILE}>)
 
 if (CONFIG_OPENTHREAD_TELINK_LIBRARY)
     set(ZEPHYR_OPENTHREAD_MODULE_DIR ${ZEPHYR_BASE}/../modules/lib/openthread_telink_lib CACHE STRING INTERNAL)
-	message(STATUS "OpenThread used as precompiled Telink library, path: ${ZEPHYR_OPENTHREAD_MODULE_DIR}")
+    message(STATUS "OpenThread used as precompiled Telink library, path: ${ZEPHYR_OPENTHREAD_MODULE_DIR}")
+else()
+    set(ZEPHYR_OPENTHREAD_MODULE_DIR ${ZEPHYR_BASE}/../modules/lib/openthread CACHE STRING INTERNAL)
+    message(STATUS "OpenThread used from source, path: ${ZEPHYR_OPENTHREAD_MODULE_DIR}")
 endif()
 
 if (CONFIG_CHIP_OPENTHREAD_CONFIG)
@@ -114,6 +117,7 @@ matter_add_gn_arg_bool  ("chip_enable_icd_server"                 CONFIG_CHIP_EN
 matter_add_gn_arg_bool  ("chip_enable_factory_data"               CONFIG_CHIP_FACTORY_DATA)
 matter_add_gn_arg_bool  ("chip_mdns_minimal"                      CONFIG_WIFI_W91)
 matter_add_gn_arg_bool  ("chip_mdns_platform"                     CONFIG_NET_L2_OPENTHREAD)
+matter_add_gn_arg_bool  ("chip_persist_subscriptions"             CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS)
 
 if (CONFIG_CHIP_ENABLE_ICD_SUPPORT)
     matter_add_gn_arg_bool  ("chip_enable_icd_lit"                       CONFIG_CHIP_ICD_LIT_SUPPORT)
@@ -169,12 +173,45 @@ endif()
 # Define 'process_binaries' target for collecting final binary to flash
 # ==============================================================================
 
+set(BLOCK_SIZE "1024")
+
+if(CONFIG_SOC_RISCV_TELINK_TL323X)
+set(SOC "TL323X")
+
+# Calculate the offset of zigbee partition relative to slot0 start
+dt_nodelabel(slot0_partition_path NODELABEL "slot0_partition")
+dt_reg_addr(slot0_start PATH ${slot0_partition_path})
+dt_reg_size(slot0_size PATH ${slot0_partition_path})
+message(STATUS "slot0_start: ${slot0_start}")
+message(STATUS "slot0_size: ${slot0_size}")
+
+dt_nodelabel(zb_partition_path NODELABEL "slot0_zb_partition")
+dt_reg_addr(zb_start PATH ${zb_partition_path})
+message(STATUS "zb_start: ${zb_start}")
+
+math(EXPR zb_offset_bytes "${zb_start} - ${slot0_start}" OUTPUT_FORMAT DECIMAL)
+
+math(EXPR ZB_FW_OFFSET_DECIMAL "${zb_offset_bytes} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+message(STATUS "ZB_FW_OFFSET_DECIMAL: ${ZB_FW_OFFSET_DECIMAL}")
+
+set(ZB_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/ZB/Zigbee-SampleDemo.bin")
+
+set(SBOOT_FILE_PATH "${ZEPHYR_BASE}/${SOC}_FW/SBOOT/Secure_Bootloader.bin")
+math(EXPR SKIP_BYTES_DECIMAL "${CONFIG_MCUBOOT_START_OFFSET} / ${BLOCK_SIZE}" OUTPUT_FORMAT DECIMAL)
+message(STATUS "SKIP_BYTES_DECIMAL: ${SKIP_BYTES_DECIMAL}")
+
+endif()
+
 add_custom_target(
     process_binaries ALL
     COMMAND ${Python3_EXECUTABLE} ${CHIP_ROOT}/scripts/tools/telink/process_binaries.py
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
-add_dependencies(process_binaries ${ZEPHYR_FINAL_EXECUTABLE})
+if(EXISTS ${ZB_FILE_PATH} AND CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RISCV_TELINK_TLX))
+    add_dependencies(process_binaries west_sign)
+else()
+    add_dependencies(process_binaries ${ZEPHYR_FINAL_EXECUTABLE})
+endif()
 
 # ==============================================================================
 # Define 'build_mcuboot' target for building the MCUBoot bootloader
@@ -184,10 +221,62 @@ if (CONFIG_BOOTLOADER_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_B9X OR CONFIG_SOC_RIS
     add_custom_target(build_mcuboot ALL
         COMMAND
         west build -b ${BASE_BOARD} -d build_mcuboot ${ZEPHYR_BASE}/../bootloader/mcuboot/boot/zephyr
-            -- -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
+            -- -DCONFIG_DUAL_MODE=${CONFIG_DUAL_MODE} -DOVERLAY_CONFIG=${GLOBAL_BOOT_CONF_OVERLAY_FILE} -DDTC_OVERLAY_FILE="${GLOBAL_BOOT_DTC_OVERLAY_FILE};${FLASH_DTC_OVERLAY_FILE};${USB_BOOT_DTC_OVERLAY_FILE};${MARS_BOOT_DTC_OVERLAY_FILE}"
         COMMAND
-        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        dd if=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin of=${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin bs=${BLOCK_SIZE} skip=${SKIP_BYTES_DECIMAL} conv=notrunc
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/zephyr.mcuboot.bin
+        COMMAND
+        cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/mcuboot_for_sign.bin ${PROJECT_BINARY_DIR}/mcuboot_for_sign.bin
     )
+    message(STATUS "mcuboot_for_sign.bin is for external signing.")
+
+    if (EXISTS ${SBOOT_FILE_PATH})
+        add_custom_target(merge_sboot ALL
+            COMMAND
+            dd if=/dev/zero bs=${BLOCK_SIZE} count=${SKIP_BYTES_DECIMAL} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/bootloader_merged.bin
+            COMMAND
+            dd if=${SBOOT_FILE_PATH} of=${PROJECT_BINARY_DIR}/bootloader_merged.bin conv=notrunc
+            COMMAND
+            dd if=${PROJECT_BINARY_DIR}/zephyr.mcuboot.bin of=${PROJECT_BINARY_DIR}/bootloader_merged.bin bs=${BLOCK_SIZE} seek=${SKIP_BYTES_DECIMAL} conv=notrunc
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/bootloader_merged.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        )
+        message(WARNING "merged secure boot to mcuboot..")
+    else()
+        # Since there is no secure boot, no offset is needed.
+        # Simultaneously check if CONFIG_MCUBOOT_START_OFFSET is 0x0.
+        add_custom_target(merge_sboot ALL
+            cp ${PROJECT_BINARY_DIR}/../modules/chip-module/build_mcuboot/zephyr/zephyr.bin ${PROJECT_BINARY_DIR}/mcuboot.bin
+        )
+        message(WARNING "File ${SBOOT_FILE_PATH} does not exist.")
+    endif()
+    add_dependencies(merge_sboot build_mcuboot)
+
+    if (EXISTS ${ZB_FILE_PATH})
+        add_custom_target(merge_zigbee ALL
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/zephyr.bin ${PROJECT_BINARY_DIR}/zephyr.matter.bin # store matter firmware
+            COMMAND
+            dd if=/dev/zero bs=${BLOCK_SIZE} count=${ZB_FW_OFFSETZB_FW_OFFSET} | tr '\\000' '\\377' > ${PROJECT_BINARY_DIR}/dm_merged.bin
+            COMMAND
+            dd if=${PROJECT_BINARY_DIR}/zephyr.matter.bin of=${PROJECT_BINARY_DIR}/dm_merged.bin conv=notrunc
+            COMMAND
+            dd if=${ZB_FILE_PATH} of=${PROJECT_BINARY_DIR}/dm_merged.bin bs=${BLOCK_SIZE} seek=${ZB_FW_OFFSET_DECIMAL} conv=notrunc
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/dm_merged.bin ${PROJECT_BINARY_DIR}/zephyr.bin
+            COMMAND
+            cp ${PROJECT_BINARY_DIR}/dm_merged.bin ${PROJECT_BINARY_DIR}/unsign_merged.bin  # store unsign merged firmware
+        )
+        add_custom_target(west_sign ALL
+            COMMAND
+            west sign -t imgtool -p ${ZEPHYR_BASE}/../bootloader/mcuboot/scripts/imgtool.py   -d ${PROJECT_BINARY_DIR}/.. --   --key ${ZEPHYR_BASE}/../${CONFIG_MCUBOOT_SIGNATURE_KEY_FILE} --slot-size ${slot0_size}
+        )
+        add_dependencies(merge_zigbee ${ZEPHYR_FINAL_EXECUTABLE})
+        add_dependencies(west_sign merge_zigbee)
+    else()
+        message(WARNING "File ${ZB_FILE_PATH} does not exist. merge_zigbee target will not be created.")
+    endif()
 endif()
 
 # ==============================================================================

@@ -121,6 +121,9 @@ class TelinkBoard(Enum):
     TL3218X = auto()
     TL3218X_ML3M = auto()
     TL3218X_RETENTION = auto()
+    TL3238X = auto()
+    TL3238X_ML3M = auto()
+    TL3238X_RETENTION = auto()
     TL7218X = auto()
     TL7218X_ML7G = auto()
     TL7218X_ML7M = auto()
@@ -141,6 +144,12 @@ class TelinkBoard(Enum):
             return 'tl3218x_ml3m'
         elif self == TelinkBoard.TL3218X_RETENTION:
             return 'tl3218x_retention'
+        elif self == TelinkBoard.TL3238X:
+            return 'tl3238x'
+        elif self == TelinkBoard.TL3238X_ML3M:
+            return 'tl3238x_ml3m'
+        elif self == TelinkBoard.TL3238X_RETENTION:
+            return 'tl3238x_retention'
         elif self == TelinkBoard.TL7218X:
             return 'tl7218x'
         elif self == TelinkBoard.TL7218X_ML7G:
@@ -172,6 +181,7 @@ class TelinkBuilder(Builder):
                  thread_analyzer_config: bool = False,
                  precompiled_ot_config: bool = False,
                  tflm_config: bool = False,
+                 dual_mode_config: int = 0,
                  ):
         super(TelinkBuilder, self).__init__(root, runner)
         self.app = app
@@ -188,6 +198,7 @@ class TelinkBuilder(Builder):
         self.thread_analyzer_config = thread_analyzer_config
         self.precompiled_ot_config = precompiled_ot_config
         self.tflm_config = tflm_config
+        self.dual_mode_config = dual_mode_config
 
     def get_cmd_prefixes(self):
         if not self._runner.dry_run:
@@ -243,6 +254,9 @@ class TelinkBuilder(Builder):
 
         if self.tflm_config:
             flags.append("-DCONFIG_TFLM_FEATURE=y")
+
+        if self.dual_mode_config:
+            flags.append("-DCONFIG_DUAL_MODE=0")
 
         if self.options.pregen_dir:
             flags.append(f"-DCHIP_CODEGEN_PREGEN_DIR={shlex.quote(self.options.pregen_dir)}")

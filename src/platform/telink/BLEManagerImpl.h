@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2022-2024 Project CHIP Authors
+ *    Copyright (c) 2022-2026 Project CHIP Authors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ private:
         kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
         kChipoBleGattServiceRegister = 0x0020, /**< The system has currently CHIPoBLE GATT service registered. */
+        kExtendedAdvertisingEnabled  = 0x0040, /**< The application has enabled extended advertising. */
     };
 
     struct ServiceData;
@@ -150,7 +151,8 @@ private:
     static void HandleTXIndicated(bt_conn * conn, bt_gatt_indicate_params * attr, uint8_t err);
     static void HandleConnect(bt_conn * conn, uint8_t err);
     static void HandleDisconnect(bt_conn * conn, uint8_t reason);
-    static void HandleBLEAdvertisementIntervalChange(System::Layer * layer, void * param);
+    static void HandleSlowBLEAdvertisementInterval(System::Layer * layer, void * param);
+    static void HandleExtendedBLEAdvertisementInterval(System::Layer * layer, void * param);
 
     // ===== Members for internal use by the following friends.
 
@@ -171,6 +173,11 @@ public:
 
     bool NeedToResetFailSafeTimer(void);
     void ClearResetFailSafeTimerFlag(void);
+
+#if CHIP_DEVICE_EXPOSE_CHIP_ID_VIA_BLE
+    static ssize_t HandleChipIDRead(struct bt_conn * conn, const struct bt_gatt_attr * attr, void * buf, uint16_t len,
+                                    uint16_t offset);
+#endif
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     // Switch context from BLE to Thread

@@ -65,6 +65,10 @@ extern "C" void otSysProcessDrivers(otInstance * aInstance);
 extern "C" void otAppCliInit(otInstance * aInstance);
 #endif
 
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION
+bool isThreadCommissioned = false;
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+
 namespace chip {
 namespace DeviceLayer {
 namespace Internal {
@@ -357,6 +361,15 @@ bool GenericThreadStackManagerImpl_OpenThread<ImplClass>::_IsThreadAttached()
     Impl()->LockThreadStack();
     curRole = otThreadGetDeviceRole(mOTInst);
     Impl()->UnlockThreadStack();
+
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION
+
+    if ((curRole != OT_DEVICE_ROLE_DISABLED && curRole != OT_DEVICE_ROLE_DETACHED))
+    {
+        if (isThreadCommissioned == false)
+            isThreadCommissioned = true;
+    }
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 
     return (curRole != OT_DEVICE_ROLE_DISABLED && curRole != OT_DEVICE_ROLE_DETACHED);
 }
@@ -676,6 +689,10 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::ConfigureThreadS
 
     mOTInst = otInst;
 
+    // Lock the OpenThread stack to prevent race conditions with OpenThread's internal operations.
+    // On some platforms (e.g., Zephyr), OpenThread may already be running before Matter initialization completes.
+    Impl()->LockThreadStack();
+
     // Arrange for OpenThread to call the OnOpenThreadStateChange method whenever a
     // state change occurs.  Note that we reference the OnOpenThreadStateChange method
     // on the concrete implementation class so that that class can override the default
@@ -711,6 +728,7 @@ CHIP_ERROR GenericThreadStackManagerImpl_OpenThread<ImplClass>::ConfigureThreadS
 
 exit:
 
+    Impl()->UnlockThreadStack();
     ChipLogProgress(DeviceLayer, "OpenThread started: %s", otThreadErrorToString(otErr));
     return err;
 }
