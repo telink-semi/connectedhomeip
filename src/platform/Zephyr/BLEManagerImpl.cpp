@@ -1078,16 +1078,32 @@ ssize_t BLEManagerImpl::HandleC3Read(struct bt_conn * conId, const struct bt_gat
 #endif
 
 #if CHIP_DEVICE_EXPOSE_CHIP_ID_VIA_BLE
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "efuse.h"
+#ifdef __cplusplus
+}
+#endif
 #include <zephyr/drivers/hwinfo.h>
 ssize_t BLEManagerImpl::HandleChipIDRead(struct bt_conn * conId, const struct bt_gatt_attr * attr, void * buf, uint16_t len,
                                          uint16_t offset)
 {
-    ChipLogDetail(DeviceLayer, "Read request received for CHIPoBLE Chip ID (ConnId 0x%02x)", bt_conn_index(conId));
     // Example chip_id data storage (replace with actual chip_id value)
-    // uint8_t chip_id_value[] = { 0x42, 0xe3, 0x03, 0xb4, 0xcf, 0x3c, 0xe6, 0x32, 0x36, 0x37, 0x36, 0x42, 0x50, 0x55, 0x76, 0xce };
-    uint8_t chip_id_value[16] = { 0 };
-    efuse_get_chip_id(chip_id_value);
-    return bt_gatt_attr_read(conId, attr, buf, len, offset, chip_id_value, sizeof(chip_id_value));
+    // uint8_t chip_id[] = { 0x42, 0xe3, 0x03, 0xb4, 0xcf, 0x3c, 0xe6, 0x32, 0x36, 0x37, 0x36, 0x42, 0x50, 0x55, 0x76, 0xce };
+    ChipLogDetail(DeviceLayer, "Read request received for CHIPoBLE Chip ID (ConnId 0x%02x)", bt_conn_index(conId));
+
+    uint8_t chip_id[16]  = { 0 };
+    uint8_t ieee_addr[8] = { 0 };
+
+    if (efuse_get_ieee_addr(ieee_addr) != DRV_API_SUCCESS)
+    {
+        ChipLogDetail(DeviceLayer, "Failed to get chip ID.");
+        return 0;
+    }
+
+    memcpy(chip_id, ieee_addr, 8);
+    return bt_gatt_attr_read(conId, attr, buf, len, offset, chip_id, sizeof(chip_id));
 }
 #endif
 

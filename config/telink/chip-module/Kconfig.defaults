@@ -305,7 +305,7 @@ config NVS_LOOKUP_CACHE
     default y
 
 config NVS_LOOKUP_CACHE_SIZE
-    default 400 if SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL323X
+    default 512 if SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL323X
     default 2048 if !PM || SOC_RISCV_TELINK_W91
 
 # Set multiplicator of Name Value Storage (NVS) as 1 to reach NVS sector size 4KB

@@ -36,9 +36,11 @@
 #include <DeviceInfoProviderImpl.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/ota-requestor/OTATestEventTriggerHandler.h>
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
 #include <app/persistence/AttributePersistenceProviderInstance.h>
 #include <app/persistence/DefaultAttributePersistenceProvider.h>
 #include <app/persistence/DeferredAttributePersistenceProvider.h>
+#endif
 #include <app/server/Server.h>
 #include <app/util/endpoint-config-api.h>
 #include <setup_payload/OnboardingCodesUtil.h>
@@ -60,7 +62,7 @@
 #if CONFIG_CHIP_OTA_REQUESTOR
 #include <app/clusters/ota-requestor/OTARequestorInterface.h>
 #endif
-#include <zephyr/sys/reboot.h>
+
 bool AppTaskCommon::sIsCommissioningFailed = false;
 
 extern "C" {
@@ -71,6 +73,10 @@ extern "C" {
 extern bool pm_has_deep_sleep_retention_occurred(void);
 #endif
 }
+
+#include <zephyr/fs/nvs.h>
+#include <zephyr/settings/settings.h>
+#include <zephyr/sys/reboot.h>
 
 #if defined(CONFIG_PM) && !defined(CONFIG_CHIP_ENABLE_PM_DURING_BLE)
 #include <zephyr/pm/policy.h>
@@ -108,7 +114,7 @@ bool sIsNetworkEnabled      = false;
 bool sIsNetworkAttached     = false;
 bool sHaveBLEConnections    = false;
 
-
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
 /**
  * @brief Set deferred attributes storage
  *
@@ -141,7 +147,8 @@ DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttribut
                                                                  Span<DeferredAttribute>(gPersisters, ATTRIBUTES_ARRAY_SIZE),
                                                                  System::Clock::Milliseconds32(DEFERRED_STORAGE_TIME));
 
-                                                                 
+#endif
+
 #include <ext_driver/ext_pm.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/flash.h>
@@ -325,7 +332,7 @@ public:
     void OnCommissioningSessionEstablishmentStarted() override { AppTaskCommon::sIsCommissioningFailed = false; }
     void OnCommissioningSessionStarted() override { isComissioningStarted = true; }
     void OnCommissioningSessionStopped() override { isComissioningStarted = false; }
-    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override { sIsCommissioningFailed = true; isComissioningStarted = false; }
+    void OnCommissioningSessionEstablishmentError(CHIP_ERROR err) override { AppTaskCommon::sIsCommissioningFailed = true; isComissioningStarted = false; }
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     void OnCommissioningWindowClosed() override
     {
