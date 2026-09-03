@@ -607,6 +607,9 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sOtaTestEventTriggerHandler) == CHIP_NO_ERROR);
 #endif
     LogErrorOnFailure(initParams.InitializeStaticResourcesBeforeServerInit());
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
+    VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
+#endif
 #if APP_SET_DEVICE_INFO_PROVIDER
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
@@ -622,9 +625,10 @@ CHIP_ERROR AppTaskCommon::InitCommonParts(void)
     // ZAP/codegen applications use the generated data model.
     initParams.dataModelProvider = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
     ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
-
+#if CONFIG_CHIP_PERSISTENT_SUBSCRIPTIONS
     /* Add deferred storage attribute for provider */
     app::SetAttributePersistenceProvider(&gDeferredAttributePersister);
+#endif
 
     ConfigurationMgr().LogDeviceConfig();
     PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
