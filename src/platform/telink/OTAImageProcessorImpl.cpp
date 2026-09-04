@@ -190,13 +190,16 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessBlock(ByteSpan & aBlock)
                     ChipLogError(SoftwareUpdate, "OTA skip err: %" CHIP_ERROR_FORMAT, err.Format());
                 }
                 downloadedBytesRestored = 0;
-                TEMPORARY_RETURN_IGNORED SystemLayer().StartTimer(
-                    System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs), ResumeWatchdogHandler, this);
+                SystemLayer().StartTimer(System::Clock::Milliseconds32(kResumeWatchdogTimeoutMs), ResumeWatchdogHandler, this);
             }
             else
             {
-                TEMPORARY_RETURN_IGNORED DeviceLayer::SystemLayer().CancelTimer(ResumeWatchdogHandler, this);
-                TEMPORARY_RETURN_IGNORED mDownloader->FetchNextData();
+                DeviceLayer::SystemLayer().CancelTimer(ResumeWatchdogHandler, this);
+                CHIP_ERROR err = mDownloader->FetchNextData();
+                if (err != CHIP_NO_ERROR)
+                {
+                    ChipLogError(SoftwareUpdate, "OTA fetch err: %" CHIP_ERROR_FORMAT, err.Format());
+                }
             }
         }
         else

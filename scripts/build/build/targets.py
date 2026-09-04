@@ -886,7 +886,6 @@ def BuildTelinkTarget():
     target.AppendModifier("log-none", log_level=TelinkLogLevel.NONE).ExceptIfRe("-log-(progress|error|all)")
     target.AppendModifier("log-all", log_level=TelinkLogLevel.ALL).ExceptIfRe("-log-(progress|error|none)")
 
-
     return target
 
 

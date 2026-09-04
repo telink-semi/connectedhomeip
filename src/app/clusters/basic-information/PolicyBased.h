@@ -304,6 +304,7 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         MutableCharSpan vendorSuffixSpan(manufacturingDateString + kMaxDateLength, kMaxSuffixLength);
         CHIP_ERROR status = mPolicy.GetManufacturingDate(manufacturingYear, manufacturingMonth, manufacturingDayOfMonth);
 #endif /* CONFIG_SECURE_PROGRAMMING */
+
         if (status == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND || status == CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE)
         {
             manufacturingYear       = 2020;
@@ -316,7 +317,7 @@ DataModel::ActionReturnStatus PolicyBased<Policy>::ReadAttribute(const DataModel
         }
         ReturnErrorOnFailure(status);
 #if CONFIG_SECURE_PROGRAMMING
-    return encoder.Encode(CharSpan(manufacturingDateString, strnlen(manufacturingDateString, kMaxTotalLength)));
+        return encoder.Encode(CharSpan(manufacturingDateString, strnlen(manufacturingDateString, kMaxTotalLength)));
 #else
         snprintf(manufacturingDateString, sizeof(manufacturingDateString), "%04u%02u%02u", manufacturingYear, manufacturingMonth,
                  manufacturingDayOfMonth);
