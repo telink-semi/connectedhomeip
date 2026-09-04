@@ -39,6 +39,31 @@
 
 #include <cstdint>
 
+#include <zephyr/device.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+
+#define OPCODE_FACTORY_RESET 0
+#define OPCODE_SWITCH_ZIGBEE 1 // include init state and matter paired state.
+#define OPCODE_MATTER_PAIRED 2
+
+#define DUAL_MODE_PARTITION dual_mode_partition
+#define DUAL_MODE_PARTITION_DEVICE FIXED_PARTITION_DEVICE(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_OFFSET FIXED_PARTITION_OFFSET(DUAL_MODE_PARTITION)
+#define DUAL_MODE_PARTITION_SIZE FIXED_PARTITION_SIZE(DUAL_MODE_PARTITION)
+// init mode will jump to matter
+#define MODE_VAL_INIT 0xff
+
+// after matter paired , it will go to matter, only if trigger action.
+#define MODE_VAL_MATTER_PAIR 0x55
+#define ACTION_SWITCH_ZIGBEE 0xaa
+
+// after zb paired , it will go to zb, only if trigger action.
+#define MODE_VAL_ZB_PAIR 0xaa
+#define ACTION_SWITCH_MATTER 0x55
+
+void dual_mode_switch(uint32_t op);
+
 using namespace ::chip;
 using namespace ::chip::app;
 using namespace ::chip::Credentials;
@@ -112,7 +137,9 @@ protected:
     virtual void LinkPwms(PwmManager & pwmManager);
     void InitButtons(void);
     virtual void LinkButtons(ButtonManager & buttonManager);
-
+#if CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+    static void DnssTimerTimeoutCallback(k_timer * timer);
+#endif
     static void FactoryResetTimerTimeoutCallback(k_timer * timer);
     static void FactoryResetTimerEventHandler(AppEvent * aEvent);
     static void FactoryResetButtonEventHandler(void);
@@ -142,6 +169,8 @@ protected:
     static void ChipEventHandler(const chip::DeviceLayer::ChipDeviceEvent * event, intptr_t arg);
 
     static void UpdateStatusLED(void);
+
+    static void OtaEventsHandler(const ChipDeviceEvent * event);
 
 #if CONFIG_CHIP_FACTORY_DATA
     chip::DeviceLayer::FactoryDataProvider<chip::DeviceLayer::ExternalFlashFactoryData> mFactoryDataProvider;

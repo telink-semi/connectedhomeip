@@ -827,6 +827,9 @@ def BuildTelinkTarget():
         TargetPart('tl3218x', board=TelinkBoard.TL3218X),
         TargetPart('tl3218x_ml3m', board=TelinkBoard.TL3218X_ML3M),
         TargetPart('tl3218x_retention', board=TelinkBoard.TL3218X_RETENTION),
+        TargetPart('tl3238x', board=TelinkBoard.TL3238X),
+        TargetPart('tl3238x_ml3m', board=TelinkBoard.TL3238X_ML3M),
+        TargetPart('tl3238x_retention', board=TelinkBoard.TL3238X_RETENTION),
         TargetPart('tl7218x', board=TelinkBoard.TL7218X),
         TargetPart('tl7218x_ml7g', board=TelinkBoard.TL7218X_ML7G),
         TargetPart('tl7218x_ml7m', board=TelinkBoard.TL7218X_ML7M),
@@ -876,6 +879,7 @@ def BuildTelinkTarget():
     target.AppendModifier('thread-analyzer', thread_analyzer_config=True)
     target.AppendModifier('precompiled-ot', precompiled_ot_config=True)
     target.AppendModifier('tflm', tflm_config=True)
+    target.AppendModifier('dual-mode', dual_mode_config=0)
     target.AppendModifier('nfc-payload', chip_enable_nfc_onboarding_payload=True)
     target.AppendModifier("log-progress", log_level=TelinkLogLevel.PROGRESS).ExceptIfRe("-log-(all|error|none)")
     target.AppendModifier("log-error", log_level=TelinkLogLevel.ERROR).ExceptIfRe("-log-(progress|all|none)")
